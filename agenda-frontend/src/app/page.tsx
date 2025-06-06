@@ -1,8 +1,9 @@
 "use client"; // ✅ Enables interactivity on the client side
 
 import React, { useState } from "react";
-import { Agenda } from "../lib/types"; // 👈 Adjust if path differs
-import CreateAgendaForm from "../components/CreateAgendaForm"; // 👈 Our form component
+import { Agenda } from "../lib/types"; //  Adjust if path differs
+import CreateAgendaForm from "../components/CreateAgendaForm"; //  Our form component
+import AgendaCard from "../components/AgendaCard";
 
 export default function HomePage() {
   const [agendas, setAgendas] = useState<Agenda[]>([]); // Store list of created agendas
@@ -20,19 +21,25 @@ export default function HomePage() {
       <h1 className="text-2xl font-bold text-center mb-6">Agenda Builder</h1>
 
       {/* Create form */}
-      <CreateAgendaForm onCreate={handleCreateAgenda} />
-
+	  {/*Embeding the CreateAgendaForm, and passing the "handleCreateAgenda" function that creates the new Agenda state.
+	    The CreateAgendaForm recieves the function "handleCreateAgenda" as a parameter from the parent (props).
+	    The CreateAgendaForm than creates the new agenda object and update the state using the "handleCreateAgenda" from the parent (this page/component) */} 
+     
+     <CreateAgendaForm onCreate={handleCreateAgenda} />
+	  
       {/* Agenda list */}
       <div className="mt-8 space-y-4 max-w-md mx-auto">
         {agendas.map((agenda) => (
-          <div key={agenda.id} className="border rounded p-4 bg-white shadow-sm">
-            <h3 className="text-lg font-semibold">{agenda.title}</h3>
-            <p className="text-sm text-gray-600">
-              Created at: {agenda.createdAt.toLocaleString()}
-            </p>
-          </div>
+            <AgendaCard
+              key={agenda.id}
+              agenda={agenda}
+              onAddArticle={(id) => alert(`Add article to agenda ${id}`)} // placeholder
+            />
+    
         ))}
       </div>
+
     </div>
+	
   );
 }
