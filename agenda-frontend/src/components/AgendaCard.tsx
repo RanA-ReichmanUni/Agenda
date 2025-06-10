@@ -5,8 +5,8 @@ import { Agenda } from "../lib/types"; //  Use the shared interface
 import Link from "next/link"; //  for navigation between pages
 
 interface AgendaCardProps {
-  agenda: Agenda; // ✅ The agenda to display
-  onAddArticle?: (agendaId: string) => void; // ✅ Function for handling article addition (for next steps)
+  agenda: Agenda; //  The agenda to display
+  onAddArticle?: (agendaId: string) => void; //  Function for handling article addition (for next steps)
 }
 
 export default function AgendaCard({ agenda, onAddArticle }: AgendaCardProps) {

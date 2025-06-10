@@ -20,7 +20,7 @@ export default function HomePage() {
   return (
     <div className="p-4 min-h-screen bg-gray-100">
       {/* Title of the page */}
-      <h1 className="text-2xl font-bold text-center mb-6">Agenda Builder</h1>
+      <h1 className="text-2xl font-bold text-center mb-6 text-blue-600">Agenda Builder</h1>
 
       {/* ✅ Form for creating new agendas, receives a callback that updates the global state */}
       <CreateAgendaForm onCreate={handleCreateAgenda} />

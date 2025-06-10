@@ -1,10 +1,10 @@
 
 export interface Article {
 	
-	url: string;
+	id: string;
 	title: string;
+	url: string;
 	description: string;
-	imageUrl? : string; // Optional image url
 }
 
 export interface Agenda {

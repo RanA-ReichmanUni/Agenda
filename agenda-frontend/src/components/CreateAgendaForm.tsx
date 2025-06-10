@@ -45,13 +45,13 @@ export default function CreateAgendaForm({ onCreate }: CreateAgendaFormProps) {
       className="flex flex-col gap-4 p-4 bg-white rounded-xl shadow max-w-md mx-auto mt-6"
     >
       {/*  Section title */}
-      <h2 className="text-xl font-semibold">Create a New Agenda</h2>
+      <h2 className="text-xl font-semibold text-black">Create a New Agenda</h2>
 
       {/* Input field for agenda title */}
       <input
         type="text" // Standard text input
         placeholder="Agenda Title" // Placeholder text inside the field
-        className="border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" // Tailwind styling
+        className="border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-blue-600" // Tailwind styling
         value={title} // Controlled input: bound to the title state
         onChange={(e) => setTitle(e.target.value)} // Update state whenever user types
       />
