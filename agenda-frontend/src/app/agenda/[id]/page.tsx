@@ -69,6 +69,13 @@ export default function AgendaPage() {
           >
             <h3 className="font-semibold text-blue-700">{article.title}</h3>
             <p className="text-sm text-gray-600 mt-1">{article.description}</p>
+            {article.image && (
+              <img 
+                src={article.image} 
+                alt={article.title} 
+                className="mt-2 max-w-sm mx-auto rounded"
+              />
+            )}
           </a>
         ))}
       </div>

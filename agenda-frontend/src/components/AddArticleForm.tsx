@@ -1,109 +1,149 @@
-// React import for building components and using state
 import React, { useState } from "react";
-
-// Import the Article type definition to enforce structure and type safety
 import { Article } from "../lib/types";
-
-// Import UUID generator for assigning unique IDs to articles
 import { v4 as uuidv4 } from "uuid";
 
-// Define the props for the AddArticleForm component
-// This component expects a single function `onAdd` that receives an Article object
 interface AddArticleFormProps {
   onAdd: (article: Article) => void;
 }
 
-// Define the functional component for the Add Article form
-export default function AddArticleForm({ onAdd }: AddArticleFormProps) {
-  // React state to store all form input values in a single object
-  // This simplifies managing multiple related fields
-  const [articleData, setArticleData] = useState({
-    title: "",         // The title of the article
-    url: "",           // The URL to the article
-    description: "",   // A short description of the article
-  });
+// ✅ Local interface to describe the structure of metadata returned by /api/extract
+interface ArticleMeta {
+  title: string;
+  description: string;
+  image?: string;
+}
 
-  // Handler function for input changes (called on each keystroke in a field)
-  // Uses `name` of the input field to determine which property to update
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target; // Destructure input field's name and value
-    setArticleData((prev) => ({
-      ...prev,         // Spread the existing state
-      [name]: value,   // Update only the field that changed (dynamic key)
-    }));
+export default function AddArticleForm({ onAdd }: AddArticleFormProps) {
+  const [url, setUrl] = useState(""); // User input for the article URL
+
+  // Store metadata returned from /api/extract
+  const [articleData, setArticleData] = useState<ArticleMeta | null>(null);
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  // Fetch metadata from internal server route using the entered URL
+  const handleFetch = async () => {
+    setLoading(true);
+    setError("");
+    setArticleData(null);
+
+    try {
+      console.log('Fetching metadata for:', url);
+      const res = await fetch("/api/extract", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+
+      // Log the raw response for debugging
+      const responseText = await res.text();
+      console.log('Raw response:', responseText);
+
+      // Try to parse the response as JSON
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('Failed to parse response:', parseError);
+        throw new Error('Invalid response from server');
+      }
+
+      if (!res.ok) {
+        // Construct a more detailed error message
+        const errorMessage = [
+          data.error,
+          data.details,
+          data.url ? `URL: ${data.url}` : null,
+          data.statusCode ? `Status: ${data.statusCode}` : null
+        ].filter(Boolean).join(' - ');
+        
+        throw new Error(errorMessage || "Unknown error occurred");
+      }
+
+      if (!data || typeof data !== 'object') {
+        throw new Error('Invalid response format from server');
+      }
+
+      const fetchedMeta: ArticleMeta = {
+        title: data.title || "No title found",
+        description: data.description || "No description found",
+        image: data.image,
+      };
+
+      setArticleData(fetchedMeta);
+    } catch (err: any) {
+      console.error('Error fetching metadata:', err);
+      setError(err.message || "Failed to fetch metadata");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Handler function called when the form is submitted
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault(); // Prevent default page reload behavior on form submit
+  // Construct full Article and notify parent component
+  const handleAdd = () => {
+    if (!articleData) return;
 
-    // Construct a new article object based on form data
     const newArticle: Article = {
-      id: uuidv4(),                        // Generate a unique ID for the article
-      title: articleData.title,           // Use the current value from state
-      url: articleData.url,
+      id: uuidv4(),
+      title: articleData.title,
+      url,
       description: articleData.description,
+      image: articleData.image
     };
 
-    onAdd(newArticle); // Call the parent's `onAdd` function to update article list
-
-    // Reset the form fields back to empty
-    setArticleData({
-      title: "",
-      url: "",
-      description: "",
-    });
+    onAdd(newArticle);
+    setUrl("");
+    setArticleData(null);
   };
 
-  // JSX return: render the form
   return (
-    <form
-      onSubmit={handleSubmit} // Link the form submission to the handler
-      className="space-y-4 bg-white p-4 rounded-xl shadow-md"
-    >
+    <div className="space-y-4 bg-white p-4 rounded-xl shadow-md">
       <h2 className="text-lg font-semibold">Add Article</h2>
 
-      {/* Input field for article title */}
+      {/* Input field for URL */}
       <input
-        name="title" // Important: used as key in articleData
-        type="text"
-        placeholder="Article Title"
-        value={articleData.title} // Controlled component: value is bound to state
-        onChange={handleChange}   // Call change handler on keystroke
-        className="w-full border px-3 py-2 rounded"
-        required // User must fill this field
-      />
-
-      {/* Input field for article URL */}
-      <input
-        name="url"
         type="url"
-        placeholder="https://example.com"
-        value={articleData.url}
-        onChange={handleChange}
+        placeholder="Paste article URL"
+        value={url}
+        onChange={(e) => setUrl(e.target.value)}
         className="w-full border px-3 py-2 rounded"
         required
       />
 
-      {/* Textarea for article description */}
-      <textarea
-        name="description"
-        placeholder="Short description"
-        value={articleData.description}
-        onChange={handleChange}
-        className="w-full border px-3 py-2 rounded"
-        rows={3} // Set initial height of the text area
-      />
-
-      {/* Submit button */}
+      {/* Fetch article metadata */}
       <button
-        type="submit"
+        onClick={handleFetch}
+        disabled={loading || !url}
         className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
       >
-        Add Article
+        {loading ? "Fetching..." : "Fetch Info"}
       </button>
-    </form>
+
+      {/* Display error message if fetch fails */}
+      {error && <p className="text-red-500">{error}</p>}
+
+      {/* Display fetched article info */}
+      {articleData && (
+        <div className="border-t pt-4">
+          <h3 className="font-semibold text-blue-700">{articleData.title}</h3>
+          <p className="text-sm text-gray-600 mt-1">{articleData.description}</p>
+          {articleData.image && (
+            <img 
+              src={articleData.image} 
+              alt="Preview" 
+              className="mt-2 max-w-sm mx-auto rounded"
+            />
+          )}
+
+          <button
+            onClick={handleAdd}
+            className="mt-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+          >
+            Add Article
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
