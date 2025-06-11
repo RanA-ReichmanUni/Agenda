@@ -11,7 +11,15 @@ export default function AgendaPage() {
   
   // Handle case where params or id is undefined
   if (!params || !params.id) {
-    return <div className="p-4 text-red-600">Invalid agenda ID</div>;
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white p-8">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-red-600">
+            Invalid agenda ID
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const id = params.id as string;
@@ -20,7 +28,15 @@ export default function AgendaPage() {
   const agenda = agendas.find(a => a.id === id);
 
   if (!agenda) {
-    return <div className="p-4 text-red-600">Agenda not found</div>;
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white p-8">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-red-600">
+            Agenda not found
+          </div>
+        </div>
+      </div>
+    );
   }
 
   // Function to add a new article to the current agenda
@@ -39,45 +55,68 @@ export default function AgendaPage() {
   };
 
   return (
-    <div className="p-6 max-w-2xl mx-auto space-y-6">
-      {/* Agenda title */}
-      <h1 className="text-2xl font-bold text-gray-800">{agenda.title}</h1>
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white p-8">
+      <div className="max-w-4xl mx-auto space-y-8">
+        {/* Header Section */}
+        <div className="bg-white shadow-xl rounded-2xl p-6 border border-gray-200">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">{agenda.title}</h1>
+          <p className="text-sm text-gray-500">
+            Created at: {agenda.createdAt.toLocaleString()}
+          </p>
+        </div>
 
-      {/* Agenda creation time */}
-      <p className="text-sm text-gray-500">
-        Created at: {agenda.createdAt.toLocaleString()}
-      </p>
+        {/* Add Article Form */}
+        <div >
+          <AddArticleForm onAdd={handleAddArticle} />
+        </div>
 
-      {/* Add Article Form */}
-      <AddArticleForm onAdd={handleAddArticle} />
+        {/* Articles List */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-semibold text-gray-800">
+              Articles
+              {agenda.articles.length > 0 && (
+                <span className="text-sm font-normal text-gray-500 ml-2">
+                  ({agenda.articles.length})
+                </span>
+              )}
+            </h2>
+          </div>
 
-      {/* Display Articles */}
-      <div className="mt-6 space-y-4">
-        <h2 className="text-lg font-semibold">Articles</h2>
-
-        {agenda.articles.length === 0 && (
-          <p className="text-gray-500 italic">No articles yet.</p>
-        )}
-
-        {agenda.articles.map((article) => (
-          <a
-            key={article.id}
-            href={article.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block p-4 bg-white rounded shadow hover:shadow-md transition-all border"
-          >
-            <h3 className="font-semibold text-blue-700">{article.title}</h3>
-            <p className="text-sm text-gray-600 mt-1">{article.description}</p>
-            {article.image && (
-              <img 
-                src={article.image} 
-                alt={article.title} 
-                className="mt-2 max-w-sm mx-auto rounded"
-              />
-            )}
-          </a>
-        ))}
+          {agenda.articles.length === 0 ? (
+            <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-200">
+              <p className="text-gray-500">No articles yet. Add your first one above!</p>
+            </div>
+          ) : (
+            <div className="grid gap-6">
+              {agenda.articles.map((article) => (
+                <a
+                  key={article.id}
+                  href={article.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block bg-white rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-200 overflow-hidden group"
+                >
+                  <div className="p-6 space-y-4">
+                    <h3 className="text-xl font-semibold text-blue-700 group-hover:text-blue-800 transition-colors">
+                      {article.title}
+                    </h3>
+                    <p className="text-gray-600">{article.description}</p>
+                    {article.image && (
+                      <div className="flex justify-center">
+                        <img 
+                          src={article.image} 
+                          alt={article.title} 
+                          className="rounded-xl shadow max-h-48 object-cover"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

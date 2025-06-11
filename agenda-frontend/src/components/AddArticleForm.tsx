@@ -98,47 +98,58 @@ export default function AddArticleForm({ onAdd }: AddArticleFormProps) {
   };
 
   return (
-    <div className="space-y-4 bg-white p-4 rounded-xl shadow-md">
-      <h2 className="text-lg font-semibold">Add Article</h2>
+    <div className="bg-white shadow-xl rounded-2xl p-6 max-w-xl mx-auto space-y-6 border border-gray-200">
+      <h2 className="text-2xl font-bold text-gray-800 text-center">Add Article</h2>
 
-      {/* Input field for URL */}
-      <input
-        type="url"
-        placeholder="Paste article URL"
-        value={url}
-        onChange={(e) => setUrl(e.target.value)}
-        className="w-full border px-3 py-2 rounded"
-        required
-      />
+      <div className="space-y-2">
+        <label htmlFor="url" className="block text-sm font-medium text-gray-700">
+          Article URL
+        </label>
+        <input
+          id="url"
+          type="url"
+          placeholder="https://example.com/article"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
+          required
+        />
+        <button
+          onClick={handleFetch}
+          disabled={loading || !url}
+          className={`w-full mt-2 py-2 px-4 rounded-xl font-semibold transition 
+            ${loading || !url 
+              ? "bg-gray-300 cursor-not-allowed" 
+              : "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md hover:shadow-lg"}`}
+        >
+          {loading ? "Fetching..." : "Fetch Info"}
+        </button>
+      </div>
 
-      {/* Fetch article metadata */}
-      <button
-        onClick={handleFetch}
-        disabled={loading || !url}
-        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-      >
-        {loading ? "Fetching..." : "Fetch Info"}
-      </button>
+      {error && (
+        <div className="text-red-600 bg-red-100 border border-red-200 rounded-xl p-3 text-sm">
+          {error}
+        </div>
+      )}
 
-      {/* Display error message if fetch fails */}
-      {error && <p className="text-red-500">{error}</p>}
-
-      {/* Display fetched article info */}
       {articleData && (
-        <div className="border-t pt-4">
-          <h3 className="font-semibold text-blue-700">{articleData.title}</h3>
-          <p className="text-sm text-gray-600 mt-1">{articleData.description}</p>
+        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 shadow-sm space-y-3">
+          <h3 className="text-xl font-semibold text-blue-700">{articleData.title}</h3>
+          <p className="text-gray-600 text-sm">{articleData.description}</p>
+
           {articleData.image && (
-            <img 
-              src={articleData.image} 
-              alt="Preview" 
-              className="mt-2 max-w-sm mx-auto rounded"
-            />
+            <div className="flex justify-center">
+              <img
+                src={articleData.image}
+                alt="Article"
+                className="rounded-xl shadow max-h-48 object-cover"
+              />
+            </div>
           )}
 
           <button
             onClick={handleAdd}
-            className="mt-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+            className="w-full mt-4 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-2 px-4 rounded-xl transition shadow-md hover:shadow-lg"
           >
             Add Article
           </button>
