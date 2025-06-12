@@ -42,10 +42,10 @@ export default function CreateAgendaForm({ onCreate }: CreateAgendaFormProps) {
   return (
     <form
       onSubmit={handleSubmit} // Handle form submission
-      className="flex flex-col gap-4 p-4 bg-white rounded-xl shadow max-w-md mx-auto mt-6"
+      className="flex flex-col gap-4 p-4 bg-white rounded-xl shadow  mt-6 border-gray-200"
     >
       {/*  Section title */}
-      <h2 className="text-xl font-semibold text-black">Create a New Agenda</h2>
+      <h2 className="text-xl font-semibold text-black text-center">Create a New Agenda</h2>
 
       {/* Input field for agenda title */}
       <input

@@ -88,7 +88,7 @@ export default function AgendaPage() {
               <p className="text-gray-500">No articles yet. Add your first one above!</p>
             </div>
           ) : (
-            <div className="grid gap-6">
+            <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
               {agenda.articles.map((article) => (
                 <a
                   key={article.id}

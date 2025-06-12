@@ -98,7 +98,7 @@ export default function AddArticleForm({ onAdd }: AddArticleFormProps) {
   };
 
   return (
-    <div className="bg-white shadow-xl rounded-2xl p-6 max-w-xl mx-auto space-y-6 border border-gray-200">
+    <div className="bg-white shadow-xl rounded-2xl p-6 border border-gray-200">
       <h2 className="text-2xl font-bold text-gray-800 text-center">Add Article</h2>
 
       <div className="space-y-2">

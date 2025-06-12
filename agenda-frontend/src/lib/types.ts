@@ -5,6 +5,7 @@ export interface Article {
 	title: string;
 	url: string;
 	description: string;
+	image?: string;
 }
 
 export interface Agenda {
