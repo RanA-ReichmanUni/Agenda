@@ -8,7 +8,7 @@ import { Agenda } from "../lib/types"; // Import the Agenda type
 
 export default function HomePage() {
   // ✅ Pull the global agendas state and its updater from the context
-  const { agendas, setAgendas } = useAgenda();
+  const { agendas, setAgendas, removeAgenda } = useAgenda();
 
   // ✅ Function to be passed down to CreateAgendaForm, appends a new agenda to the global list
   const handleCreateAgenda = (newAgenda: Agenda) => {
@@ -56,6 +56,7 @@ export default function HomePage() {
                 <AgendaCard
                   key={agenda.id}
                   agenda={agenda}
+                  onDelete={removeAgenda} // ← נוסף
                   onAddArticle={(id) => alert(`Add article to agenda ${id}`)}
                 />
               ))}

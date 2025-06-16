@@ -5,6 +5,7 @@ import { useAgenda } from "../../../context/AgendaContext";
 import { useParams } from "next/navigation";
 import AddArticleForm from "../../../components/AddArticleForm"; // Form component to add articles
 import { Article } from "../../../lib/types";
+import ArticleCard from "../../../components/ArticleCard";
 
 export default function AgendaPage() {
   const params = useParams();
@@ -23,7 +24,8 @@ export default function AgendaPage() {
   }
 
   const id = params.id as string;
-  const { agendas, setAgendas } = useAgenda();
+  const { agendas, removeArticle, setAgendas } = useAgenda();
+
   
   const agenda = agendas.find(a => a.id === id);
 
@@ -90,30 +92,13 @@ export default function AgendaPage() {
           ) : (
             <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
               {agenda.articles.map((article) => (
-                <a
+                 <ArticleCard
                   key={article.id}
-                  href={article.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block bg-white rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-200 overflow-hidden group"
-                >
-                  <div className="p-6 space-y-4">
-                    <h3 className="text-xl font-semibold text-blue-700 group-hover:text-blue-800 transition-colors">
-                      {article.title}
-                    </h3>
-                    <p className="text-gray-600">{article.description}</p>
-                    {article.image && (
-                      <div className="flex justify-center">
-                        <img 
-                          src={article.image} 
-                          alt={article.title} 
-                          className="rounded-xl shadow max-h-48 object-cover"
-                        />
-                      </div>
-                    )}
-                  </div>
-                </a>
+                  article={article}
+                  onDelete={(id) => removeArticle(agenda.id, id)}
+               />
               ))}
+
             </div>
           )}
         </div>

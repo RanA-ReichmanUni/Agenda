@@ -8,6 +8,8 @@ interface AgendaContextType {
   agendas: Agenda[];                      // List of all created agendas
   setAgendas: React.Dispatch<React.SetStateAction<Agenda[]>>;   // Function to update agendas
   addAgenda: (agenda: Agenda) => void;   // Function to add a new agenda to the list
+  removeAgenda: (agendaId: string) => void;
+  removeArticle: (agendaId: string, articleId: string) => void;
 }
 
 // Create the context with an initial undefined value
@@ -23,10 +25,29 @@ export const AgendaProvider = ({ children }: { children: React.ReactNode }) => {
     setAgendas((prev) => [...prev, agenda]); // 'prev' holds the previous state (array of agendas)
   };
 
+  const removeAgenda = (agendaId: string) => {
+    setAgendas((prev) => prev.filter((a) => a.id !== agendaId));
+  };
+
+  const removeArticle = (agendaId: string, articleId: string) => {
+    setAgendas((prev) =>
+      prev.map((agenda) =>
+        agenda.id === agendaId
+          ? {
+              ...agenda,
+              articles: agenda.articles.filter((article) => article.id !== articleId),
+            }
+          : agenda
+      )
+    );
+  };
+
+  
+
   // Return the provider and pass the state + function to its children
   return (
     //Adds a context provider to the app, which allows all nested components to access the context
-    <AgendaContext.Provider value={{ agendas, setAgendas, addAgenda }}>
+    <AgendaContext.Provider value={{ agendas, setAgendas, addAgenda, removeAgenda, removeArticle }}>
       {children} {/* All nested components inside this provider will have access to the context*/}
     </AgendaContext.Provider>
   );

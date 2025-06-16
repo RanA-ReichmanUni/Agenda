@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import * as cheerio from "cheerio";
+
+let cheerioInstance: typeof import("cheerio") | null = null;
 
 // Function to extract metadata from HTML using cheerio
 function extractMetadata(html: string, url: string) {
+  const cheerio = cheerioInstance!;
   const $ = cheerio.load(html);
   
   // Get title from various possible meta tags
@@ -35,6 +37,12 @@ function extractMetadata(html: string, url: string) {
 }
 
 export async function POST(req: NextRequest) {
+  if (!cheerioInstance) {
+    console.log("Initializing cheerio...");
+    cheerioInstance = await import("cheerio");
+    cheerioInstance.load(""); // Dummy load to warm up cheerio
+  }
+
   console.log('Received metadata extraction request');
   
   try {
