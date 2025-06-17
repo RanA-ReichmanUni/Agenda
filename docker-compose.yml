@@ -1,0 +1,28 @@
+
+services:
+  postgres:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: agenda_user
+      POSTGRES_PASSWORD: supersecret
+      POSTGRES_DB: agenda_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: ./agenda-backend
+    ports:
+      - "4000:4000"
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: postgres://agenda_user:supersecret@postgres:5432/agenda_db
+    volumes:
+      - ./agenda-backend:/app
+    command: npm run dev
+
+volumes:
+  postgres_data:
