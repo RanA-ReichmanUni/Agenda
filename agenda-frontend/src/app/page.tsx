@@ -1,15 +1,32 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import CreateAgendaForm from "../components/CreateAgendaForm";
 import AgendaCard from "../components/AgendaCard";
 import { useAgendaContext } from "../context/AgendaContext";
 
 export default function HomePage() {
   const { agendas, loading, error } = useAgendaContext();
+  const [agendasWithArticles, setAgendasWithArticles] = useState([]);
+
+  useEffect(() => {
+    if (!agendas.length) return;
+    Promise.all(
+      agendas.map(async (agenda) => {
+        const res = await fetch(`http://localhost:4000/agendas/${agenda.id}/articles`);
+        const articles = await res.json();
+        // Only keep up to 4 articles with images, ordered by created_at
+        const thumbnails = articles
+          .filter((a) => a.image)
+          .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+          .slice(0, 4);
+        return { ...agenda, articles: thumbnails };
+      })
+    ).then(setAgendasWithArticles);
+  }, [agendas]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 py-4 px-2 md:px-0 relative overflow-x-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-white via-gray-50 to-blue-100 py-4 px-2 md:px-0 relative overflow-x-hidden">
       {/* Decorative blurred gradient shapes */}
       <div className="fixed top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-400 via-purple-400 to-pink-400 opacity-30 rounded-full blur-3xl pointer-events-none -z-10 animate-float" style={{ filter: 'blur(120px)' }} />
       <div className="fixed bottom-0 right-0 w-96 h-96 bg-gradient-to-tr from-pink-400 via-purple-400 to-blue-400 opacity-30 rounded-full blur-3xl pointer-events-none -z-10 animate-float2" style={{ filter: 'blur(120px)' }} />
@@ -52,7 +69,7 @@ export default function HomePage() {
             </div>
           ) : (
             <div className="grid gap-8 md:grid-cols-2">
-              {agendas.map((agenda) => (
+              {agendasWithArticles.map((agenda) => (
                 <AgendaCard
                   key={agenda.id}
                   agenda={agenda}

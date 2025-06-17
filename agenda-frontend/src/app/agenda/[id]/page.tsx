@@ -135,7 +135,7 @@ export default function AgendaPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 pt-0 pb-2 px-2 md:px-0">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-yellow-50 to-black-50 pt-0 pb-2 px-2 md:px-0">
       <div className="max-w-3xl mx-auto space-y-10 scale-85">
         {/* Back Button */}
         <div className="relative z-20 flex justify-start mt-0 mb-2 animate-fade-in">
