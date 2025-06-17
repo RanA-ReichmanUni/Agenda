@@ -1,67 +1,67 @@
-// 🧠 This file defines a reusable React component for creating a new agenda
+"use client";
 
-"use client"; //  This tells Next.js to render this component on the client side (not the server)
+import React, { useState } from "react";
+import { useAgendaContext } from "../context/AgendaContext";
 
-import React, { useState } from "react"; //  React and useState are required to build interactive UI and manage local state
-import { Agenda } from "../lib/types"; //  Import the Agenda interface to ensure the created object follows the correct structure
-import { v4 as uuidv4 } from "uuid"; //  UUID is used to generate a unique identifier for each agenda
+/**
+ * Form component to create a new agenda by sending POST request to backend.
+ */
+export default function CreateAgendaForm() {
+  const { refetch } = useAgendaContext(); // Get refetch function from context
+  const [title, setTitle] = useState("");// New Agenda title state, to be created and sent to database when agenda is being created
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-// Props interface: this component receives a single function (onCreate) as a prop from its parent component
-interface CreateAgendaFormProps {
-  onCreate: (newAgenda: Agenda) => void; // onCreate receives a complete Agenda object
-}
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-//  Functional component declaration with destructured props
+    if (!title.trim()) {
+      setError("Title is required");
+      return;
+    }
 
-// Recieved an object that confirms to the "CreateAgendaFormProps" interface rules.
-// Uses destructring to extract the onCreate field directly from the object instead of using props.onCreate() directly.
-// props is commen name for recieved object with parameters in React.
-export default function CreateAgendaForm({ onCreate }: CreateAgendaFormProps) { 
-  //  useState hook to manage the input value (agenda title)
-  const [title, setTitle] = useState(""); // Initially empty
+    setLoading(true);
+    setError(null);
 
-  //  This function is triggered when the form is submitted
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault(); // Prevents the browser's default form submission behavior (which refreshes the page)
+    try {
+      const response = await fetch("http://localhost:4000/agendas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title }),
+      });
 
-    if (!title.trim()) return; // Prevent submitting an empty or whitespace-only agenda title
+      if (!response.ok) {
+        const { error } = await response.json();
+        throw new Error(error || "Failed to create agenda");
+      }
 
-    // Construct a new Agenda object using the structure from types.ts
-    const newAgenda: Agenda = {
-      id: uuidv4(), // Generate a unique ID
-      title: title.trim(), // Remove unnecessary spaces from the title
-      createdAt: new Date(), // Store the creation time
-      articles: [], // Start with an empty list of articles
-    };
-
-    onCreate(newAgenda); // Call the parent function and send the new agenda object
-    setTitle(""); // Clear the input field after submission
+      // Clear form + refresh context
+      setTitle("");
+      await refetch(); //Update all agenda list after the new agenda addition
+    } catch (err: any) {
+      console.error("Create agenda error:", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Return the actual form UI that will be rendered
   return (
-    <form
-      onSubmit={handleSubmit} // Handle form submission
-      className="flex flex-col gap-4 p-4 bg-white rounded-xl shadow  mt-6 border-gray-200"
-    >
-      {/*  Section title */}
-      <h2 className="text-xl font-semibold text-black text-center">Create a New Agenda</h2>
-
-      {/* Input field for agenda title */}
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4 max-w-md mx-auto">
       <input
-        type="text" // Standard text input
-        placeholder="Agenda Title" // Placeholder text inside the field
-        className="border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-blue-600" // Tailwind styling
-        value={title} // Controlled input: bound to the title state
-        onChange={(e) => setTitle(e.target.value)} // Update state whenever user types
+        type="text"
+        placeholder="Agenda title"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        className="border border-gray-300 rounded px-4 py-2"
       />
-
-      {/* Submit button */}
+      {error && <p className="text-red-500 text-sm">{error}</p>}
       <button
-        type="submit" // Triggers the form's onSubmit event
-        className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded transition" // Tailwind styles
+        type="submit"
+        disabled={loading}
+        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
       >
-        Create
+        {loading ? "Creating..." : "Create Agenda"}
       </button>
     </form>
   );

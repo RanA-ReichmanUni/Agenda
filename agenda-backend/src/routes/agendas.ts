@@ -1,10 +1,10 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import pool from '../db';
 
 const router = Router();
 
 /** GET /agendas - Fetch all agendas */
-router.get('/', async (req, res) => {
+router.get('/', async (req: Request, res: Response) => {
   try {
     const result = await pool.query('SELECT * FROM agendas ORDER BY created_at DESC');
     res.json(result.rows);
@@ -15,7 +15,7 @@ router.get('/', async (req, res) => {
 });
 
 /** GET /agendas/:id - Fetch single agenda by ID */
-router.get('/:id', async (req, res) => {
+router.get('/:id', async (req: Request, res: Response) => {
   const id = Number(req.params.id);
   if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
 
@@ -30,7 +30,7 @@ router.get('/:id', async (req, res) => {
 });
 
 /** POST /agendas - Create a new agenda */
-router.post('/', async (req, res) => {
+router.post('/', async (req: Request, res: Response) => {
   const { title } = req.body;
   if (!title || typeof title !== 'string') {
     return res.status(400).json({ error: 'Missing or invalid title' });
@@ -49,7 +49,7 @@ router.post('/', async (req, res) => {
 });
 
 /** DELETE /agendas/:id - Delete an agenda */
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', async (req: Request, res: Response) => {
   const id = Number(req.params.id);
   if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
 
