@@ -45,16 +45,19 @@ export default function HomePage() {
         {/* Header */}
         <div className="relative z-10 bg-white/60 backdrop-blur-xl border border-gray-200 shadow-2xl rounded-3xl p-10 flex flex-col items-center animate-fade-in">
           <h1 className="text-5xl md:text-6xl font-extrabold text-blue-800 mb-4 drop-shadow-lg tracking-tight">
-            Agenda Builder
+            Agenda
           </h1>
           <p className="text-gray-700 text-lg md:text-xl max-w-2xl mx-auto font-medium">
-            Create and manage your reading agendas. Add articles, organize your content, and build your knowledge base in style.
+            Create and manage your narratives and agendas. Add articles, organize your content, and prove your point.
           </p>
         </div>
 
         {/* Create Form */}
         <div className="relative z-10 animate-fade-in-up">
-          <CreateAgendaForm />
+          <div className="bg-white/60 backdrop-blur-xl border border-gray-200 shadow-2xl rounded-3xl p-8">
+            <h2 className="text-3xl font-bold text-blue-800 tracking-tight mb-6">Create New Agenda</h2>
+            <CreateAgendaForm />
+          </div>
         </div>
 
         {/* Agendas List */}
