@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import AddArticleForm from "../../../components/AddArticleForm";
 import { Article } from "../../../lib/types";
@@ -14,7 +14,6 @@ import Link from "next/link";
 export default function AgendaPage() {
   const params = useParams();
 
-  // Handle case where params or id is undefined
   if (!params || !params.id) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100">
@@ -28,32 +27,29 @@ export default function AgendaPage() {
 
   const agendaId = params.id as string;
 
-  // State for agenda info and articles
   const [agenda, setAgenda] = useState<{ title: string; createdAt: string } | null>(null);
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [articleToDelete, setArticleToDelete] = useState<Article | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [iframeError, setIframeError] = useState<boolean>(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  // Fetch agenda info and articles from backend
+  // Fetch agenda & articles
   useEffect(() => {
     const fetchAgendaAndArticles = async () => {
       setLoading(true);
       try {
-        // Fetch agenda info
         const agendaRes = await fetch(`http://localhost:4000/agendas/${agendaId}`);
         if (!agendaRes.ok) throw new Error("Failed to fetch agenda");
         const agendaData = await agendaRes.json();
 
-        // Fetch articles
         const articlesRes = await fetch(`http://localhost:4000/agendas/${agendaId}/articles`);
         if (!articlesRes.ok) throw new Error("Failed to fetch articles");
         const articlesData = await articlesRes.json();
 
-        setAgenda({
-          title: agendaData.title,
-          createdAt: agendaData.created_at,
-        });
+        setAgenda({ title: agendaData.title, createdAt: agendaData.created_at });
         setArticles(articlesData);
         setError(null);
       } catch (err: any) {
@@ -66,7 +62,7 @@ export default function AgendaPage() {
     fetchAgendaAndArticles();
   }, [agendaId]);
 
-  // Add article handler (calls backend, then refreshes list)
+  // Add article
   const handleAddArticle = async (newArticle: Omit<Article, "id">) => {
     try {
       const res = await fetch(`http://localhost:4000/agendas/${agendaId}/articles`, {
@@ -78,30 +74,55 @@ export default function AgendaPage() {
         const { error } = await res.json();
         throw new Error(error || "Failed to add article");
       }
-      // Refresh articles after adding
-      const articlesRes = await fetch(`http://localhost:4000/agendas/${agendaId}/articles`);
-      const articlesData = await articlesRes.json();
-      setArticles(articlesData);
-    } catch (error) {
-      alert("Failed to add article: " + (error as Error).message);
+      const updated = await fetch(`http://localhost:4000/agendas/${agendaId}/articles`);
+      setArticles(await updated.json());
+    } catch (err: any) {
+      alert("Failed to add article: " + err.message);
     }
   };
 
-  // Remove article handler (calls backend, then refreshes list)
+  // Remove article
   const handleRemoveArticle = async (articleId: number) => {
     try {
-      const res = await fetch(`http://localhost:4000/articles/${articleId}`, {
-        method: "DELETE",
-      });
+      const res = await fetch(`http://localhost:4000/articles/${articleId}`, { method: "DELETE" });
       if (!res.ok) {
         const { error } = await res.json();
         throw new Error(error || "Failed to delete article");
       }
-      // Refresh articles after deleting
       setArticles((prev) => prev.filter((a) => Number(a.id) !== articleId));
-    } catch (error) {
-      alert("Failed to delete article: " + (error as Error).message);
+    } catch (err: any) {
+      alert("Failed to delete article: " + err.message);
     }
+  };
+
+  // Immediately open preview, then HEAD-check
+  const handleArticleClick = (url: string) => {
+    setIframeError(false);
+    setPreviewUrl(url); // open the modal right away
+
+    fetch(`/api/check-iframe?url=${encodeURIComponent(url)}`)
+      .then((res) => res.json())
+      .then(({ blocked }) => {
+        if (blocked) {
+          setIframeError(true);
+          // previewUrl remains, so the error dialog has the correct link
+        }
+      })
+      .catch(() => {
+        setIframeError(true);
+      });
+  };
+
+  // Close preview and/or error dialog
+  const closePreview = () => {
+    setPreviewUrl(null);
+    setIframeError(false);
+  };
+
+  // Open in new tab
+  const handleOpenInNewTab = (url: string) => {
+    window.open(url, "_blank");
+    closePreview();
   };
 
   if (loading) {
@@ -136,21 +157,35 @@ export default function AgendaPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-yellow-50 to-black-50 pt-0 pb-2 px-2 md:px-0">
+      {/* Back Button */}
+      <div className="fixed left-10 top-8 z-30 animate-fade-in">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/60 backdrop-blur-xl border border-gray-200 shadow-lg text-blue-800 font-semibold text-base transition hover:bg-blue-100/80 hover:text-blue-900 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
+        >
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+          Back
+        </Link>
+      </div>
+
       <div className="max-w-3xl mx-auto space-y-10 scale-85">
-        {/* Back Button */}
-        <div className="relative z-20 flex justify-start mt-0 mb-2 animate-fade-in">
-          <Link href="/" className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/60 backdrop-blur-xl border border-gray-200 shadow-lg text-blue-800 font-semibold text-lg transition hover:bg-blue-100/80 hover:text-blue-900 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-400">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
-            Back
-          </Link>
-        </div>
-        {/* Header Section */}
+        {/* Header */}
         <div className="relative z-10 bg-white/60 backdrop-blur-xl border border-gray-200 shadow-2xl rounded-3xl p-8 flex flex-col items-center animate-fade-in">
           <h1 className="text-4xl md:text-5xl font-extrabold text-blue-800 mb-2 drop-shadow-lg tracking-tight">
             {agenda.title}
           </h1>
           <p className="text-base md:text-lg text-gray-700 font-medium mb-2">
-            Created at: <span className="font-mono text-blue-700">{new Date(agenda.createdAt).toLocaleString()}</span>
+            Created at:{" "}
+            <span className="font-mono text-blue-700">{new Date(agenda.createdAt).toLocaleString()}</span>
           </p>
         </div>
 
@@ -177,28 +212,29 @@ export default function AgendaPage() {
           ) : (
             <div className="grid gap-8 grid-cols-1 md:grid-cols-2">
               {articles.map((article) => (
-                <ArticleCard
-                  key={article.id}
-                  article={article}
-                  onDelete={() => setArticleToDelete(article)}
-                />
+                <div key={article.id} onClick={() => handleArticleClick(article.url)} className="cursor-pointer">
+                  <ArticleCard
+                    article={article}
+                    onDelete={(e) => {
+                      e.stopPropagation?.();
+                      setArticleToDelete(article);
+                    }}
+                  />
+                </div>
               ))}
             </div>
           )}
         </div>
       </div>
-      {/* Decorative blurred gradient shapes */}
-      <div className="fixed top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-400 via-purple-400 to-pink-400 opacity-30 rounded-full blur-3xl pointer-events-none -z-10 animate-float" style={{ filter: 'blur(120px)' }} />
-      <div className="fixed bottom-0 right-0 w-96 h-96 bg-gradient-to-tr from-pink-400 via-purple-400 to-blue-400 opacity-30 rounded-full blur-3xl pointer-events-none -z-10 animate-float2" style={{ filter: 'blur(120px)' }} />
+
       {/* Delete Confirmation Modal */}
       {articleToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
           <div className="bg-white/80 backdrop-blur-xl border border-gray-200 rounded-2xl shadow-2xl p-8 max-w-md w-full animate-fade-in">
-            <h3 className="text-xl font-bold text-red-700 mb-4 text-center">
-              Confirm Deletion
-            </h3>
+            <h3 className="text-xl font-bold text-red-700 mb-4 text-center">Confirm Deletion</h3>
             <p className="text-gray-700 text-center mb-6">
-              Are you sure you want to delete the article titled <span className="font-semibold text-blue-800">"{articleToDelete.title}"</span>?
+              Are you sure you want to delete the article titled{" "}
+              <span className="font-semibold text-blue-800">"{articleToDelete.title}"</span>?
             </p>
             <div className="flex justify-center gap-4">
               <button
@@ -220,6 +256,69 @@ export default function AgendaPage() {
           </div>
         </div>
       )}
+
+      {/* Preview Modal (hidden when iframeError) */}
+      {previewUrl && !iframeError && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="relative w-[95vw] h-[95vh] bg-white rounded-2xl shadow-2xl overflow-hidden animate-fade-in">
+            {/* Close + Full View Buttons */}
+            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
+              {/* Close */}
+              <button
+                onClick={closePreview}
+                className="bg-red-600 text-white rounded-full w-16 h-16 flex items-center justify-center hover:bg-red-700 transition focus:outline-none focus:ring-4 focus:ring-red-400 shadow-2xl"
+                title="Close preview"
+              >
+                <span className="text-4xl font-bold leading-none">×</span>
+              </button>
+              {/* Full View */}
+              <button
+                onClick={() => window.open(previewUrl, "_blank")}
+                className="bg-blue-600 text-white rounded-full w-16 h-16 flex items-center justify-center hover:bg-blue-700 transition focus:outline-none focus:ring-4 focus:ring-blue-400 shadow-2xl"
+                title="Open in new tab"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </button>
+            </div>
+            <iframe
+              ref={iframeRef}
+              src={previewUrl}
+              title="Article Preview"
+              className="w-full h-full border-0 rounded-2xl"
+              style={{ minHeight: 0, minWidth: 0 }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Iframe Error Dialog */}
+      {iframeError && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40">
+          <div className="bg-white/80 backdrop-blur-xl border border-gray-200 rounded-2xl shadow-2xl p-8 max-w-md w-full animate-fade-in">
+            <h3 className="text-xl font-bold text-blue-800 mb-4 text-center">Website Preview Not Available</h3>
+            <p className="text-gray-700 text-center mb-6">
+              This website cannot be displayed in the preview. Would you like to open it in a new tab instead?
+            </p>
+            <div className="flex justify-center gap-4">
+              <button
+                className="px-6 py-2 rounded-full bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 transition"
+                onClick={() => handleOpenInNewTab(previewUrl!)}
+              >
+                Open in New Tab
+              </button>
+              <button
+                className="px-6 py-2 rounded-full bg-gray-200 text-gray-700 font-semibold shadow hover:bg-gray-300 transition"
+                onClick={closePreview}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style jsx global>{`
         @keyframes fade-in {
           from { opacity: 0; transform: translateY(40px); }
