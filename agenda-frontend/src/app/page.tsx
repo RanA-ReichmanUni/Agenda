@@ -43,26 +43,26 @@ export default function HomePage() {
       <div className="fixed bottom-0 right-0 w-96 h-96 bg-gradient-to-tr from-pink-400 via-purple-400 to-blue-400 opacity-30 rounded-full blur-3xl pointer-events-none -z-10 animate-float2" style={{ filter: 'blur(120px)' }} />
       <div className="max-w-3xl mx-auto space-y-12 scale-85">
         {/* Header */}
-        <div className="relative z-10 bg-white/60 backdrop-blur-xl border border-gray-200 shadow-2xl rounded-3xl p-10 flex flex-col items-center animate-fade-in">
-          <h1 className="text-5xl md:text-6xl font-extrabold text-blue-800 mb-4 drop-shadow-lg tracking-tight">
+        <div className="relative z-10 bg-white/60 backdrop-blur-xl border border-gray-200 shadow-2xl rounded-3xl p-10 flex flex-col items-center animate-header-reveal">
+          <h1 className="text-5xl md:text-6xl font-extrabold text-blue-800 mb-4 drop-shadow-lg tracking-tight animate-title-bounce">
             Agenda
           </h1>
-          <p className="text-gray-700 text-lg md:text-xl max-w-2xl mx-auto font-medium">
+          <p className="text-gray-700 text-lg md:text-xl max-w-2xl mx-auto font-medium animate-subtitle-fade">
             Create and manage your narratives and agendas. Add articles, organize your content, and prove your point.
           </p>
         </div>
 
         {/* Create Form */}
-        <div className="relative z-10 animate-fade-in-up">
+        <div className="relative z-10 animate-form-slide">
           <div className="bg-white/60 backdrop-blur-xl border border-gray-200 shadow-2xl rounded-3xl p-8">
-            <h2 className="text-3xl font-bold text-blue-800 tracking-tight mb-6">Create New Agenda</h2>
+            <h2 className="text-3xl font-bold text-blue-800 tracking-tight mb-6 animate-title-bounce">Create New Agenda</h2>
             <CreateAgendaForm />
           </div>
         </div>
 
         {/* Agendas List */}
-        <div className="relative z-10 space-y-8 animate-fade-in-up">
-          <h2 className="text-3xl font-bold text-blue-800 tracking-tight flex items-center gap-2">
+        <div className="relative z-10 space-y-8 animate-agendas-reveal">
+          <h2 className="text-3xl font-bold text-blue-800 tracking-tight flex items-center gap-2 animate-title-bounce">
             <span>Your Agendas</span>
             {agendas.length > 0 && (
               <span className="text-base font-normal text-gray-500 ml-2">({agendas.length})</span>
@@ -145,6 +145,83 @@ export default function HomePage() {
           50% { transform: translateY(30px) scale(1.08); }
         }
         .animate-float2 { animation: float2 14s ease-in-out infinite; }
+
+        /* New fun animations */
+        @keyframes header-reveal {
+          0% { 
+            opacity: 0;
+            transform: translateY(-100px) scale(0.8);
+          }
+          60% {
+            opacity: 1;
+            transform: translateY(20px) scale(1.1);
+          }
+          100% {
+            transform: translateY(0) scale(1);
+          }
+        }
+        .animate-header-reveal {
+          animation: header-reveal 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+        }
+
+        @keyframes title-bounce {
+          0% { 
+            opacity: 0;
+            transform: scale(0.5);
+          }
+          70% {
+            opacity: 1;
+            transform: scale(1.2);
+          }
+          100% {
+            transform: scale(1);
+          }
+        }
+        .animate-title-bounce {
+          animation: title-bounce 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+        }
+
+        @keyframes subtitle-fade {
+          0% { 
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-subtitle-fade {
+          animation: subtitle-fade 0.8s ease-out 0.4s both;
+        }
+
+        @keyframes form-slide {
+          0% {
+            opacity: 0;
+            transform: translateX(-100px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+        .animate-form-slide {
+          animation: form-slide 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.6s both;
+        }
+
+        @keyframes agendas-reveal {
+          0% {
+            opacity: 0;
+            transform: translateY(50px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-agendas-reveal {
+          animation: agendas-reveal 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.8s both;
+        }
       `}</style>
     </div>
   );

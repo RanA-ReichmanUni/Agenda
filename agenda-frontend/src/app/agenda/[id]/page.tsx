@@ -179,25 +179,25 @@ export default function AgendaPage() {
 
       <div className="max-w-3xl mx-auto space-y-10 scale-85">
         {/* Header */}
-        <div className="relative z-10 bg-white/60 backdrop-blur-xl border border-gray-200 shadow-2xl rounded-3xl p-8 flex flex-col items-center animate-fade-in">
-          <h1 className="text-4xl md:text-5xl font-extrabold text-blue-800 mb-2 drop-shadow-lg tracking-tight">
+        <div className="relative z-10 bg-white/60 backdrop-blur-xl border border-gray-200 shadow-2xl rounded-3xl p-8 flex flex-col items-center animate-agenda-header">
+          <h1 className="text-4xl md:text-5xl font-extrabold text-blue-800 mb-2 drop-shadow-lg tracking-tight animate-agenda-title">
             {agenda.title}
           </h1>
-          <p className="text-base md:text-lg text-gray-700 font-medium mb-2">
+          <p className="text-base md:text-lg text-gray-700 font-medium mb-2 animate-agenda-date">
             Created at:{" "}
             <span className="font-mono text-blue-700">{new Date(agenda.createdAt).toLocaleString()}</span>
           </p>
         </div>
 
         {/* Add Article Form */}
-        <div className="relative z-10 animate-fade-in-up">
+        <div className="relative z-10 animate-form-float">
           <AddArticleForm onAdd={handleAddArticle} />
         </div>
 
         {/* Articles List */}
-        <div className="relative z-10 space-y-8 animate-fade-in-up">
+        <div className="relative z-10 space-y-8 animate-articles-container">
           <div className="flex items-center justify-between mb-2">
-            <h2 className="text-3xl font-bold text-blue-800 tracking-tight flex items-center gap-2">
+            <h2 className="text-3xl font-bold text-blue-800 tracking-tight flex items-center gap-2 animate-section-title">
               <span>Articles</span>
               {articles.length > 0 && (
                 <span className="text-base font-normal text-gray-500 ml-2">({articles.length})</span>
@@ -206,13 +206,18 @@ export default function AgendaPage() {
           </div>
 
           {articles.length === 0 ? (
-            <div className="text-center py-16 bg-white/60 backdrop-blur-xl rounded-2xl border border-gray-200 shadow-inner animate-fade-in">
+            <div className="text-center py-16 bg-white/60 backdrop-blur-xl rounded-2xl border border-gray-200 shadow-inner animate-empty-state">
               <p className="text-gray-500 text-lg">No articles yet. Add your first one above!</p>
             </div>
           ) : (
             <div className="grid gap-8 grid-cols-1 md:grid-cols-2">
-              {articles.map((article) => (
-                <div key={article.id} onClick={() => handleArticleClick(article.url)} className="cursor-pointer">
+              {articles.map((article, index) => (
+                <div 
+                  key={article.id} 
+                  onClick={() => handleArticleClick(article.url)} 
+                  className="cursor-pointer animate-article-card"
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
                   <ArticleCard
                     article={article}
                     onDelete={(e) => {
@@ -340,6 +345,117 @@ export default function AgendaPage() {
           50% { transform: translateY(30px) scale(1.08); }
         }
         .animate-float2 { animation: float2 14s ease-in-out infinite; }
+
+        /* New agenda page animations */
+        @keyframes agenda-header {
+          0% {
+            opacity: 0;
+            transform: translateY(-50px) rotate(-2deg);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0) rotate(0);
+          }
+        }
+        .animate-agenda-header {
+          animation: agenda-header 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+        }
+
+        @keyframes agenda-title {
+          0% {
+            opacity: 0;
+            transform: scale(0.8) translateX(-20px);
+          }
+          100% {
+            opacity: 1;
+            transform: scale(1) translateX(0);
+          }
+        }
+        .animate-agenda-title {
+          animation: agenda-title 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
+        }
+
+        @keyframes agenda-date {
+          0% {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-agenda-date {
+          animation: agenda-date 0.6s ease-out 0.4s both;
+        }
+
+        @keyframes form-float {
+          0% {
+            opacity: 0;
+            transform: translateY(30px) scale(0.95);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+        .animate-form-float {
+          animation: form-float 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.6s both;
+        }
+
+        @keyframes articles-container {
+          0% {
+            opacity: 0;
+          }
+          100% {
+            opacity: 1;
+          }
+        }
+        .animate-articles-container {
+          animation: articles-container 0.6s ease-out 0.8s both;
+        }
+
+        @keyframes section-title {
+          0% {
+            opacity: 0;
+            transform: translateX(-20px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+        .animate-section-title {
+          animation: section-title 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.9s both;
+        }
+
+        @keyframes article-card {
+          0% {
+            opacity: 0;
+            transform: translateY(20px) scale(0.95);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+        .animate-article-card {
+          animation: article-card 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+        }
+
+        @keyframes empty-state {
+          0% {
+            opacity: 0;
+            transform: scale(0.9);
+          }
+          100% {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+        .animate-empty-state {
+          animation: empty-state 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 1s both;
+        }
       `}</style>
     </div>
   );
