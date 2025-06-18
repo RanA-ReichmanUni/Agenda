@@ -6,8 +6,19 @@ import AgendaCard from "../components/AgendaCard";
 import { useAgendaContext } from "../context/AgendaContext";
 
 export default function HomePage() {
-  const { agendas, loading, error } = useAgendaContext();
-  const [agendasWithArticles, setAgendasWithArticles] = useState([]);
+  const { agendas, loading, error, refetch } = useAgendaContext();
+  const [agendasWithArticles, setAgendasWithArticles] = useState<any[]>([]);
+  const [agendaToDelete, setAgendaToDelete] = useState<any | null>(null);
+
+  // Delete agenda handler
+  const handleDeleteAgenda = async (agendaId: number) => {
+    try {
+      await fetch(`http://localhost:4000/agendas/${agendaId}`, { method: 'DELETE' });
+      await refetch();
+    } catch (err) {
+      alert('Failed to delete agenda');
+    }
+  };
 
   useEffect(() => {
     if (!agendas.length) return;
@@ -17,8 +28,8 @@ export default function HomePage() {
         const articles = await res.json();
         // Only keep up to 4 articles with images, ordered by created_at
         const thumbnails = articles
-          .filter((a) => a.image)
-          .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+          .filter((a: any) => a.image)
+          .sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
           .slice(0, 4);
         return { ...agenda, articles: thumbnails };
       })
@@ -73,12 +84,43 @@ export default function HomePage() {
                 <AgendaCard
                   key={agenda.id}
                   agenda={agenda}
+                  onDelete={() => setAgendaToDelete(agenda)}
                 />
               ))}
             </div>
           )}
         </div>
       </div>
+      {/* Delete Confirmation Modal */}
+      {agendaToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+          <div className="bg-white/80 backdrop-blur-xl border border-gray-200 rounded-2xl shadow-2xl p-8 max-w-md w-full animate-fade-in">
+            <h3 className="text-xl font-bold text-red-700 mb-4 text-center">
+              Confirm Deletion
+            </h3>
+            <p className="text-gray-700 text-center mb-6">
+              Are you sure you want to delete the agenda titled <span className="font-semibold text-blue-800">"{agendaToDelete.title}"</span>?
+            </p>
+            <div className="flex justify-center gap-4">
+              <button
+                className="px-6 py-2 rounded-full bg-red-600 text-white font-semibold shadow hover:bg-red-700 transition"
+                onClick={async () => {
+                  await handleDeleteAgenda(Number(agendaToDelete.id));
+                  setAgendaToDelete(null);
+                }}
+              >
+                Confirm
+              </button>
+              <button
+                className="px-6 py-2 rounded-full bg-gray-200 text-gray-700 font-semibold shadow hover:bg-gray-300 transition"
+                onClick={() => setAgendaToDelete(null)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <style jsx global>{`
         @keyframes fade-in {
           from { opacity: 0; transform: translateY(40px); }

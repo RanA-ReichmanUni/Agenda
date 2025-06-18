@@ -7,7 +7,7 @@ import Link from "next/link"; //  for navigation between pages
 interface AgendaCardProps {
   agenda: Agenda;
   onAddArticle?: (agendaId: string) => void;
-  onDelete?: (agendaId: string) => void; // ← חדש
+  onDelete?: (agendaId: number) => void;
 }
 
 export default function AgendaCard({ agenda, onAddArticle, onDelete }: AgendaCardProps) {
@@ -47,11 +47,12 @@ export default function AgendaCard({ agenda, onAddArticle, onDelete }: AgendaCar
       </Link>
       {onDelete && (
         <button
-          onClick={() => onDelete(agenda.id)}
-          className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-700"
+          onClick={() => onDelete(Number(agenda.id))}
+          className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-4 h-4 flex items-center justify-center hover:bg-red-700 transition focus:outline-none focus:ring-2 focus:ring-red-400 shadow"
           title="Delete agenda"
+          style={{ padding: 0 }}
         >
-          ×
+          <span className="text-base font-bold leading-none">×</span>
         </button>
       )}
     </div>

@@ -36,10 +36,11 @@ export default function ArticleCard({ article, onDelete }: ArticleCardProps) {
       {onDelete && (
         <button
           onClick={() => onDelete(article.id)}
-          className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-700"
+          className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-4 h-4 flex items-center justify-center hover:bg-red-700 transition focus:outline-none focus:ring-2 focus:ring-red-400 shadow"
           title="Delete article"
+          style={{ padding: 0 }}
         >
-          ×
+          <span className="text-base font-bold leading-none" style={{ lineHeight: 1 }}>×</span>
         </button>
       )}
     </div>
