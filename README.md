@@ -1,6 +1,6 @@
-# 🧠 Agenda Builder — Work in Progress
+# Agenda — Work in Progress
 
-**Agenda Builder** is a web application that allows users to present a **personal agenda or narrative**, and back it up with **reliable external sources** — primarily news articles.
+**Agenda** is a web application that allows users to present a **personal agenda or narrative**, and back it up with **reliable external sources** — primarily news articles.
 
 Each **agenda** represents a specific claim or statement (e.g., “Biden is unfit to be president”).  
 The user then attaches **articles from reputable news outlets** that serve as evidence supporting the claim.
