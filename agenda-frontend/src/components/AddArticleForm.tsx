@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Article } from "../lib/types";
 import { v4 as uuidv4 } from "uuid";
+import { API_ENDPOINTS } from "../lib/api";
 
 interface AddArticleFormProps {
   onAdd: (article: Article) => void;
@@ -30,7 +31,7 @@ export default function AddArticleForm({ onAdd }: AddArticleFormProps) {
 
     try {
       console.log('Fetching metadata for:', url);
-      const res = await fetch("/api/extract", {
+      const res = await fetch(API_ENDPOINTS.extract, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url }),

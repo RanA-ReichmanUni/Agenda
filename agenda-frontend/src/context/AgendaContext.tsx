@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { API_ENDPOINTS } from '../lib/api';
 
 /**
  * Type representing an Agenda item from the backend.
@@ -36,7 +37,7 @@ export const AgendaProvider = ({ children }: { children: React.ReactNode }) => {
   const fetchAgendas = async () => {
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:4000/agendas');
+      const res = await fetch(API_ENDPOINTS.agendas);
       if (!res.ok) throw new Error('Failed to fetch agendas');
       const data = await res.json();
       // Set Agenda state, but map the sql database column of "created_at" to the object form "createdAt"

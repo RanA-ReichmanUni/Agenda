@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import CreateAgendaForm from "../components/CreateAgendaForm";
 import AgendaCard from "../components/AgendaCard";
 import { useAgendaContext } from "../context/AgendaContext";
+import { API_ENDPOINTS } from "../lib/api";
 
 export default function HomePage() {
   const { agendas, loading, error, refetch } = useAgendaContext();
@@ -13,7 +14,7 @@ export default function HomePage() {
   // Delete agenda handler
   const handleDeleteAgenda = async (agendaId: number) => {
     try {
-      await fetch(`http://localhost:4000/agendas/${agendaId}`, { method: 'DELETE' });
+      await fetch(API_ENDPOINTS.agenda(agendaId), { method: 'DELETE' });
       await refetch();
     } catch (err) {
       alert('Failed to delete agenda');
@@ -24,7 +25,7 @@ export default function HomePage() {
     if (!agendas.length) return;
     Promise.all(
       agendas.map(async (agenda) => {
-        const res = await fetch(`http://localhost:4000/agendas/${agenda.id}/articles`);
+        const res = await fetch(API_ENDPOINTS.articles(agenda.id));
         const articles = await res.json();
         // Only keep up to 4 articles with images, ordered by created_at
         const thumbnails = articles

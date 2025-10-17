@@ -1,0 +1,38 @@
+from pydantic import BaseModel
+from typing import Optional
+from datetime import datetime
+
+# ============================================
+# AGENDA MODELS
+# ============================================
+
+class CreateAgenda(BaseModel):
+    """Model for creating a new agenda"""
+    title: str
+
+class Agenda(BaseModel):
+    """Model for agenda response"""
+    id: int
+    title: str
+    created_at: datetime
+
+# ============================================
+# ARTICLE MODELS
+# ============================================
+
+class CreateArticle(BaseModel):
+    """Model for creating a new article"""
+    title: str
+    url: str
+    description: str
+    image: Optional[str] = None
+
+class Article(BaseModel):
+    """Model for article response"""
+    id: int
+    title: str
+    url: str
+    description: str
+    image: Optional[str]
+    agenda_id: int
+    created_at: datetime

@@ -6,6 +6,7 @@ import AddArticleForm from "../../../components/AddArticleForm";
 import { Article } from "../../../lib/types";
 import ArticleCard from "../../../components/ArticleCard";
 import Link from "next/link";
+import { API_ENDPOINTS } from "../../../lib/api";
 
 /**
  * Agenda detail page that loads and displays its articles,
@@ -41,11 +42,11 @@ export default function AgendaPage() {
     const fetchAgendaAndArticles = async () => {
       setLoading(true);
       try {
-        const agendaRes = await fetch(`http://localhost:4000/agendas/${agendaId}`);
+        const agendaRes = await fetch(API_ENDPOINTS.agenda(agendaId));
         if (!agendaRes.ok) throw new Error("Failed to fetch agenda");
         const agendaData = await agendaRes.json();
 
-        const articlesRes = await fetch(`http://localhost:4000/agendas/${agendaId}/articles`);
+        const articlesRes = await fetch(API_ENDPOINTS.articles(agendaId));
         if (!articlesRes.ok) throw new Error("Failed to fetch articles");
         const articlesData = await articlesRes.json();
 
@@ -65,7 +66,7 @@ export default function AgendaPage() {
   // Add article
   const handleAddArticle = async (newArticle: Omit<Article, "id">) => {
     try {
-      const res = await fetch(`http://localhost:4000/agendas/${agendaId}/articles`, {
+      const res = await fetch(API_ENDPOINTS.articles(agendaId), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newArticle),
@@ -74,7 +75,7 @@ export default function AgendaPage() {
         const { error } = await res.json();
         throw new Error(error || "Failed to add article");
       }
-      const updated = await fetch(`http://localhost:4000/agendas/${agendaId}/articles`);
+      const updated = await fetch(API_ENDPOINTS.articles(agendaId));
       setArticles(await updated.json());
     } catch (err: any) {
       alert("Failed to add article: " + err.message);
@@ -84,7 +85,7 @@ export default function AgendaPage() {
   // Remove article
   const handleRemoveArticle = async (articleId: number) => {
     try {
-      const res = await fetch(`http://localhost:4000/articles/${articleId}`, { method: "DELETE" });
+      const res = await fetch(API_ENDPOINTS.article(articleId), { method: "DELETE" });
       if (!res.ok) {
         const { error } = await res.json();
         throw new Error(error || "Failed to delete article");

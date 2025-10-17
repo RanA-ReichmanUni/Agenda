@@ -13,15 +13,34 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   backend:
-    build: ./agenda-backend
+    build: ./backend
     ports:
-      - "4000:4000"
+      - "8000:8000"
     depends_on:
       - postgres
     environment:
-      DATABASE_URL: postgres://agenda_user:supersecret@postgres:5432/agenda_db
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: agenda_db
+      DB_USER: agenda_user
+      DB_PASSWORD: supersecret
+      API_PORT: 8000
     volumes:
-      - ./agenda-backend:/app
+      - ./backend:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build: ./agenda-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    volumes:
+      - ./agenda-frontend:/app
+      - /app/node_modules
+      - /app/.next
     command: npm run dev
 
 volumes:

@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useAgendaContext } from "../context/AgendaContext";
+import { API_ENDPOINTS } from "../lib/api";
 
 /**
  * Form component to create a new agenda by sending POST request to backend.
@@ -24,15 +25,22 @@ export default function CreateAgendaForm() {
     setError(null);
 
     try {
-      const response = await fetch("http://localhost:4000/agendas", {
+      const response = await fetch(API_ENDPOINTS.agendas, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title }),
       });
 
       if (!response.ok) {
-        const { error } = await response.json();
-        throw new Error(error || "Failed to create agenda");
+        let message = `Failed to create agenda (HTTP ${response.status})`;
+        try {
+          const maybeJson = await response.json();
+          if (maybeJson?.detail) message = Array.isArray(maybeJson.detail) ? maybeJson.detail.map((d:any)=>d.msg||d).join(", ") : maybeJson.detail;
+          if (maybeJson?.error) message = maybeJson.error;
+        } catch {
+          // ignore JSON parse error
+        }
+        throw new Error(message);
       }
 
       // Clear form + refresh context
