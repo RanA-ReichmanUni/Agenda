@@ -190,12 +190,12 @@ export default function AgendaPage() {
               <p className="text-gray-500 text-lg">No articles yet. Add your first one above!</p>
             </div>
           ) : (
-            <div className="grid gap-8 grid-cols-1 md:grid-cols-2">
+            <div className="grid grid-cols-2 gap-0">
               {articles.map((article, index) => (
                 <div
                   key={article.id}
                   onClick={() => handleArticleClick(article.url)}
-                  className="cursor-pointer animate-article-card"
+                  className="animate-article-card"
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
                   <ArticleCard
