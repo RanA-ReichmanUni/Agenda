@@ -140,6 +140,30 @@ async def extract_metadata(data: ExtractURLRequest):
         image=image
     )
 
+# Additional utility endpoint: iframe embedding check
+@app.get("/api/check-iframe")
+async def check_iframe(url: str):
+    """Server-side HEAD check to determine if a URL blocks iframe embedding.
+    Returns { blocked: bool } where True means likely blocked by X-Frame-Options or CSP.
+    """
+    if not url or (not url.startswith("http://") and not url.startswith("https://")):
+        raise HTTPException(status_code=400, detail="Missing or invalid url")
+    try:
+        res = requests.head(url, allow_redirects=True, timeout=8, headers={
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        })
+        frame_options = (res.headers.get("x-frame-options") or "").lower()
+        csp = (res.headers.get("content-security-policy") or "").lower()
+        blocked = (
+            "deny" in frame_options or
+            "sameorigin" in frame_options or
+            "frame-ancestors" in csp
+        )
+        return {"blocked": blocked}
+    except requests.exceptions.RequestException:
+        # Network errors: assume blocked to be safe
+        return {"blocked": True}
+
 # ============================================
 # AGENDA ENDPOINTS
 # ============================================

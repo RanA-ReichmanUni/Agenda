@@ -1,14 +1,31 @@
-# Agenda Application
+# Agenda - Work in Progress
 
-A full-stack application for creating and managing agendas with articles. Built with **Python FastAPI** backend and **Next.js** frontend.
+**Agenda** is a web application that allows users to present a **personal agenda or narrative**, and back it up with **reliable external sources**, primarily news articles.
 
-## 🎯 Project Overview
+Each **agenda** represents a specific claim or statement (e.g., "Biden is unfit to be president" or the contrast, "Biden is a great president").  
+The user then attaches **articles from reputable news outlets** that serve as evidence supporting the claim.
 
-This application allows users to:
-- Create and manage multiple agendas
-- Add articles to agendas with automatic metadata extraction
-- Organize and visualize content
-- Build narratives and prove points with curated articles
+---
+
+## Use Case
+
+This tool is designed for:
+- Structuring personal beliefs or arguments with traceable sources
+- Gathering credible evidence for political, social, or personal narratives
+- Showcasing a curated, article-based "case" for a point of view
+- Simplifying research and content organization
+
+---
+
+## Status: In Progress
+
+This is an ongoing personal project intended to simulate a full production-grade system with a strong emphasis on:
+- Scalable backend architecture
+- SQL-based persistence (no ORM)
+- Modern frontend development
+- Real-world development practices (Docker, CI-ready)
+
+---
 
 ## 🏗️ Architecture
 
@@ -20,16 +37,35 @@ This application allows users to:
   - Automatic metadata extraction from URLs
   - OpenAPI/Swagger documentation
   - Type validation with Pydantic
+  - Raw SQL queries (no ORM used)
   - CORS enabled for frontend
 
-### Frontend (Next.js)
-- **Framework**: Next.js 14+ with React
+### Frontend (Vite + React)
+- **Framework**: Vite with React 18+
+- **Routing**: React Router DOM
 - **Styling**: Tailwind CSS
 - **State Management**: React Context API
 - **Features**:
-  - Server-side rendering
-  - Responsive design
+  - Lightning-fast HMR (Hot Module Replacement)
+  - TypeScript for type safety
   - Modern UI with glassmorphism effects
+  - Responsive design
+
+---
+
+## Stack & Technologies
+
+| Area       | Tech                                       |
+|------------|--------------------------------------------|
+| Frontend   | [Vite](https://vitejs.dev/), [React](https://react.dev/), [TypeScript](https://www.typescriptlang.org/) |
+| Routing    | [React Router](https://reactrouter.com/)   |
+| Styling    | [TailwindCSS](https://tailwindcss.com/)    |
+| Backend    | [Python](https://www.python.org/), [FastAPI](https://fastapi.tiangolo.com/) |
+| Database   | [PostgreSQL](https://www.postgresql.org/)  |
+| DB Access  | Raw SQL via `psycopg2` (no ORM used)       |
+| Dev Env    | [Docker](https://www.docker.com/), `docker-compose` |
+
+---
 
 ## 📁 Project Structure
 
@@ -38,31 +74,62 @@ Agenda/
 ├── backend/                  # Python FastAPI Backend
 │   ├── main.py              # Main application & routes
 │   ├── models.py            # Pydantic models
-│   ├── database.py          # Database connection
+│   ├── database.py          # Database connection & raw SQL
 │   ├── requirements.txt     # Python dependencies
 │   ├── Dockerfile           # Docker configuration
 │   └── .env                 # Environment variables
 │
-├── agenda-frontend/         # Next.js Frontend
+├── frontend/                # Vite + React Frontend
 │   ├── src/
-│   │   ├── app/             # Next.js app router pages
+│   │   ├── App.tsx          # Main app with React Router
+│   │   ├── main.tsx         # Vite entry point
 │   │   ├── components/      # React components
 │   │   ├── context/         # React context providers
-│   │   └── lib/             # Utilities & types
+│   │   ├── lib/             # Utilities & types
+│   │   └── pages/           # Page components
 │   ├── package.json
-│   └── .env.local           # Frontend environment
+│   ├── vite.config.ts       # Vite configuration
+│   └── .env                 # Frontend environment
 │
 └── docker-compose.yml       # Docker orchestration
 ```
+
+---
+
+## Features Implemented
+
+- [x] Create and list agendas (core narratives)
+- [x] Add articles as evidence supporting an agenda
+- [x] Store and retrieve all data from PostgreSQL
+- [x] RESTful backend built with raw SQL queries (no ORM)
+- [x] Dockerized environment with PostgreSQL persistence
+- [x] Delete agendas and articles
+- [x] Article preview with metadata (image, excerpt)
+- [x] Automatic metadata extraction from URLs
+- [x] Modern, responsive UI with animations
+
+---
+
+## Roadmap
+
+- [ ] Tagging or categorization of agendas
+- [ ] Public sharing / publishing features
+- [ ] Authentication & user management
+- [ ] Search and filter functionality
+- [ ] Export agendas (PDF, JSON)
+- [ ] Dark mode
+- [ ] CI/CD pipeline
+
+---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
 - **Python 3.11+**
-- **Node.js 18+**
+- **Node.js 20+**
 - **PostgreSQL 15+** (or use Docker)
-- **npm** or **yarn**
+- **npm**
 
 ### Option 1: Run with Docker (Recommended)
 
@@ -78,9 +145,10 @@ Agenda/
    ```
 
 3. **Access the application**
-   - Frontend: http://localhost:3000
+   - Frontend: http://localhost:5173
    - Backend API: http://localhost:8000
    - API Docs: http://localhost:8000/docs
+   - Database: localhost:5432
 
 ### Option 2: Run Locally
 
@@ -110,11 +178,10 @@ Agenda/
 
 5. **Run the server**
    ```powershell
-   python main.py
-   ```
+   # Using convenience script
+   ..\start-backend.ps1
    
-   Or with uvicorn:
-   ```powershell
+   # Or manually with uvicorn
    uvicorn main:app --reload --host 0.0.0.0 --port 8000
    ```
 
@@ -122,7 +189,7 @@ Agenda/
 
 1. **Navigate to frontend directory**
    ```powershell
-   cd agenda-frontend
+   cd frontend
    ```
 
 2. **Install dependencies**
@@ -130,19 +197,23 @@ Agenda/
    npm install
    ```
 
-3. **Configure environment**
+3. **Configure environment** (if different from default)
    ```powershell
-   # Create .env.local file
-   echo "NEXT_PUBLIC_API_URL=http://localhost:8000" > .env.local
+   # Create .env file
+   echo "VITE_API_URL=http://localhost:8000" > .env
    ```
 
 4. **Run the development server**
    ```powershell
+   # Using convenience script
+   ..\start-frontend-vite.ps1
+   
+   # Or manually with npm
    npm run dev
    ```
 
 5. **Open browser**
-   Navigate to http://localhost:3000
+   Navigate to http://localhost:5173
 
 ## 📚 API Documentation
 
@@ -188,7 +259,34 @@ Once the backend is running, visit:
 - **Docker** - Containerization
 - **Docker Compose** - Multi-container orchestration
 
-## 🔧 Development
+---
+
+## �️ Tech Stack
+
+### Backend
+- **FastAPI** - Modern Python web framework with async support
+- **Uvicorn** - Lightning-fast ASGI server
+- **PostgreSQL** - Robust relational database
+- **psycopg2** - PostgreSQL adapter (raw SQL, no ORM)
+- **BeautifulSoup4** - HTML parsing for metadata extraction
+- **Pydantic** - Data validation and serialization
+- **python-dotenv** - Environment management
+
+### Frontend
+- **Vite** - Next-generation frontend tooling
+- **React 18+** - Modern UI library with hooks
+- **React Router DOM** - Client-side routing
+- **TypeScript** - Static type checking
+- **Tailwind CSS** - Utility-first CSS framework
+- **uuid** - Unique ID generation
+
+### DevOps
+- **Docker** - Containerization
+- **Docker Compose** - Multi-container orchestration
+
+---
+
+## �🔧 Development
 
 ### Backend Development
 
@@ -201,21 +299,27 @@ uvicorn main:app --reload
 
 ### Frontend Development
 
-Next.js includes hot module replacement. Changes will be reflected instantly.
+Vite includes blazing-fast Hot Module Replacement (HMR). Changes are reflected instantly without losing state.
 
 ```powershell
 npm run dev
 ```
 
+---
+
 ## 🌟 Features
 
-- ✅ **Metadata Extraction**: Automatically fetch title, description, and images from URLs
-- ✅ **CRUD Operations**: Full create, read, update, delete for agendas and articles
-- ✅ **Responsive Design**: Works on desktop and mobile devices
-- ✅ **Modern UI**: Glassmorphism effects and smooth animations
-- ✅ **Type Safety**: TypeScript frontend, Pydantic backend
-- ✅ **API Documentation**: Auto-generated Swagger/OpenAPI docs
-- ✅ **Docker Support**: Easy deployment with Docker Compose
+- ✅ **Metadata Extraction**: Automatically fetch title, description, and images from URLs using BeautifulSoup
+- ✅ **CRUD Operations**: Full create, read, delete for agendas and articles
+- ✅ **Responsive Design**: Works seamlessly on desktop and mobile devices
+- ✅ **Modern UI**: Glassmorphism effects, smooth animations, and polished design
+- ✅ **Type Safety**: TypeScript frontend with strict mode, Pydantic backend validation
+- ✅ **API Documentation**: Auto-generated Swagger/OpenAPI docs at `/docs`
+- ✅ **Docker Support**: Easy deployment and development with Docker Compose
+- ✅ **Iframe Preview**: Check if articles can be embedded and preview them
+- ✅ **Raw SQL**: Direct database queries for maximum control and performance
+
+---
 
 ## 📝 Environment Variables
 
@@ -224,15 +328,34 @@ npm run dev
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=agenda_db
-DB_USER=postgres
-DB_PASSWORD=postgres
+DB_USER=agenda_user
+DB_PASSWORD=supersecret
 API_PORT=8000
 ```
 
-### Frontend (.env.local)
+### Frontend (.env)
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:8000
+VITE_API_URL=http://localhost:8000
 ```
+
+---
+
+## 👨‍💻 Author
+
+This project is developed by an independent developer with two academic degrees in Computer Science, combining deep theoretical foundations with practical, real-world full-stack engineering experience.
+
+---
+
+## 🔗 Links
+
+- [FastAPI Documentation](https://fastapi.tiangolo.com/)
+- [Vite Documentation](https://vitejs.dev/)
+- [React Documentation](https://react.dev/)
+- [PostgreSQL Documentation](https://www.postgresql.org/docs/)
+
+---
+
+**Made with ❤️ using Python FastAPI and Vite + React**
 
 ## 👨‍💻 Author
 
