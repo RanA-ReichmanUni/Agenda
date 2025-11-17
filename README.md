@@ -32,24 +32,28 @@ This is an ongoing personal project intended to simulate a full production-grade
 ### Backend (Python FastAPI)
 - **Framework**: FastAPI (modern, fast, async)
 - **Database**: PostgreSQL
+- **Authentication**: JWT tokens with bcrypt password hashing
 - **Features**:
-  - RESTful API design
+  - RESTful API design with router-based architecture
   - Automatic metadata extraction from URLs
   - OpenAPI/Swagger documentation
   - Type validation with Pydantic
   - Raw SQL queries (no ORM used)
   - CORS enabled for frontend
+  - Protected endpoints with OAuth2
 
 ### Frontend (Vite + React)
 - **Framework**: Vite with React 18+
 - **Routing**: React Router DOM
 - **Styling**: Tailwind CSS
 - **State Management**: React Context API
+- **Authentication**: JWT tokens with localStorage
 - **Features**:
   - Lightning-fast HMR (Hot Module Replacement)
   - TypeScript for type safety
   - Modern UI with glassmorphism effects
   - Responsive design
+  - Protected routes
 
 ---
 
@@ -98,27 +102,30 @@ Agenda/
 
 ## Features Implemented
 
+- [x] User authentication with JWT tokens
+- [x] Protected routes and API endpoints
 - [x] Create and list agendas (core narratives)
 - [x] Add articles as evidence supporting an agenda
 - [x] Store and retrieve all data from PostgreSQL
-- [x] RESTful backend built with raw SQL queries (no ORM)
+- [x] RESTful backend with clean router-based architecture
 - [x] Dockerized environment with PostgreSQL persistence
 - [x] Delete agendas and articles
 - [x] Article preview with metadata (image, excerpt)
 - [x] Automatic metadata extraction from URLs
+- [x] Iframe embedding detection for articles
 - [x] Modern, responsive UI with animations
 
 ---
 
 ## Roadmap
 
-- [ ] Tagging or categorization of agendas
 - [ ] Public sharing / publishing features
-- [ ] Authentication & user management
+- [ ] Tagging or categorization of agendas
 - [ ] Search and filter functionality
 - [ ] Export agendas (PDF, JSON)
 - [ ] Dark mode
 - [ ] CI/CD pipeline
+- [ ] Email verification for registration
 
 ---
 
@@ -215,6 +222,11 @@ Agenda/
 5. **Open browser**
    Navigate to http://localhost:5173
 
+6. **Create an account**
+   - Click "Sign Up" or navigate to `/register`
+   - Enter your details and create an account
+   - Login with your credentials
+
 ## 📚 API Documentation
 
 Once the backend is running, visit:
@@ -225,17 +237,23 @@ Once the backend is running, visit:
 
 #### Metadata Extraction
 - `POST /api/extract` - Extract metadata from a URL
+- `GET /api/check-iframe?url=<url>` - Check if URL allows iframe embedding
+
+#### Authentication
+- `POST /auth/register` - Register new user
+- `POST /auth/login` - Login and receive JWT token
+- `GET /auth/me` - Get current user profile (protected)
 
 #### Agendas
-- `GET /agendas` - Get all agendas
-- `GET /agendas/{id}` - Get single agenda
-- `POST /agendas` - Create new agenda
-- `DELETE /agendas/{id}` - Delete agenda
+- `GET /agendas` - Get all agendas for current user (protected)
+- `GET /agendas/{id}` - Get single agenda (protected)
+- `POST /agendas` - Create new agenda (protected)
+- `DELETE /agendas/{id}` - Delete agenda (protected)
 
 #### Articles
-- `GET /agendas/{id}/articles` - Get articles for an agenda
-- `POST /agendas/{id}/articles` - Create article
-- `DELETE /articles/{id}` - Delete article
+- `GET /agendas/{id}/articles` - Get articles for an agenda (protected)
+- `POST /agendas/{id}/articles` - Create article (protected)
+- `DELETE /articles/{id}` - Delete article (protected)
 
 ## 🛠️ Tech Stack
 
@@ -244,16 +262,18 @@ Once the backend is running, visit:
 - **Uvicorn** - ASGI server
 - **PostgreSQL** - Relational database
 - **psycopg2** - PostgreSQL adapter
+- **python-jose** - JWT token generation and validation
+- **passlib** - Password hashing with bcrypt
 - **BeautifulSoup4** - HTML parsing for metadata extraction
 - **Pydantic** - Data validation
 - **python-dotenv** - Environment management
 
 ### Frontend
-- **Next.js 14+** - React framework
-- **React 18+** - UI library
-- **TypeScript** - Type safety
-- **Tailwind CSS** - Utility-first CSS
-- **uuid** - Unique ID generation
+- **Vite** - Next-generation frontend tooling
+- **React 18+** - Modern UI library with hooks
+- **React Router DOM** - Client-side routing
+- **TypeScript** - Static type checking
+- **Tailwind CSS** - Utility-first CSS framework
 
 ### DevOps
 - **Docker** - Containerization
@@ -364,12 +384,13 @@ Created as a learning project to demonstrate full-stack development skills.
 ## 🔗 Links
 
 - [FastAPI Documentation](https://fastapi.tiangolo.com/)
-- [Next.js Documentation](https://nextjs.org/docs)
+- [Vite Documentation](https://vitejs.dev/)
+- [React Documentation](https://react.dev/)
 - [PostgreSQL Documentation](https://www.postgresql.org/docs/)
 
 ---
 
-**Made with ❤️ using Python FastAPI and Next.js** — Work in Progress
+**Made with ❤️ using Python FastAPI and Vite + React**
 
 **Agenda** is a web application that allows users to present a **personal agenda or narrative**, and back it up with **reliable external sources** — primarily news articles.
 
@@ -402,13 +423,13 @@ This is an ongoing personal project intended to simulate a full production-grade
 
 | Area       | Tech                                       |
 |------------|--------------------------------------------|
-| Frontend   | [Next.js](https://nextjs.org/), [React](https://react.dev/), [TypeScript](https://www.typescriptlang.org/) |
+| Frontend   | [Vite](https://vitejs.dev/), [React](https://react.dev/), [TypeScript](https://www.typescriptlang.org/) |
+| Routing    | [React Router](https://reactrouter.com/)   |
 | Styling    | [TailwindCSS](https://tailwindcss.com/)    |
-| Backend    | [Node.js](https://nodejs.org/), [Express](https://expressjs.com/) |
+| Backend    | [Python](https://www.python.org/), [FastAPI](https://fastapi.tiangolo.com/) |
 | Database   | [PostgreSQL](https://www.postgresql.org/)  |
-| DB Access  | Raw SQL via `pg` (no ORM used)             |
+| DB Access  | Raw SQL via `psycopg2` (no ORM used)       |
 | Dev Env    | [Docker](https://www.docker.com/), `docker-compose` |
-| DB Admin   | [pgAdmin](https://www.pgadmin.org/)        |
 
 ---
 
@@ -439,18 +460,18 @@ This is an ongoing personal project intended to simulate a full production-grade
 
 ## Local Development Setup
 
-```bash
-# Start backend + PostgreSQL
+```powershell
+# Start backend + PostgreSQL with Docker
 docker-compose up --build
 
 # Start frontend (in a second terminal)
-cd agenda-frontend
+cd frontend
 npm install
 npm run dev
 ```
 
-> Access backend on `http://localhost:4000`  
-> Access frontend on `http://localhost:3000`
+> Access backend on `http://localhost:8000`  
+> Access frontend on `http://localhost:5173`
 
 ---
 
