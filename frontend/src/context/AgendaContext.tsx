@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { API_ENDPOINTS } from '../lib/api';
+import { API_ENDPOINTS, authFetch } from '../lib/api';
 
 export interface AgendaItem {
   id: number;
@@ -25,7 +25,7 @@ export const AgendaProvider = ({ children }: { children: React.ReactNode }) => {
   const fetchAgendas = async () => {
     setLoading(true);
     try {
-      const res = await fetch(API_ENDPOINTS.agendas);
+      const res = await authFetch(API_ENDPOINTS.agendas);
       if (!res.ok) throw new Error('Failed to fetch agendas');
       const data = await res.json();
       setAgendas(

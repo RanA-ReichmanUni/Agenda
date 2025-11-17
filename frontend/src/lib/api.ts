@@ -13,3 +13,32 @@ export const API_ENDPOINTS = {
   articles: (agendaId: number | string) => `${API_URL}/agendas/${agendaId}/articles`,
   article: (id: number | string) => `${API_URL}/articles/${id}`,
 };
+
+// Helper function to get auth headers
+export function getAuthHeaders(): HeadersInit {
+  const token = localStorage.getItem('token');
+  return {
+    'Content-Type': 'application/json',
+    ...(token && { 'Authorization': `Bearer ${token}` }),
+  };
+}
+
+// Authenticated fetch wrapper
+export async function authFetch(url: string, options: RequestInit = {}) {
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      ...getAuthHeaders(),
+      ...options.headers,
+    },
+  });
+
+  if (response.status === 401) {
+    // Token expired or invalid, redirect to login
+    localStorage.removeItem('token');
+    window.location.href = '/login';
+    throw new Error('Unauthorized');
+  }
+
+  return response;
+}

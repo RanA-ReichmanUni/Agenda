@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useAgendaContext } from "../context/AgendaContext";
-import { API_ENDPOINTS } from "../lib/api";
+import { API_ENDPOINTS, authFetch } from "../lib/api";
 
 export default function CreateAgendaForm() {
   const { refetch } = useAgendaContext();
@@ -17,7 +17,7 @@ export default function CreateAgendaForm() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(API_ENDPOINTS.agendas, {
+      const response = await authFetch(API_ENDPOINTS.agendas, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title }),

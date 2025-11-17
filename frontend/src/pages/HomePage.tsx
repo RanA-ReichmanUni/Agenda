@@ -2,16 +2,18 @@ import React, { useEffect, useState } from "react";
 import CreateAgendaForm from "../components/CreateAgendaForm";
 import AgendaCard from "../components/AgendaCard";
 import { useAgendaContext } from "../context/AgendaContext";
-import { API_ENDPOINTS } from "../lib/api";
+import { API_ENDPOINTS, authFetch } from "../lib/api";
+import { useAuth } from "../context/AuthContext";
 
 export default function HomePage() {
   const { agendas, loading, error, refetch } = useAgendaContext();
+  const { user, logout } = useAuth();
   const [agendasWithArticles, setAgendasWithArticles] = useState<any[]>([]);
   const [agendaToDelete, setAgendaToDelete] = useState<any | null>(null);
 
   const handleDeleteAgenda = async (agendaId: number) => {
     try {
-      await fetch(API_ENDPOINTS.agenda(agendaId), { method: "DELETE" });
+      await authFetch(API_ENDPOINTS.agenda(agendaId), { method: "DELETE" });
       await refetch();
     } catch (err) {
       alert("Failed to delete agenda");
@@ -22,7 +24,7 @@ export default function HomePage() {
     if (!agendas.length) return;
     Promise.all(
       agendas.map(async (agenda) => {
-        const res = await fetch(API_ENDPOINTS.articles(agenda.id));
+        const res = await authFetch(API_ENDPOINTS.articles(agenda.id));
         const articles = await res.json();
         const thumbnails = articles
           .filter((a: any) => a.image)
@@ -38,6 +40,21 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-gray-50 to-blue-100 py-4 px-2 md:px-0 relative overflow-x-hidden">
+      {/* Logout button */}
+      <div className="absolute top-4 right-4 z-20">
+        <div className="bg-white/80 backdrop-blur-xl border border-gray-200 rounded-lg px-4 py-2 shadow-lg flex items-center gap-3">
+          <span className="text-sm text-gray-700">
+            Welcome, <span className="font-semibold text-blue-700">{user?.name}</span>
+          </span>
+          <button
+            onClick={logout}
+            className="text-sm bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md transition"
+          >
+            Logout
+          </button>
+        </div>
+      </div>
+
       <div className="fixed top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-400 via-purple-400 to-pink-400 opacity-30 rounded-full blur-3xl pointer-events-none -z-10 animate-float" style={{ filter: 'blur(120px)' }} />
       <div className="fixed bottom-0 right-0 w-96 h-96 bg-gradient-to-tr from-pink-400 via-purple-400 to-blue-400 opacity-30 rounded-full blur-3xl pointer-events-none -z-10 animate-float2" style={{ filter: 'blur(120px)' }} />
       <div className="max-w-3xl mx-auto space-y-12 scale-85">

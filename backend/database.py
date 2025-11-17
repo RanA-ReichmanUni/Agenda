@@ -27,13 +27,24 @@ def init_db():
     try:
         cursor = conn.cursor()
         
-        # Create agendas table (with user_id)
+        # Create users table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                email VARCHAR(255) UNIQUE NOT NULL,
+                password_hash VARCHAR(255) NOT NULL,
+                name VARCHAR(255),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        # Create agendas table (with user_id foreign key)
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS agendas (
                 id SERIAL PRIMARY KEY,
                 title VARCHAR(255) NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                user_id INTEGER NOT NULL DEFAULT 1
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE
             )
         """)
         

@@ -1,16 +1,58 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { AgendaProvider } from './context/AgendaContext';
 import HomePage from './pages/HomePage';
 import AgendaPage from './pages/AgendaPage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+
+// Protected Route wrapper
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100">
+        <div className="animate-spin rounded-full h-24 w-24 border-t-4 border-b-4 border-blue-400 opacity-60"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <>{children}</>;
+}
 
 export default function App() {
   return (
-    <AgendaProvider>
+    <AuthProvider>
       <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/agenda/:id" element={<AgendaPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <AgendaProvider>
+                <HomePage />
+              </AgendaProvider>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/agenda/:id"
+          element={
+            <ProtectedRoute>
+              <AgendaProvider>
+                <AgendaPage />
+              </AgendaProvider>
+            </ProtectedRoute>
+          }
+        />
       </Routes>
-    </AgendaProvider>
+    </AuthProvider>
   );
 }
