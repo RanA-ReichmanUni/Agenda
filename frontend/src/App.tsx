@@ -6,6 +6,8 @@ import HomePage from './pages/HomePage';
 import AgendaPage from './pages/AgendaPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import { ToastProvider } from './context/ToastContext';
+import ShowToast from './components/Toast';
 
 // Protected Route wrapper
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -47,7 +49,10 @@ export default function App() {
           element={
             <ProtectedRoute>
               <AgendaProvider>
-                <AgendaPage />
+                <ToastProvider>
+                  <ShowToast />
+                  <AgendaPage />
+                </ToastProvider>
               </AgendaProvider>
             </ProtectedRoute>
           }

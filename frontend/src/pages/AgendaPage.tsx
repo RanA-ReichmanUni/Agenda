@@ -4,7 +4,7 @@ import AddArticleForm from "../components/AddArticleForm";
 import { Article } from "../lib/types";
 import ArticleCard from "../components/ArticleCard";
 import { API_ENDPOINTS, authFetch } from "../lib/api";
-
+import { useToastContext } from "../context/ToastContext";
 export default function AgendaPage() {
   const { id } = useParams();
   if (!id) {
@@ -17,7 +17,7 @@ export default function AgendaPage() {
       </div>
     );
   }
-
+  const { showUndo, setShowUndo, undoDelete, setUndoDelete } = useToastContext();
   const agendaId = id as string;
 
   const [agenda, setAgenda] = useState<{ title: string; createdAt: string } | null>(null);
@@ -72,14 +72,55 @@ export default function AgendaPage() {
     }
   };
 
+    const restoreLastArticle = async (articleToRestore: Article) => {
+    try {
+      const res = await authFetch(API_ENDPOINTS.articles(agendaId), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(articleToRestore),
+      });
+      if (!res.ok) {
+        const { error } = await res.json();
+        throw new Error(error || "Failed to add article");
+      }
+      const updated = await authFetch(API_ENDPOINTS.articles(agendaId));
+      setArticles(await updated.json());
+
+      // Hide toast after restore
+      setShowUndo(false);  
+      setArticleToDelete(null);
+
+    } catch (err: any) {
+      alert("Failed to add article: " + err.message);
+    }
+  };
+
   const handleRemoveArticle = async (articleId: number) => {
     try {
+      
+      const articleToRestore = articles.find(a => Number(a.id) === articleId);
+      //setArticleToDelete(articleToRestore || null);
+      if (!articleToRestore) {
+        throw new Error("Article not found");
+      }
+
       const res = await authFetch(API_ENDPOINTS.article(articleId), { method: "DELETE" });
       if (!res.ok) {
         const { error } = await res.json();
         throw new Error(error || "Failed to delete article");
       }
       setArticles((prev) => prev.filter((a) => Number(a.id) !== articleId));
+      // Set up undo deletion
+      const undoFunc = () => restoreLastArticle(articleToRestore);
+      setUndoDelete(() => undoFunc);
+      setShowUndo(true);
+
+      // Auto-hide toast after 5 seconds
+      setTimeout(() => {
+        setShowUndo(false);
+        setArticleToDelete(null);
+      }, 5000);
+
     } catch (err: any) {
       alert("Failed to delete article: " + err.message);
     }

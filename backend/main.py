@@ -8,7 +8,37 @@ and includes all router modules for clean separation of concerns.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import init_db
-from routers import auth, agendas, articles, metadata
+
+print("Loading Agenda API...")
+print("Importing routers...")
+
+try:
+    from routers import auth
+    print("✓ auth imported")
+except Exception as e:
+    print(f"✗ Error importing auth: {e}")
+    raise
+
+try:
+    from routers import agendas
+    print("✓ agendas imported")
+except Exception as e:
+    print(f"✗ Error importing agendas: {e}")
+    raise
+
+try:
+    from routers import articles
+    print("✓ articles imported")
+except Exception as e:
+    print(f"✗ Error importing articles: {e}")
+    raise
+
+try:
+    from routers import metadata
+    print("✓ metadata imported")
+except Exception as e:
+    print(f"✗ Error importing metadata: {e}")
+    raise
 
 # Create FastAPI application
 app = FastAPI(
@@ -46,4 +76,14 @@ async def root():
 # Initialize database on startup
 @app.on_event("startup")
 async def startup_event():
-    init_db()
+    print("Starting up...")
+    try:
+        init_db()
+    except Exception as e:
+        print(f"❌ Failed to initialize database: {e}")
+        import traceback
+        traceback.print_exc()
+        raise
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

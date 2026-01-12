@@ -129,7 +129,7 @@ async def get_articles(
         conn.close()
 
 
-@router.delete("/{article_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/articles/{article_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_article(
     article_id: int,
     current_user: User = Depends(get_current_user)
