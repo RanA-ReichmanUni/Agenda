@@ -5,7 +5,7 @@ import { API_ENDPOINTS, authFetch } from '../lib/api';
 
 interface ToastContextType {
   showUndo: boolean; 
-  undoDelete: () => void; 
+  undoDelete: (() => void) | null; 
   setShowUndo: (value:boolean) => void;
   setUndoDelete: (undoFunc: (() => void) | null) => void;
 }
@@ -15,7 +15,7 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined);
 //children are the components that will be wrapped by the provider
 export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
   const [showUndo, setShowUndo] = useState<boolean>(false);
-  const [undoDelete, setUndoDelete] = useState<() => void | null> (null);
+  const [undoDelete, setUndoDelete] = useState<(() => void) | null>(null);
  
 
   return (
