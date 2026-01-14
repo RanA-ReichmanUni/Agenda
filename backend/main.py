@@ -8,6 +8,7 @@ and includes all router modules for clean separation of concerns.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import init_db
+from fastapi.responses import Response
 
 print("Loading Agenda API...")
 print("Importing routers...")
@@ -53,12 +54,17 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",
         "https://agenda-pied-eta.vercel.app",
+        "https://agenda-kngy515d1-rans-projects-66467de7.vercel.app",
     ],
     allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.options("/{path:path}")
+async def preflight_handler(path: str):
+    return Response(status_code=204)
 
 # Include routers
 app.include_router(auth.router, prefix="/auth", tags=["authentication"])
