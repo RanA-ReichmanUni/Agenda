@@ -1,22 +1,40 @@
 import psycopg2
 import os
 from dotenv import load_dotenv
-
+from urllib.parse import urlparse
 load_dotenv()
+
+def _get_env(name: str, default: str | None = None) -> str | None:
+    """Small helper to read env vars consistently."""
+    value = os.getenv(name)
+    return value if value not in (None, "") else default
 
 def get_db_connection():
     """
-    Create and return a database connection.
-    Uses environment variables for configuration.
+    Connection strategy:
+    1) Prefer DATABASE_URL (Render, Railway, Heroku, etc.)
+    2) Fallback to DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASSWORD (local / docker-compose)
     """
-    conn = psycopg2.connect(
-        host=os.getenv('DB_HOST', 'localhost'),
-        port=os.getenv('DB_PORT', '5432'),
-        database=os.getenv('DB_NAME', 'agenda_db'),
-        user=os.getenv('DB_USER', 'postgres'),
-        password=os.getenv('DB_PASSWORD', 'postgres')
+
+    database_url = _get_env("DATABASE_URL")
+    if database_url:
+        # psycopg2 accepts a connection URL directly
+        return psycopg2.connect(database_url)
+
+    # Fallback: discrete variables (local setup)
+    host = _get_env("DB_HOST", "localhost")
+    port = _get_env("DB_PORT", "5432")
+    dbname = _get_env("DB_NAME", "postgres")
+    user = _get_env("DB_USER", "postgres")
+    password = _get_env("DB_PASSWORD", "postgres")
+
+    return psycopg2.connect(
+        host=host,
+        port=int(port) if port else 5432,
+        dbname=dbname,
+        user=user,
+        password=password,
     )
-    return conn
 
 def init_db():
     """
