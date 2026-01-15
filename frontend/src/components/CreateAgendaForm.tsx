@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { useAgendaContext } from "../context/AgendaContext";
-import { API_ENDPOINTS, authFetch } from "../lib/api";
 
-export default function CreateAgendaForm() {
-  const { refetch } = useAgendaContext();
+interface CreateAgendaFormProps {
+  onCreate: (title: string) => Promise<void>;
+}
+
+export default function CreateAgendaForm({ onCreate }: CreateAgendaFormProps) {
   const [title, setTitle] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -17,27 +18,10 @@ export default function CreateAgendaForm() {
     setLoading(true);
     setError(null);
     try {
-      const response = await authFetch(API_ENDPOINTS.agendas, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title }),
-      });
-      if (!response.ok) {
-        let message = `Failed to create agenda (HTTP ${response.status})`;
-        try {
-          const maybeJson = await response.json();
-          if (maybeJson?.detail)
-            message = Array.isArray(maybeJson.detail)
-              ? maybeJson.detail.map((d: any) => d.msg || d).join(", ")
-              : maybeJson.detail;
-          if (maybeJson?.error) message = maybeJson.error;
-        } catch {}
-        throw new Error(message);
-      }
+      await onCreate(title);
       setTitle("");
-      await refetch();
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || "Failed to create agenda");
     } finally {
       setLoading(false);
     }

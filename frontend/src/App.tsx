@@ -5,8 +5,6 @@ import { AgendaProvider } from './context/AgendaContext';
 import { DemoProvider } from './context/DemoContext';
 import HomePage from './pages/HomePage';
 import AgendaPage from './pages/AgendaPage';
-import DemoHomePage from './pages/DemoHomePage';
-import DemoAgendaPage from './pages/DemoAgendaPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import { ToastProvider } from './context/ToastContext';
@@ -35,55 +33,45 @@ export default function App() {
   return (
     <DemoProvider>
     <AuthProvider>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        
-        {/* Demo Routes - Publicly accessible */}
-        <Route 
-          path="/demo" 
-          element={
-            <ToastProvider>
-              <ShowToast />
-              <DemoHomePage />
-            </ToastProvider>
-          } 
-        />
-        <Route 
-          path="/demo/agenda/:id" 
-          element={
-            <ToastProvider>
-              <ShowToast />
-              <DemoAgendaPage />
-            </ToastProvider>
-          } 
-        />
+      <ToastProvider>
+        <ShowToast />
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          
+          {/* Demo Routes - Publicly accessible */}
+          <Route 
+            path="/demo" 
+            element={<HomePage />} 
+          />
+          <Route 
+            path="/demo/agenda/:id" 
+            element={<AgendaPage />} 
+          />
 
-        {/* Protected App Routes */}
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <AgendaProvider>
-                <HomePage />
-              </AgendaProvider>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/agenda/:id"
-          element={
-            <ProtectedRoute>
-              <AgendaProvider>
-                <ToastProvider>
-                  <ShowToast />
+          {/* Protected App Routes */}
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <AgendaProvider>
+                  <HomePage />
+                </AgendaProvider>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/agenda/:id"
+            element={
+              <ProtectedRoute>
+                <AgendaProvider>
                   <AgendaPage />
-                </ToastProvider>
-              </AgendaProvider>
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
+                </AgendaProvider>
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </ToastProvider>
     </AuthProvider>
     </DemoProvider>
   );

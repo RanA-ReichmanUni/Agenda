@@ -17,6 +17,8 @@ interface AgendaContextType {
 
 const AgendaContext = createContext<AgendaContextType | undefined>(undefined);
 
+export { AgendaContext }; // Export the context for optional usage
+
 export const AgendaProvider = ({ children }: { children: React.ReactNode }) => {
   const [agendas, setAgendas] = useState<AgendaItem[]>([]);
   const [loading, setLoading] = useState(true);

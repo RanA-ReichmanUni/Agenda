@@ -1,77 +1,165 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import CreateAgendaForm from "../components/CreateAgendaForm";
-import AgendaCard from "../components/AgendaCard";
-import { useAgendaContext } from "../context/AgendaContext";
-import { API_ENDPOINTS, authFetch } from "../lib/api";
+import { AgendaContext, AgendaItem } from "../context/AgendaContext";
+import { useDemo } from "../context/DemoContext";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { Link } from "react-router-dom";
+import { API_ENDPOINTS, authFetch } from "../lib/api";
 
 export default function HomePage() {
-  const { agendas, loading, error, refetch } = useAgendaContext();
-  const { user, logout } = useAuth();
+  const location = useLocation();
+  const isDemo = location.pathname.startsWith('/demo');
+  
+  // Real Context (might be undefined if in demo route)
+  const agendaContext = useContext(AgendaContext);
+  const { user, logout } = useAuth(); // Auth is always present but might be null user
+
+  // Demo Context
+  const demoContext = useDemo();
+
+  // Unified Data Selection
+  const agendas = isDemo ? demoContext.agendas : (agendaContext?.agendas || []);
+  const loading = isDemo ? false : (agendaContext?.loading || false);
+  const error = isDemo ? null : (agendaContext?.error || null);
+  const deleteAgenda = isDemo ? demoContext.deleteAgenda : null; // Real delete is handled differently in strict mode, but here we can just call API?
+  // Actually, AgendaContext doesn't expose deleteAgenda, it exposes refetch. Layout handles delete locally?
+  // In the original HomePage, handleDeleteAgenda called authFetch(DELETE) then refetch().
+  
   const [agendasWithArticles, setAgendasWithArticles] = useState<any[]>([]);
   const [agendaToDelete, setAgendaToDelete] = useState<any | null>(null);
 
+  const handleCreateAgenda = async (title: string) => {
+    if (isDemo) {
+      await demoContext.addAgenda(title);
+    } else {
+      const response = await authFetch(API_ENDPOINTS.agendas, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title }),
+      });
+      if (!response.ok) {
+        let message = `Failed to create agenda (HTTP ${response.status})`;
+        try {
+          const maybeJson = await response.json();
+          if (maybeJson?.detail) message = maybeJson.detail;
+          if (maybeJson?.error) message = maybeJson.error;
+        } catch {}
+        throw new Error(message);
+      }
+      agendaContext?.refetch();
+    }
+  };
+
   const handleDeleteAgenda = async (agendaId: number) => {
     try {
-      await authFetch(API_ENDPOINTS.agenda(agendaId), { method: "DELETE" });
-      await refetch();
-    } catch (err) {
-      alert("Failed to delete agenda");
+      if (isDemo) {
+        await demoContext.deleteAgenda(agendaId);
+      } else {
+        await authFetch(API_ENDPOINTS.agenda(agendaId), { method: "DELETE" });
+        agendaContext?.refetch();
+      }
+      setAgendaToDelete(null);
+    } catch (err: any) {
+      alert("Failed to delete agenda: " + err.message);
     }
   };
 
   useEffect(() => {
+    // Fetch articles for thumbnails if needed (Real mode only)
+    if (isDemo) {
+       // Demo agendas already have articles
+       setAgendasWithArticles(agendas);
+       return;
+    }
+
     if (!agendas.length) return;
+    
+    // In real mode, we need to fetch articles for previews
     Promise.all(
       agendas.map(async (agenda) => {
-        const res = await authFetch(API_ENDPOINTS.articles(agenda.id));
-        const articles = await res.json();
-        const thumbnails = articles
-          .filter((a: any) => a.image)
-          .sort(
-            (a: any, b: any) =>
-              new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-          )
-          .slice(0, 4);
-        return { ...agenda, articles: thumbnails };
+        try {
+            const res = await authFetch(API_ENDPOINTS.articles(agenda.id));
+            if (res.ok) {
+                const articles = await res.json();
+                const thumbnails = articles
+                .filter((a: any) => a.image)
+                .sort(
+                    (a: any, b: any) =>
+                    new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+                )
+                .slice(0, 4);
+                return { ...agenda, articles: thumbnails };
+            }
+        } catch (e) { console.error(e); }
+        return agenda;
       })
-    ).then(setAgendasWithArticles);
-  }, [agendas]);
+    ).then((results) => setAgendasWithArticles(results as any[]));
+  }, [agendas, isDemo]);
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-gray-50 to-blue-100 py-4 px-2 md:px-0 relative overflow-x-hidden">
-      {/* Logout button */}
-      <div className="absolute top-4 right-4 z-20">
-        <div className="bg-white/80 backdrop-blur-xl border border-gray-200 rounded-lg px-4 py-2 shadow-lg flex items-center gap-3">
-          <span className="text-sm text-gray-700">
-            Welcome, <span className="font-semibold text-blue-700">{user?.name}</span>
-          </span>
-          <button
-            onClick={logout}
-            className="text-sm bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md transition"
-          >
-            Logout
-          </button>
+      
+      {/* Demo Banner */}
+      {isDemo && (
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-30">
+          <div className="bg-yellow-100 border border-yellow-300 text-yellow-800 px-4 py-1 rounded-full text-sm font-semibold shadow-md">
+            Demo Mode - Local Storage Only
+          </div>
         </div>
-      </div>
+      )}
 
+      {/* Logout button - Only show if user exists (Real mode mainly, but Demo has a fake user too) */}
+      {user && (
+        <div className="absolute top-4 right-4 z-20">
+          <div className="bg-white/80 backdrop-blur-xl border border-gray-200 rounded-lg px-4 py-2 shadow-lg flex items-center gap-3">
+            <span className="text-sm text-gray-700">
+              Welcome, <span className="font-semibold text-blue-700">{user.name || user.email}</span>
+            </span>
+            <button
+              onClick={logout}
+              className="text-sm bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md transition"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+      )}
+      
+      {isDemo && !user && (
+         <div className="absolute top-4 right-4 z-20">
+          <div className="bg-white/80 backdrop-blur-xl border border-gray-200 rounded-lg px-4 py-2 shadow-lg flex items-center gap-3">
+            <span className="text-sm text-gray-700">
+              Welcome, <span className="font-semibold text-blue-700">Demo User</span>
+            </span>
+             <Link
+            to="/login"
+            className="text-sm bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded-md transition"
+          >
+            Exit Demo
+          </Link>
+          </div>
+        </div>
+      )}
+
+      {/* Background Orbs */}
       <div className="fixed top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-400 via-purple-400 to-pink-400 opacity-30 rounded-full blur-3xl pointer-events-none -z-10 animate-float" style={{ filter: 'blur(120px)' }} />
       <div className="fixed bottom-0 right-0 w-96 h-96 bg-gradient-to-tr from-pink-400 via-purple-400 to-blue-400 opacity-30 rounded-full blur-3xl pointer-events-none -z-10 animate-float2" style={{ filter: 'blur(120px)' }} />
+      
       <div className="max-w-3xl mx-auto space-y-12 scale-85">
-        <div className="relative z-10 bg-white/60 backdrop-blur-xl border border-gray-200 shadow-2xl rounded-3xl p-10 flex flex-col items-center animate-header-reveal">
-          <h1 className="text-5xl md:text-6xl font-extrabold text-blue-800 mb-4 drop-shadow-lg tracking-tight animate-title-bounce">
+        <div className="text-center mb-8 relative z-10">
+          <h1 className="text-7xl md:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-purple-800 to-blue-900 bg-[length:200%_auto] drop-shadow-2xl tracking-tighter animate-title-gradient" style={{ fontFamily: "'Playfair Display', serif" }}>
             AGENDA
           </h1>
-          <p className="text-gray-700 text-lg md:text-xl max-w-2xl mx-auto font-medium text-center animate-subtitle-fade">
-            Create and manage your narratives and agendas. <br />Add sources and articles, and prove your point.
+          <p className="text-gray-600 font-medium text-lg md:text-xl tracking-[0.5em] uppercase opacity-0 mt-2 animate-subtitle-reveal">
+            Prove Your Point
           </p>
         </div>
 
         <div className="relative z-10 animate-form-slide">
           <div className="bg-white/60 backdrop-blur-xl border border-gray-200 shadow-2xl rounded-3xl p-8">
             <h2 className="text-3xl font-bold text-blue-800 tracking-tight mb-6 animate-title-bounce">Create New Agenda</h2>
-            <CreateAgendaForm />
+            <CreateAgendaForm onCreate={handleCreateAgenda} />
           </div>
         </div>
 
@@ -99,7 +187,7 @@ export default function HomePage() {
             <div className="grid gap-8 md:grid-cols-2">
               {agendasWithArticles.map((agenda) => (
                 <div key={agenda.id}>
-                    <Link to={`/agenda/${agenda.id}`} className="block h-full group">
+                    <Link to={isDemo ? `/demo/agenda/${agenda.id}` : `/agenda/${agenda.id}`} className="block h-full group">
                         <div className="bg-white/70 backdrop-blur-md border border-gray-200 rounded-2xl p-6 shadow-lg hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 h-full flex flex-col relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-100 to-purple-100 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110" />
                             
@@ -107,13 +195,13 @@ export default function HomePage() {
                             {agenda.title}
                             </h3>
                             <p className="text-sm text-gray-500 mb-6 font-mono">
-                            {new Date(agenda.created_at).toLocaleDateString()}
+                            {agenda.createdAt ? new Date(agenda.createdAt).toLocaleDateString() : 'No Date'}
                             </p>
 
                             <div className="flex-1">
                             {agenda.articles && agenda.articles.length > 0 ? (
                                 <div className="grid grid-cols-2 gap-2 mb-4">
-                                {agenda.articles.map((article: any) => (
+                                {agenda.articles.slice(0, 4).map((article: any) => (
                                     <div key={article.id} className="aspect-video rounded-lg overflow-hidden bg-gray-100 relative">
                                     <img 
                                         src={article.image || `https://source.unsplash.com/random/200x200?sig=${article.id}`} 
@@ -126,7 +214,7 @@ export default function HomePage() {
                                 </div>
                             ) : (
                                 <div className="h-24 bg-gray-50 rounded-xl border border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-sm mb-4">
-                                No articles added
+                                  {isDemo ? "No articles" : "View to see articles"}
                                 </div>
                             )}
                             </div>
@@ -185,6 +273,21 @@ export default function HomePage() {
       )}
 
       <style>{`
+        @keyframes title-gradient { 
+          0% { background-position: 0% 50%; opacity: 0; transform: scale(0.9) translateY(-20px); filter: blur(10px); } 
+          20% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0px); }
+          100% { background-position: 200% 50%; opacity: 1; transform: scale(1) translateY(0); filter: blur(0px); } 
+        }
+        .animate-title-gradient { animation: title-gradient 5s ease-out infinite alternate; animation-play-state: running; }
+        
+        @keyframes subtitle-reveal { 
+          0% { opacity: 0; letter-spacing: 0em; filter: blur(5px); } 
+          100% { opacity: 0.7; letter-spacing: 0.5em; filter: blur(0px); } 
+        }
+        .animate-subtitle-reveal { animation: subtitle-reveal 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) 0.5s forwards; }
+
+        @keyframes fade-in-down { 0% { opacity: 0; transform: translateY(-20px); } 100% { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in-down { animation: fade-in-down 0.8s ease-out both; }
         @keyframes fade-in { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fade-in 1s cubic-bezier(0.4,0,0.2,1) both; }
         @keyframes float { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-30px) scale(1.05); } }

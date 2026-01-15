@@ -26,12 +26,23 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 p-4">
-      <div className="bg-white/80 backdrop-blur-xl border border-gray-200 rounded-2xl shadow-2xl p-8 max-w-md w-full">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 p-4">
+      
+      {/* Brand Title */}
+      <div className="text-center mb-8 animate-fade-in-down">
+        <h1 className="text-7xl md:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-700 to-purple-800 drop-shadow-2xl tracking-tighter" style={{ fontFamily: "'Playfair Display', serif" }}>
+          AGENDA
+        </h1>
+        <p className="text-gray-600 font-medium text-lg md:text-xl tracking-[0.5em] uppercase opacity-70 mt-2">
+          PROVE YOUR POINT
+        </p>
+      </div>
+
+      <div className="bg-white/80 backdrop-blur-xl border border-gray-200 rounded-3xl shadow-2xl p-8 max-w-md w-full animate-fade-in-up">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
             Welcome Back
-          </h1>
+          </h2>
           <p className="text-gray-600">Sign in to your Agenda account</p>
         </div>
 
@@ -101,6 +112,22 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+      <style>{`
+        @keyframes fade-in-down {
+          0% { opacity: 0; transform: translateY(-20px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fade-in-up {
+          0% { opacity: 0; transform: translateY(20px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-down {
+          animation: fade-in-down 0.8s ease-out both;
+        }
+        .animate-fade-in-up {
+          animation: fade-in-up 0.8s ease-out 0.2s both;
+        }
+      `}</style>
     </div>
   );
 }
