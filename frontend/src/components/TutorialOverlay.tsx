@@ -3,7 +3,7 @@ import { useTutorial } from '../context/TutorialContext';
 
 export function TutorialOverlay() {
   const { isActive, currentStep, nextStep, prevStep, endTutorial, stepIndex, totalSteps } = useTutorial();
-  const [position, setPosition] = useState<{ top: number; left: number; width?: number } | null>(null);
+  const [position, setPosition] = useState<{ top: number; left: number; placement: string } | null>(null);
   const bubbleRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -17,43 +17,62 @@ export function TutorialOverlay() {
             if (!element) return;
 
             const rect = element.getBoundingClientRect();
-            const placement = currentStep.position || 'bottom';
+            // Default to 'bottom' if not specified
+            let placement = currentStep.position || 'bottom';
+            
+            // ZOOM CORRECTION:
+            // The global zoom: 0.8 on html means fixed elements are also scaled.
+            // getBoundingClientRect returns visual viewport pixels.
+            // We must divide by 0.8 to convert visual pixels to the CSS pixel value needed for the fix element.
+            const zoomFactor = 0.8;
+            
+            const rTop = rect.top / zoomFactor;
+            const rBottom = rect.bottom / zoomFactor;
+            const rLeft = rect.left / zoomFactor;
+            const rRight = rect.right / zoomFactor;
 
-            // Use viewport-relative coords directly (page is zoomed; overlay is in same zoomed context)
-            let top = rect.bottom + 10; // default: below target
-            let left = rect.left;
+            // Initial calculation
+            let top = rBottom + 10; 
+            let left = rLeft;
 
             if (placement === 'top') {
-                top = rect.top - 10; // bubble translates up via CSS
+                top = rTop - 10; 
             } else if (placement === 'right') {
-                top = rect.top;
-                left = rect.right + 10;
+                top = rTop;
+                left = rRight + 10;
             } else if (placement === 'left') {
-                top = rect.top;
-                left = rect.left - 10;
+                top = rTop;
+                left = rLeft - 10;
             }
 
-            // Basic vertical guard: if target is near top and placement is 'top', drop it below instead
-            const bubbleHeight = 220; // rough
-            if (placement === 'top' && top < bubbleHeight) {
-                top = rect.bottom + 10;
+            // Auto-Flip Vertical Logic
+            // If placed top but too close to edge, move to bottom
+            const bubbleHeightApprox = 250;
+            if (placement === 'top' && top < bubbleHeightApprox) {
+                placement = 'bottom';
+                top = rBottom + 10;
             }
+            // If placed bottom but too low? (Handling bottom overflow is harder as we don't know window height perfectly in scaled space, but top is more critical)
 
-            // Clamp horizontally to viewport
-            const bubbleWidth = 320;
-            if (left + bubbleWidth > window.innerWidth) {
-                left = window.innerWidth - bubbleWidth - 20;
+            // Clamp Horizontally
+            const bubbleWidth = 320; 
+            // Available width in CSS pixels
+            const windowWidth = window.innerWidth / zoomFactor; 
+            
+            if (left + bubbleWidth > windowWidth) {
+                left = windowWidth - bubbleWidth - 20;
             }
             if (left < 10) left = 10;
 
-            setPosition({ top, left });
+            setPosition({ top, left, placement });
 
-            // Keep target in view for context
-            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Keep target in view
+            // Use block: 'start' or 'nearest' to avoid centering large elements which pushes them out of top view
+            element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         };
 
     // Initial update
-    const timer = setTimeout(updatePosition, 100); // Small delay to ensure DOM is ready
+    const timer = setTimeout(updatePosition, 100); 
     window.addEventListener('resize', updatePosition);
     window.addEventListener('scroll', updatePosition);
 
@@ -66,12 +85,11 @@ export function TutorialOverlay() {
 
   if (!isActive || !currentStep || !position) return null;
 
+  // Use the calculated placement or fallback
+  const finalPlacement = position.placement;
+
   return (
     <div className="fixed inset-0 z-50 pointer-events-none">
-      {/* Semi-transparent overlay mask - optional, maybe distracting
-      <div className="absolute inset-0 bg-black bg-opacity-20" /> 
-      */}
-
       {/* The Bubble */}
       <div 
         ref={bubbleRef}
@@ -79,8 +97,8 @@ export function TutorialOverlay() {
         style={{ 
             top: position.top, 
             left: position.left,
-            transform: currentStep.position === 'top' ? 'translateY(-100%)' : 
-                       currentStep.position === 'left' ? 'translateX(-100%)' : 'none'
+            transform: finalPlacement === 'top' ? 'translateY(-100%)' : 
+                       finalPlacement === 'left' ? 'translateX(-100%)' : 'none'
         }}
       >
         <div className="flex justify-between items-start mb-3">
@@ -122,8 +140,8 @@ export function TutorialOverlay() {
         {/* Arrow (Visual only, simplified) */}
         <div 
             className={`absolute w-4 h-4 bg-white border-blue-200 transform rotate-45 ${
-                currentStep.position === 'top' ? 'bottom-[-9px] border-b border-r border-t-0 border-l-0' :
-                currentStep.position === 'right' ? 'left-[-9px] border-b-0 border-r-0 border-t-0 border-l-[1px] bg-transparent' : 
+                finalPlacement === 'top' ? 'bottom-[-9px] border-b border-r border-t-0 border-l-0' :
+                finalPlacement === 'right' ? 'left-[-9px] border-b-0 border-r-0 border-t-0 border-l-[1px] bg-transparent' : 
                 'top-[-9px] left-8 border-t border-l border-b-0 border-r-0' // Default bottom
             }`}
         />

@@ -31,7 +31,7 @@ export const DEMO_HOME_STEPS: TutorialStep[] = [
     targetId: 'tutorial-agenda-list',
     title: 'Your Collection',
     content: 'Your agendas live here. We have pre-loaded a few examples for you to check out.',
-    position: 'top'
+    position: 'bottom'
   }
 ];
 
