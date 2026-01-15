@@ -53,7 +53,7 @@ export default function AgendaPage() {
         if (isDemo) {
             const demoAgenda = demoContext.getAgenda(Number(agendaId));
             if (!demoAgenda) throw new Error("Agenda not found");
-            setAgenda({ title: demoAgenda.title, createdAt: demoAgenda.created_at });
+            setAgenda({ title: demoAgenda.title, createdAt: demoAgenda.createdAt });
             setArticles(demoAgenda.articles);
         } else {
             const agendaRes = await authFetch(API_ENDPOINTS.agenda(agendaId));
@@ -64,7 +64,7 @@ export default function AgendaPage() {
             if (!articlesRes.ok) throw new Error("Failed to fetch articles");
             const articlesData = await articlesRes.json();
 
-            setAgenda({ title: agendaData.title, createdAt: agendaData.created_at });
+            setAgenda({ title: agendaData.title, createdAt: agendaData.createdAt });
             setArticles(articlesData);
         }
         setError(null);
