@@ -157,13 +157,13 @@ export default function HomePage() {
       <div className="fixed top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-400 via-purple-400 to-pink-400 opacity-30 rounded-full blur-3xl pointer-events-none -z-10 animate-float" style={{ filter: 'blur(120px)' }} />
       <div className="fixed bottom-0 right-0 w-96 h-96 bg-gradient-to-tr from-pink-400 via-purple-400 to-blue-400 opacity-30 rounded-full blur-3xl pointer-events-none -z-10 animate-float2" style={{ filter: 'blur(120px)' }} />
       
-      <div className="max-w-3xl mx-auto space-y-12 scale-85">
+      <div className="max-w-3xl mx-auto space-y-12">
         <div id="tutorial-branding" className="text-center mb-8 relative z-10">
           <h1 className="text-7xl md:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-purple-800 to-blue-900 bg-[length:200%_auto] drop-shadow-2xl tracking-tighter animate-title-gradient" style={{ fontFamily: "'Playfair Display', serif" }}>
             AGENDA
           </h1>
           <p className="text-gray-600 font-medium text-lg md:text-xl tracking-[0.5em] uppercase opacity-0 mt-2 animate-subtitle-reveal">
-            Prove Your Point
+            State And Prove Your Point
           </p>
         </div>
 
@@ -173,9 +173,11 @@ export default function HomePage() {
             <CreateAgendaForm onCreate={handleCreateAgenda} />
           </div>
         </div>
+      </div>
 
+      <div className="max-w-[90%] 2xl:max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 mt-16">
         <div id="tutorial-agenda-list" className="relative z-10 space-y-8 animate-agendas-reveal">
-          <h2 className="text-3xl font-bold text-blue-800 tracking-tight flex items-center gap-2 animate-title-bounce">
+          <h2 className="text-3xl font-bold text-blue-800 tracking-tight flex items-center gap-2 animate-title-bounce justify-center md:justify-start">
             <span>My Agendas</span>
             {agendas.length > 0 && (
               <span className="text-base font-normal text-gray-500 ml-2">({agendas.length})</span>
@@ -187,64 +189,88 @@ export default function HomePage() {
               <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-400 opacity-60"></div>
             </div>
           ) : error ? (
-            <div className="text-center py-16 bg-white/60 backdrop-blur-xl rounded-2xl border border-red-200 shadow-inner animate-fade-in">
+            <div className="text-center py-16 bg-white/60 backdrop-blur-xl rounded-2xl border border-red-200 shadow-inner animate-fade-in max-w-3xl mx-auto">
               <p className="text-red-600 text-lg">Error: {error}</p>
             </div>
           ) : agendas.length === 0 ? (
-            <div className="text-center py-16 bg-white/60 backdrop-blur-xl rounded-2xl border border-gray-200 shadow-inner animate-fade-in">
+            <div className="text-center py-16 bg-white/60 backdrop-blur-xl rounded-2xl border border-gray-200 shadow-inner animate-fade-in max-w-3xl mx-auto">
               <p className="text-gray-500 text-lg">No agendas yet. Create your first one above!</p>
             </div>
           ) : (
-            <div className="grid gap-8 md:grid-cols-2">
+            <div className="grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
               {agendasWithArticles.map((agenda) => (
                 <div key={agenda.id}>
                     <Link to={isDemo ? `/demo/agenda/${agenda.id}` : `/agenda/${agenda.id}`} className="block h-full group">
-                        <div className="bg-white/70 backdrop-blur-md border border-gray-200 rounded-2xl p-6 shadow-lg hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 h-full flex flex-col relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-100 to-purple-100 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110" />
+                        <div className="bg-white border border-gray-100 rounded-[2rem] shadow-xl hover:shadow-2xl hover:scale-[1.02] transition-all duration-500 h-[26rem] flex flex-col relative overflow-hidden group">
                             
-                            <h3 className="text-2xl font-bold text-gray-800 mb-2 group-hover:text-blue-700 transition-colors line-clamp-2">
-                            {agenda.title}
-                            </h3>
-                            <p className="text-sm text-gray-500 mb-6 font-mono">
-                            {agenda.createdAt ? new Date(agenda.createdAt).toLocaleDateString() : 'No Date'}
-                            </p>
+                            {/* Image Background Grid */}
+                            <div className="absolute inset-x-0 top-0 h-[70%] z-0">
+                                {agenda.articles && agenda.articles.length > 0 ? (
+                                    <div className="w-full h-full grid grid-cols-2 grid-rows-2 gap-[1px] bg-slate-100">
+                                        {agenda.articles.slice(0, 4).map((article: any, idx: number) => {
+                                            const total = Math.min(agenda.articles.length, 4);
+                                            let spanClass = "";
+                                            // Dynamic collage layout
+                                            if (total === 1) spanClass = "col-span-2 row-span-2";
+                                            else if (total === 2) spanClass = "col-span-1 row-span-2";
+                                            else if (total === 3) spanClass = (idx === 0) ? "col-span-1 row-span-2" : "col-span-1 row-span-1";
+                                            else spanClass = "col-span-1 row-span-1";
 
-                            <div className="flex-1">
-                            {agenda.articles && agenda.articles.length > 0 ? (
-                                <div className="grid grid-cols-2 gap-2 mb-4">
-                                {agenda.articles.slice(0, 4).map((article: any) => (
-                                    <div key={article.id} className="aspect-video rounded-lg overflow-hidden bg-gray-100 relative">
-                                    <img 
-                                        src={article.image || `https://source.unsplash.com/random/200x200?sig=${article.id}`} 
-                                        alt="" 
-                                        className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition"
-                                        onError={(e) => (e.currentTarget.style.display = 'none')}
-                                    />
+                                            return (
+                                                <div key={article.id} className={`${spanClass} relative overflow-hidden bg-gray-200`}>
+                                                     <img 
+                                                        src={article.image || `https://source.unsplash.com/random/400x400?sig=${article.id}`} 
+                                                        alt="" 
+                                                        className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 filter brightness-[0.95] contrast-[1.1]"
+                                                        onError={(e) => (e.currentTarget.style.display = 'none')}
+                                                    />
+                                                </div>
+                                            )
+                                        })}
+                                        {/* Fillers if less than 4 to keep grid nice if needed, but we handle via spans logic mostly */}
                                     </div>
-                                ))}
-                                </div>
-                            ) : (
-                                <div className="h-24 bg-gray-50 rounded-xl border border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-sm mb-4">
-                                  {isDemo ? "No articles" : "View to see articles"}
-                                </div>
-                            )}
+                                ) : (
+                                    <div className="w-full h-full bg-gradient-to-br from-indigo-50 to-blue-50 flex items-center justify-center">
+                                        <div className="text-6xl grayscale opacity-20 transform -rotate-12 select-none">📰</div>
+                                    </div>
+                                )}
                             </div>
+                            
+                            {/* Stylish Fade Overlay */}
+                            <div className="absolute inset-0 z-10 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none" style={{ top: '40%' }} />
 
-                            <div className="mt-auto flex justify-between items-center pt-4 border-t border-gray-100">
-                            <span className="text-blue-600 font-semibold text-sm group-hover:underline">View Agenda →</span>
-                            <button
-                                onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                setAgendaToDelete(agenda);
-                                }}
-                                className="text-gray-400 hover:text-red-500 transition p-2 rounded-full hover:bg-red-50"
-                                title="Delete Agenda"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                            </button>
+                            {/* Content Layer */}
+                            <div className="relative z-20 h-full flex flex-col justify-end p-8 pt-0">
+                                <div className="transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500 ease-out">
+                                    <h3 
+                                        className={`${agenda.title.length > 60 ? "text-lg md:text-xl" : agenda.title.length > 30 ? "text-xl md:text-2xl" : "text-2xl md:text-3xl"} font-black text-gray-900 mb-2 leading-tight tracking-tight group-hover:text-blue-700 transition-colors line-clamp-2`} 
+                                        style={{ fontFamily: "'Playfair Display', serif" }}
+                                    >
+                                        {agenda.title}
+                                    </h3>
+                                     <div className="flex items-center justify-between mt-3 border-t border-gray-100 pt-3 opacity-80 group-hover:opacity-100 transition-opacity">
+                                        <span className="text-xs font-bold uppercase tracking-widest text-gray-400">
+                                            {agenda.createdAt ? new Date(agenda.createdAt).toLocaleDateString() : 'No Date'}
+                                        </span>
+                                        <span className="text-xs font-bold uppercase tracking-widest text-blue-600 flex items-center gap-1">
+                                            Open <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
+                                        </span>
+                                     </div>
+                                </div>
+                                
+                                <button
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setAgendaToDelete(agenda);
+                                    }}
+                                    className="absolute top-4 right-4 z-30 bg-white/30 hover:bg-red-500 backdrop-blur-md text-slate-800 hover:text-white p-2 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-75 group-hover:scale-100"
+                                    title="Delete Agenda"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
                             </div>
                         </div>
                     </Link>

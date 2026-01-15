@@ -12,44 +12,45 @@ export function TutorialOverlay() {
     
     if (!isActive || !currentStep) return;
 
-    const updatePosition = () => {
-      const element = document.getElementById(currentStep.targetId);
-      if (element) {
-        const rect = element.getBoundingClientRect();
-        const scrollTop = window.scrollY || document.documentElement.scrollTop;
-        const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
+        const updatePosition = () => {
+            const element = document.getElementById(currentStep.targetId);
+            if (!element) return;
 
-        // Default to 'bottom' if not specified
-        const placement = currentStep.position || 'bottom';
-        
-        let top = rect.bottom + scrollTop + 10; // default bottom
-        let left = rect.left + scrollLeft;
+            const rect = element.getBoundingClientRect();
+            const placement = currentStep.position || 'bottom';
 
-        if (placement === 'top') {
-            top = rect.top + scrollTop - 10; // We'll adjust for bubble height later effectively or via CSS transform
-        } else if (placement === 'right') {
-            top = rect.top + scrollTop;
-            left = rect.right + scrollLeft + 10;
-        } else if (placement === 'left') {
-            top = rect.top + scrollTop;
-            left = rect.left + scrollLeft - 10;
-        }
+            // Use viewport-relative coords directly (page is zoomed; overlay is in same zoomed context)
+            let top = rect.bottom + 10; // default: below target
+            let left = rect.left;
 
-        // Adjust for viewport edges if needed (basic implementation)
-        const bubbleWidth = 320; // Approx width
-        if (left + bubbleWidth > window.innerWidth) {
-            left = window.innerWidth - bubbleWidth - 20;
-        }
-        if (left < 10) left = 10;
+            if (placement === 'top') {
+                top = rect.top - 10; // bubble translates up via CSS
+            } else if (placement === 'right') {
+                top = rect.top;
+                left = rect.right + 10;
+            } else if (placement === 'left') {
+                top = rect.top;
+                left = rect.left - 10;
+            }
 
-        setPosition({ top, left });
-        
-        // Scroll into view if needed
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      } else {
-          // If element doesn't exist yet, we might want to retry or just wait
-      }
-    };
+            // Basic vertical guard: if target is near top and placement is 'top', drop it below instead
+            const bubbleHeight = 220; // rough
+            if (placement === 'top' && top < bubbleHeight) {
+                top = rect.bottom + 10;
+            }
+
+            // Clamp horizontally to viewport
+            const bubbleWidth = 320;
+            if (left + bubbleWidth > window.innerWidth) {
+                left = window.innerWidth - bubbleWidth - 20;
+            }
+            if (left < 10) left = 10;
+
+            setPosition({ top, left });
+
+            // Keep target in view for context
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        };
 
     // Initial update
     const timer = setTimeout(updatePosition, 100); // Small delay to ensure DOM is ready

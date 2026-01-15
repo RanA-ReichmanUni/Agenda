@@ -21,7 +21,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     const newAgenda: DemoAgenda = {
       id: Date.now(),
       title,
-      created_at: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
       articles: []
     };
     setAgendas(prev => [newAgenda, ...prev]);
@@ -36,7 +36,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       ...articleData,
       id: Date.now().toString(),
       agenda_id: agendaId.toString(),
-      created_at: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
       image: articleData.image || "https://placehold.co/600x400/e2e8f0/1e293b?text=Article"
     };
 
