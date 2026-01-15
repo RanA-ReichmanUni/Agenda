@@ -9,6 +9,8 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import { ToastProvider } from './context/ToastContext';
 import ShowToast from './components/Toast';
+import { TutorialProvider } from './context/TutorialContext';
+import { TutorialOverlay } from './components/TutorialOverlay';
 
 // Protected Route wrapper
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -35,7 +37,9 @@ export default function App() {
     <AuthProvider>
       <ToastProvider>
         <ShowToast />
-        <Routes>
+        <TutorialProvider>
+          <TutorialOverlay />
+          <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           
@@ -71,6 +75,7 @@ export default function App() {
             }
           />
         </Routes>
+        </TutorialProvider>
       </ToastProvider>
     </AuthProvider>
     </DemoProvider>

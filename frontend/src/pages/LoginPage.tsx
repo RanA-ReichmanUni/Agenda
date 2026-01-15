@@ -103,12 +103,16 @@ export default function LoginPage() {
           </p>
           
           <div className="border-t border-gray-200 pt-4">
-            <Link 
-              to="/demo" 
-              className="inline-block w-full bg-yellow-100 text-yellow-800 font-semibold py-3 px-6 rounded-lg hover:bg-yellow-200 transition shadow-inner"
+            <button
+              onClick={() => {
+                // Clear tutorial seen flag so it always shows on fresh demo entry
+                localStorage.removeItem('agenda_demo_tutorial_home');
+                navigate('/demo');
+              }}
+              className="inline-block w-full text-center bg-yellow-100 text-yellow-800 font-semibold py-3 px-6 rounded-lg hover:bg-yellow-200 transition shadow-inner"
             >
               Try Demo Mode (No Login)
-            </Link>
+            </button>
           </div>
         </div>
       </div>

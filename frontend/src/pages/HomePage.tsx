@@ -5,10 +5,21 @@ import { useDemo } from "../context/DemoContext";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { API_ENDPOINTS, authFetch } from "../lib/api";
+import { useTutorial } from "../context/TutorialContext";
+import { DEMO_HOME_STEPS, DEMO_MODE_EXPLANATION } from "../lib/tutorialSteps";
 
 export default function HomePage() {
   const location = useLocation();
   const isDemo = location.pathname.startsWith('/demo');
+  const { startTutorial, hasSeenTutorial, isActive } = useTutorial();
+
+  useEffect(() => {
+    if (isDemo && !hasSeenTutorial('home') && !isActive) {
+        setTimeout(() => {
+             startTutorial(DEMO_HOME_STEPS, 'home');
+        }, 800);
+    }
+  }, [isDemo, startTutorial, hasSeenTutorial, isActive]);
   
   // Real Context (might be undefined if in demo route)
   const agendaContext = useContext(AgendaContext);
@@ -102,7 +113,7 @@ export default function HomePage() {
       
       {/* Demo Banner */}
       {isDemo && (
-        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-30">
+        <div id="tutorial-demo-banner" className="absolute top-4 left-1/2 transform -translate-x-1/2 z-30 cursor-pointer hover:scale-105 transition-transform" onClick={() => startTutorial(DEMO_MODE_EXPLANATION, 'demo-explanation')}>
           <div className="bg-yellow-100 border border-yellow-300 text-yellow-800 px-4 py-1 rounded-full text-sm font-semibold shadow-md">
             Demo Mode - Local Storage Only
           </div>
@@ -147,7 +158,7 @@ export default function HomePage() {
       <div className="fixed bottom-0 right-0 w-96 h-96 bg-gradient-to-tr from-pink-400 via-purple-400 to-blue-400 opacity-30 rounded-full blur-3xl pointer-events-none -z-10 animate-float2" style={{ filter: 'blur(120px)' }} />
       
       <div className="max-w-3xl mx-auto space-y-12 scale-85">
-        <div className="text-center mb-8 relative z-10">
+        <div id="tutorial-branding" className="text-center mb-8 relative z-10">
           <h1 className="text-7xl md:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-purple-800 to-blue-900 bg-[length:200%_auto] drop-shadow-2xl tracking-tighter animate-title-gradient" style={{ fontFamily: "'Playfair Display', serif" }}>
             AGENDA
           </h1>
@@ -156,14 +167,14 @@ export default function HomePage() {
           </p>
         </div>
 
-        <div className="relative z-10 animate-form-slide">
+        <div id="tutorial-create-agenda" className="relative z-10 animate-form-slide">
           <div className="bg-white/60 backdrop-blur-xl border border-gray-200 shadow-2xl rounded-3xl p-8">
             <h2 className="text-3xl font-bold text-blue-800 tracking-tight mb-6 animate-title-bounce">Create New Agenda</h2>
             <CreateAgendaForm onCreate={handleCreateAgenda} />
           </div>
         </div>
 
-        <div className="relative z-10 space-y-8 animate-agendas-reveal">
+        <div id="tutorial-agenda-list" className="relative z-10 space-y-8 animate-agendas-reveal">
           <h2 className="text-3xl font-bold text-blue-800 tracking-tight flex items-center gap-2 animate-title-bounce">
             <span>My Agendas</span>
             {agendas.length > 0 && (

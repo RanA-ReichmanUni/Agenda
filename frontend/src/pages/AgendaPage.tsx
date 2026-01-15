@@ -6,12 +6,15 @@ import ArticleCard from "../components/ArticleCard";
 import { API_ENDPOINTS, authFetch } from "../lib/api";
 import { useToastContext } from "../context/ToastContext";
 import { useDemo } from "../context/DemoContext";
+import { useTutorial } from "../context/TutorialContext";
+import { DEMO_AGENDA_STEPS } from "../lib/tutorialSteps";
 
 export default function AgendaPage() {
   const { id } = useParams();
   const location = useLocation();
   const isDemo = location.pathname.startsWith('/demo');
   const demoContext = useDemo();
+  const { startTutorial, hasSeenTutorial, isActive } = useTutorial();
 
   if (!id) {
     return (
@@ -34,6 +37,14 @@ export default function AgendaPage() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [iframeError, setIframeError] = useState<boolean>(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  useEffect(() => {
+    if (isDemo && !loading && !hasSeenTutorial('agenda') && !isActive) {
+        setTimeout(() => {
+             startTutorial(DEMO_AGENDA_STEPS, 'agenda');
+        }, 800);
+    }
+  }, [isDemo, loading, startTutorial, hasSeenTutorial, isActive]);
 
   useEffect(() => {
     const fetchAgendaAndArticles = async () => {
@@ -245,7 +256,7 @@ export default function AgendaPage() {
       <div className="max-w-4xl mx-auto space-y-12 py-12">
         <div className="relative z-10 flex flex-col items-center animate-agenda-header text-center">
             <span className="text-sm font-bold tracking-[0.3em] text-blue-600 uppercase mb-4 opacity-80 animate-subtitle-reveal">My Narrative</span>
-            <h1 className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-gray-800 via-blue-800 to-gray-900 mb-6 drop-shadow-sm tracking-tight leading-tight" style={{ fontFamily: "'Playfair Display', serif" }}>
+            <h1 id="tutorial-agenda-subject" className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-gray-800 via-blue-800 to-gray-900 mb-6 drop-shadow-sm tracking-tight leading-tight" style={{ fontFamily: "'Playfair Display', serif" }}>
             {agenda.title}
           </h1>
           <div className="flex items-center gap-2 text-sm text-gray-500 font-medium bg-white/50 backdrop-blur-sm px-4 py-2 rounded-full border border-gray-100 shadow-sm">
@@ -254,7 +265,7 @@ export default function AgendaPage() {
           </div>
         </div>
 
-        <div className="relative z-10 animate-form-float max-w-2xl mx-auto w-full">
+        <div id="tutorial-add-article" className="relative z-10 animate-form-float max-w-2xl mx-auto w-full">
           <AddArticleForm onAdd={handleAddArticle} />
         </div>
 
@@ -275,7 +286,7 @@ export default function AgendaPage() {
               <p className="text-gray-400 text-sm">Paste a URL above to add your first source.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div id="tutorial-evidence-grid" className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {articles.map((article, index) => (
                 <div
                   key={article.id}
