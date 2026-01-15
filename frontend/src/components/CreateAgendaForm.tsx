@@ -44,34 +44,30 @@ export default function CreateAgendaForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-          Agenda Title
-        </label>
+    <div className="space-y-4">
+      <form onSubmit={handleSubmit} className="relative">
         <input
           id="title"
           type="text"
-          placeholder="Enter agenda title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
-          required
+          placeholder="Agenda Title..."
+          className="w-full px-6 py-4 text-lg bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none transition shadow-inner"
+          disabled={loading}
+          required // Keep required if desired, though disabled button handles it visually
         />
-      </div>
+        
+        <button
+          type="submit"
+          disabled={loading || !title.trim()}
+          className="absolute right-2 top-2 bottom-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 rounded-lg font-semibold hover:shadow-lg hover:scale-105 active:scale-95 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {loading ? "..." : "Create"}
+        </button>
+      </form>
       {error && (
         <div className="text-red-600 bg-red-100 border border-red-200 rounded-xl p-3 text-sm">{error}</div>
       )}
-      <button
-        type="submit"
-        disabled={loading}
-        className={`w-full py-2 px-4 rounded-xl font-semibold transition 
-          ${loading 
-            ? "bg-gray-300 cursor-not-allowed" 
-            : "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md hover:shadow-lg"}`}
-      >
-        {loading ? "Creating..." : "Create Agenda"}
-      </button>
-    </form>
+    </div>
   );
 }

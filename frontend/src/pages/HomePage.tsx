@@ -4,6 +4,7 @@ import AgendaCard from "../components/AgendaCard";
 import { useAgendaContext } from "../context/AgendaContext";
 import { API_ENDPOINTS, authFetch } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
+import { Link } from "react-router-dom";
 
 export default function HomePage() {
   const { agendas, loading, error, refetch } = useAgendaContext();
@@ -97,11 +98,58 @@ export default function HomePage() {
           ) : (
             <div className="grid gap-8 md:grid-cols-2">
               {agendasWithArticles.map((agenda) => (
-                <AgendaCard
-                  key={agenda.id}
-                  agenda={agenda}
-                  onDelete={() => setAgendaToDelete(agenda)}
-                />
+                <div key={agenda.id}>
+                    <Link to={`/agenda/${agenda.id}`} className="block h-full group">
+                        <div className="bg-white/70 backdrop-blur-md border border-gray-200 rounded-2xl p-6 shadow-lg hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 h-full flex flex-col relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-100 to-purple-100 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110" />
+                            
+                            <h3 className="text-2xl font-bold text-gray-800 mb-2 group-hover:text-blue-700 transition-colors line-clamp-2">
+                            {agenda.title}
+                            </h3>
+                            <p className="text-sm text-gray-500 mb-6 font-mono">
+                            {new Date(agenda.created_at).toLocaleDateString()}
+                            </p>
+
+                            <div className="flex-1">
+                            {agenda.articles && agenda.articles.length > 0 ? (
+                                <div className="grid grid-cols-2 gap-2 mb-4">
+                                {agenda.articles.map((article: any) => (
+                                    <div key={article.id} className="aspect-video rounded-lg overflow-hidden bg-gray-100 relative">
+                                    <img 
+                                        src={article.image || `https://source.unsplash.com/random/200x200?sig=${article.id}`} 
+                                        alt="" 
+                                        className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition"
+                                        onError={(e) => (e.currentTarget.style.display = 'none')}
+                                    />
+                                    </div>
+                                ))}
+                                </div>
+                            ) : (
+                                <div className="h-24 bg-gray-50 rounded-xl border border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-sm mb-4">
+                                No articles added
+                                </div>
+                            )}
+                            </div>
+
+                            <div className="mt-auto flex justify-between items-center pt-4 border-t border-gray-100">
+                            <span className="text-blue-600 font-semibold text-sm group-hover:underline">View Agenda →</span>
+                            <button
+                                onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setAgendaToDelete(agenda);
+                                }}
+                                className="text-gray-400 hover:text-red-500 transition p-2 rounded-full hover:bg-red-50"
+                                title="Delete Agenda"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                            </div>
+                        </div>
+                    </Link>
+                </div>
               ))}
             </div>
           )}
