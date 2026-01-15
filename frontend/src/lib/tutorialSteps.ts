@@ -37,7 +37,7 @@ export const DEMO_HOME_STEPS: TutorialStep[] = [
 
 export const DEMO_AGENDA_STEPS: TutorialStep[] = [
   {
-    targetId: 'tutorial-agenda-title',
+    targetId: 'tutorial-agenda-subject',
     title: 'The Subject',
     content: 'This is the core topic of your agenda.',
     position: 'bottom'

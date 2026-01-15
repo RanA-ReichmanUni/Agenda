@@ -107,6 +107,7 @@ export default function LoginPage() {
               onClick={() => {
                 // Clear tutorial seen flag so it always shows on fresh demo entry
                 localStorage.removeItem('agenda_demo_tutorial_home');
+                localStorage.removeItem('agenda_demo_tutorial_agenda');
                 navigate('/demo');
               }}
               className="inline-block w-full text-center bg-yellow-100 text-yellow-800 font-semibold py-3 px-6 rounded-lg hover:bg-yellow-200 transition shadow-inner"

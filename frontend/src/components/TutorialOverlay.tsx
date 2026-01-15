@@ -7,6 +7,9 @@ export function TutorialOverlay() {
   const bubbleRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Reset position when step changes to prevent ghosting/jumping
+    setPosition(null);
+    
     if (!isActive || !currentStep) return;
 
     const updatePosition = () => {
