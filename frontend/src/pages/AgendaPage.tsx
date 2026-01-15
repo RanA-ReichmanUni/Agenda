@@ -202,8 +202,11 @@ export default function AgendaPage() {
         </Link>
       </div>
 
-      <div className="max-w-3xl mx-auto space-y-10 scale-85">
+      <div className="max-w-3xl mx-auto space-y-10">
         <div className="relative z-10 bg-white/60 backdrop-blur-xl border border-gray-200 shadow-2xl rounded-3xl p-8 flex flex-col items-center animate-agenda-header">
+          <h1 className="text-4xl md:text-5xl font-extrabold text-black mb-2 drop-shadow-lg tracking-tight animate-agenda-title" style={{ fontFamily: "'Playfair Display', serif" }}>
+            My Agenda: 
+          </h1>
           <h1 className="text-4xl md:text-5xl font-extrabold text-blue-800 mb-2 drop-shadow-lg tracking-tight animate-agenda-title">
             {agenda.title}
           </h1>
@@ -218,10 +221,10 @@ export default function AgendaPage() {
 
         <div className="relative z-10 space-y-8 animate-articles-container">
           <div className="flex items-center justify-between mb-2">
-            <h2 className="text-3xl font-bold text-blue-800 tracking-tight flex items-center gap-2 animate-section-title">
-              <span>Articles</span>
+            <h2 className="text-4xl md:text-3xl font-extrabold text-blue-600 mb-2 drop-shadow-lg tracking-tight animate-agenda-title" style={{ fontFamily: "'Playfair Display', serif" }}>
+              <span>Here’s Why:</span>
               {articles.length > 0 && (
-                <span className="text-base font-normal text-gray-500 ml-2">({articles.length})</span>
+                <span className="text-base md:text-2xl font-normal text-gray-500 ml-3">({articles.length})</span>
               )}
             </h2>
           </div>

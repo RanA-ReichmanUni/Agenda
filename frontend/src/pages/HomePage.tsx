@@ -60,10 +60,10 @@ export default function HomePage() {
       <div className="max-w-3xl mx-auto space-y-12 scale-85">
         <div className="relative z-10 bg-white/60 backdrop-blur-xl border border-gray-200 shadow-2xl rounded-3xl p-10 flex flex-col items-center animate-header-reveal">
           <h1 className="text-5xl md:text-6xl font-extrabold text-blue-800 mb-4 drop-shadow-lg tracking-tight animate-title-bounce">
-            Agenda
+            AGENDA
           </h1>
-          <p className="text-gray-700 text-lg md:text-xl max-w-2xl mx-auto font-medium animate-subtitle-fade">
-            Create and manage your narratives and agendas. Add articles, organize your content, and prove your point.
+          <p className="text-gray-700 text-lg md:text-xl max-w-2xl mx-auto font-medium text-center animate-subtitle-fade">
+            Create and manage your narratives and agendas. <br />Add sources and articles, and prove your point.
           </p>
         </div>
 
@@ -76,7 +76,7 @@ export default function HomePage() {
 
         <div className="relative z-10 space-y-8 animate-agendas-reveal">
           <h2 className="text-3xl font-bold text-blue-800 tracking-tight flex items-center gap-2 animate-title-bounce">
-            <span>Your Agendas</span>
+            <span>My Agendas</span>
             {agendas.length > 0 && (
               <span className="text-base font-normal text-gray-500 ml-2">({agendas.length})</span>
             )}

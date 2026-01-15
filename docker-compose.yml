@@ -37,7 +37,12 @@ services:
       - backend
     environment:
       VITE_API_URL: http://localhost:8000
-    command: npm run dev
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm run dev -- --host 0.0.0.0 --force
 
 volumes:
   postgres_data:

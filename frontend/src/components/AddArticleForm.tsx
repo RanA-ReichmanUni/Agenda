@@ -81,7 +81,7 @@ export default function AddArticleForm({ onAdd }: AddArticleFormProps) {
 
   return (
     <div className="bg-white shadow-xl rounded-2xl p-6 border border-gray-200">
-      <h2 className="text-2xl font-bold text-gray-800 text-center">Add Article</h2>
+      <h2 className="text-2xl font-bold text-gray-800 text-center">Add Source</h2>
 
       <div className="space-y-2">
         <label htmlFor="url" className="block text-sm font-medium text-gray-700">
