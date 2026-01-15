@@ -83,13 +83,22 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="mt-6 text-center">
+        <div className="mt-6 text-center space-y-4">
           <p className="text-gray-600">
             Don't have an account?{' '}
             <Link to="/register" className="text-blue-600 hover:text-blue-700 font-semibold">
               Sign up
             </Link>
           </p>
+          
+          <div className="border-t border-gray-200 pt-4">
+            <Link 
+              to="/demo" 
+              className="inline-block w-full bg-yellow-100 text-yellow-800 font-semibold py-3 px-6 rounded-lg hover:bg-yellow-200 transition shadow-inner"
+            >
+              Try Demo Mode (No Login)
+            </Link>
+          </div>
         </div>
       </div>
     </div>
