@@ -13,16 +13,36 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   backend:
-    build: ./agenda-backend
+    build: ./backend
     ports:
-      - "4000:4000"
+      - "8000:8000"
     depends_on:
       - postgres
     environment:
-      DATABASE_URL: postgres://agenda_user:supersecret@postgres:5432/agenda_db
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: agenda_db
+      DB_USER: agenda_user
+      DB_PASSWORD: supersecret
+      API_PORT: 8000
     volumes:
-      - ./agenda-backend:/app
-    command: npm run dev
+      - ./backend:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    environment:
+      VITE_API_URL: http://localhost:8000
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm run dev -- --host 0.0.0.0 --force
 
 volumes:
   postgres_data:

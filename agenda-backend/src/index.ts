@@ -3,6 +3,7 @@ import cors = require('cors');
 import dotenv = require('dotenv');
 import agendasRouter from './routes/agendas';
 import articlesRouter from './routes/articles';
+import authRouter from './routes/auth';
 
 dotenv.config();
 
@@ -11,6 +12,7 @@ app.use(cors());
 app.use(express.json());
 app.use('/agendas', agendasRouter);
 app.use('/', articlesRouter);
+app.use('/auth', authRouter);
 
 app.get('/', (req, res) => {
   res.send('Agenda Backend is running');
