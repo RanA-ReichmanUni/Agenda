@@ -81,8 +81,7 @@ export default function AgendaPage() {
   const handleAddArticle = async (newArticle: Omit<Article, "id">) => {
     try {
       if (isDemo) {
-        const added = await demoContext.createArticle(Number(agendaId), newArticle);
-        setArticles(prev => [added, ...prev]);
+        await demoContext.createArticle(Number(agendaId), newArticle);
         return;
       }
       
@@ -108,9 +107,8 @@ export default function AgendaPage() {
          // The demoContext.createArticle expects Omit<Article, id...>. 
          // But here we want to restore exact ID if possible? 
          // demoData creates new ID. It's fine for demo.
-         const { id, created_at, agenda_id, ...rest } = articleToRestore;
-         const restored = await demoContext.createArticle(Number(agendaId), rest);
-         setArticles(prev => [restored, ...prev]);
+         const { id, createdAt, agenda_id, ...rest } = articleToRestore;
+         await demoContext.createArticle(Number(agendaId), rest);
          setShowUndo(false);  
          setArticleToDelete(null);
          return;

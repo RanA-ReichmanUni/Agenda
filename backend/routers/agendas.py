@@ -33,7 +33,7 @@ async def create_agenda(
         )
         row = cursor.fetchone()
         conn.commit()
-        return Agenda(id=row[0], user_id=row[1], title=row[2], created_at=row[3])
+        return Agenda(id=row[0], user_id=row[1], title=row[2], createdAt=row[3])
     finally:
         conn.close()
 
@@ -57,7 +57,7 @@ async def get_agendas(current_user: User = Depends(get_current_user)):
             (current_user.id,)
         )
         rows = cursor.fetchall()
-        return [Agenda(id=r[0], user_id=r[1], title=r[2], created_at=r[3]) for r in rows]
+        return [Agenda(id=r[0], user_id=r[1], title=r[2], createdAt=r[3]) for r in rows]
     finally:
         conn.close()
 
@@ -90,7 +90,7 @@ async def get_agenda(
         row = cursor.fetchone()
         if not row:
             raise HTTPException(status_code=404, detail="Agenda not found")
-        return Agenda(id=row[0], user_id=row[1], title=row[2], created_at=row[3])
+        return Agenda(id=row[0], user_id=row[1], title=row[2], createdAt=row[3])
     finally:
         conn.close()
 

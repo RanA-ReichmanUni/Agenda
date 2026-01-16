@@ -75,7 +75,7 @@ async def create_article(
             url=row[3],
             description=row[4],
             image=row[5],
-            created_at=row[6]
+            createdAt=row[6]
         )
     finally:
         conn.close()
@@ -122,7 +122,7 @@ async def get_articles(
                 url=r[3],
                 description=r[4],
                 image=r[5],
-                created_at=r[6]
+                createdAt=r[6]
             ) for r in rows
         ]
     finally:

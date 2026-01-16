@@ -45,7 +45,7 @@ class Agenda(BaseModel):
     """Model for agenda response"""
     id: int
     title: str
-    created_at: datetime
+    createdAt: datetime
 
 # ============================================
 # ARTICLE MODELS
@@ -66,4 +66,4 @@ class Article(BaseModel):
     description: str
     image: Optional[str]
     agenda_id: int
-    created_at: datetime
+    createdAt: datetime

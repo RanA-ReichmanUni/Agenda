@@ -7,7 +7,7 @@ interface DemoContextType {
   agendas: DemoAgenda[];
   addAgenda: (title: string) => Promise<void>;
   deleteAgenda: (id: number) => Promise<void>;
-  createArticle: (agendaId: number, article: Omit<Article, "id" | "created_at" | "agenda_id">) => Promise<Article>;
+  createArticle: (agendaId: number, article: Omit<Article, "id" | "createdAt" | "agenda_id">) => Promise<Article>;
   deleteArticle: (agendaId: number, articleId: number) => Promise<void>;
   getAgenda: (id: number) => DemoAgenda | undefined;
 }
@@ -31,7 +31,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     setAgendas(prev => prev.filter(a => a.id !== id));
   };
 
-  const createArticle = async (agendaId: number, articleData: Omit<Article, "id" | "created_at" | "agenda_id">) => {
+  const createArticle = async (agendaId: number, articleData: Omit<Article, "id" | "createdAt" | "agenda_id">) => {
     const newArticle: Article = {
       ...articleData,
       id: Date.now().toString(),

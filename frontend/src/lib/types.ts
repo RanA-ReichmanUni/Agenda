@@ -5,7 +5,6 @@ export interface Article {
   description: string;
   image?: string;
   agenda_id?: string;
-  created_at?: string;
   createdAt?: string;
 }
 
