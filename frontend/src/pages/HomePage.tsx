@@ -200,62 +200,48 @@ export default function HomePage() {
             <div className="grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
               {agendasWithArticles.map((agenda) => (
                 <div key={agenda.id}>
-                    <Link to={isDemo ? `/demo/agenda/${agenda.id}` : `/agenda/${agenda.id}`} className="block h-full group">
-                        <div className="bg-white border border-gray-100 rounded-[2rem] shadow-xl hover:shadow-2xl hover:scale-[1.02] transition-all duration-500 h-[26rem] flex flex-col relative overflow-hidden group">
+                    <Link to={isDemo ? `/demo/agenda/${agenda.id}` : `/agenda/${agenda.id}`} className="block w-full group">
+                        <div className="bg-white border border-gray-200 rounded-3xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden group w-full h-auto flex flex-col">
                             
-                            {/* Image Background Grid */}
-                            <div className="absolute inset-x-0 top-0 h-[70%] z-0">
+                            {/* Image Header with Badge Overlay */}
+                            <div className="h-48 relative overflow-hidden bg-gray-50">
                                 {agenda.articles && agenda.articles.length > 0 ? (
-                                    <div className="w-full h-full grid grid-cols-2 grid-rows-2 gap-[1px] bg-slate-100">
-                                        {agenda.articles.slice(0, 4).map((article: any, idx: number) => {
-                                            const total = Math.min(agenda.articles.length, 4);
-                                            let spanClass = "";
-                                            // Dynamic collage layout
-                                            if (total === 1) spanClass = "col-span-2 row-span-2";
-                                            else if (total === 2) spanClass = "col-span-1 row-span-2";
-                                            else if (total === 3) spanClass = (idx === 0) ? "col-span-1 row-span-2" : "col-span-1 row-span-1";
-                                            else spanClass = "col-span-1 row-span-1";
-
-                                            return (
-                                                <div key={article.id} className={`${spanClass} relative overflow-hidden bg-gray-200`}>
-                                                     <img 
-                                                        src={article.image || `https://source.unsplash.com/random/400x400?sig=${article.id}`} 
-                                                        alt="" 
-                                                        className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 filter brightness-[0.95] contrast-[1.1]"
-                                                        onError={(e) => (e.currentTarget.style.display = 'none')}
-                                                    />
-                                                </div>
-                                            )
-                                        })}
-                                        {/* Fillers if less than 4 to keep grid nice if needed, but we handle via spans logic mostly */}
+                                    <div className="w-full h-full grid grid-cols-2 grid-rows-1 gap-px">
+                                        {agenda.articles.slice(0, 2).map((article: any) => (
+                                            <div key={article.id} className="relative h-full overflow-hidden">
+                                                <img 
+                                                    src={article.image || `https://source.unsplash.com/random/400x400?sig=${article.id}`} 
+                                                    alt="" 
+                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                                />
+                                            </div>
+                                        ))}
+                                        {agenda.articles.length === 1 && <div className="bg-gray-100 w-full h-full"></div>}
                                     </div>
                                 ) : (
-                                    <div className="w-full h-full bg-gradient-to-br from-indigo-50 to-blue-50 flex items-center justify-center">
-                                        <div className="text-6xl grayscale opacity-20 transform -rotate-12 select-none">📰</div>
+                                    <div className="w-full h-full bg-blue-50 flex items-center justify-center">
+                                        <div className="text-4xl grayscale opacity-20">📰</div>
                                     </div>
                                 )}
+                                
+                                {/* Date Badge Floating */}
+                                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider text-gray-500 shadow-sm border border-gray-100">
+                                    {agenda.createdAt ? new Date(agenda.createdAt).toLocaleDateString() : 'No Date'}
+                                </div>
                             </div>
                             
-                            {/* Stylish Fade Overlay */}
-                            <div className="absolute inset-0 z-10 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none" style={{ top: '40%' }} />
-
-                            {/* Content Layer */}
-                            <div className="relative z-20 h-full flex flex-col justify-end p-8 pt-0">
-                                <div className="transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500 ease-out">
+                            {/* Content Body */}
+                            <div className="p-6 flex flex-col justify-between flex-grow bg-white relative">
+                                <div>
                                     <h3 
-                                        className={`${agenda.title.length > 60 ? "text-lg md:text-xl" : agenda.title.length > 30 ? "text-xl md:text-2xl" : "text-2xl md:text-3xl"} font-black text-gray-900 mb-2 leading-tight tracking-tight group-hover:text-blue-700 transition-colors line-clamp-2`} 
+                                        className="text-xl font-bold text-gray-900 mb-2 leading-tight group-hover:text-blue-600 transition-colors line-clamp-2" 
                                         style={{ fontFamily: "'Playfair Display', serif" }}
                                     >
                                         {agenda.title}
                                     </h3>
-                                     <div className="flex items-center justify-between mt-3 border-t border-gray-100 pt-3 opacity-80 group-hover:opacity-100 transition-opacity">
-                                        <span className="text-xs font-bold uppercase tracking-widest text-gray-400">
-                                            {agenda.createdAt ? new Date(agenda.createdAt).toLocaleDateString() : 'No Date'}
-                                        </span>
-                                        <span className="text-xs font-bold uppercase tracking-widest text-blue-600 flex items-center gap-1">
-                                            Open <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
-                                        </span>
-                                     </div>
+                                    <div className="flex items-center gap-2 mt-4">
+                                        <div className="h-1 w-8 bg-blue-500 rounded-full group-hover:w-16 transition-all duration-300"></div>
+                                    </div>
                                 </div>
                                 
                                 <button
@@ -264,7 +250,7 @@ export default function HomePage() {
                                         e.stopPropagation();
                                         setAgendaToDelete(agenda);
                                     }}
-                                    className="absolute top-4 right-4 z-30 bg-white/30 hover:bg-red-500 backdrop-blur-md text-slate-800 hover:text-white p-2 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-75 group-hover:scale-100"
+                                    className="absolute bottom-6 right-6 text-gray-300 hover:text-red-500 transition-colors p-1"
                                     title="Delete Agenda"
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
