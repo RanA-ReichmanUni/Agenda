@@ -163,7 +163,7 @@ export default function HomePage() {
             AGENDA
           </h1>
           <p className="text-gray-600 font-medium text-lg md:text-xl tracking-[0.5em] uppercase opacity-0 mt-2 animate-subtitle-reveal">
-            State And Prove Your Point
+            Prove Your Point.
           </p>
         </div>
 
