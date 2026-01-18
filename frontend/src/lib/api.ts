@@ -8,6 +8,12 @@ export const API_ENDPOINTS = {
   // Agendas
   agendas: `${API_URL}/agendas`,
   agenda: (id: number | string) => `${API_URL}/agendas/${id}`,
+  shareAgenda: (id: number | string) => `${API_URL}/agendas/${id}/share`,
+  unshareAgenda: (id: number | string) => `${API_URL}/agendas/${id}/unshare`,
+  
+  // Shared (Public)
+  sharedAgenda: (token: string) => `${API_URL}/agendas/shared/${token}`,
+  sharedArticles: (token: string) => `${API_URL}/agendas/shared/${token}/articles`,
 
   // Articles
   articles: (agendaId: number | string) => `${API_URL}/agendas/${agendaId}/articles`,

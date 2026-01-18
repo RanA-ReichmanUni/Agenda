@@ -62,9 +62,21 @@ def init_db():
                 id SERIAL PRIMARY KEY,
                 title VARCHAR(255) NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                share_token VARCHAR(36) UNIQUE
             )
         """)
+
+        # Migration: Add share_token if it doesn't exist (for existing databases)
+        try:
+            cursor.execute("""
+                ALTER TABLE agendas 
+                ADD COLUMN IF NOT EXISTS share_token VARCHAR(36) UNIQUE;
+            """)
+            conn.commit()
+        except Exception as e:
+            print(f"⚠️  Migration note: {e}")
+            conn.rollback()
         
         # Create articles table
         cursor.execute("""

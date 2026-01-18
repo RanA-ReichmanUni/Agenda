@@ -10,7 +10,10 @@ export interface Article {
 
 export interface Agenda {
   id: string | number;
+  user_id?: string | number;
   title: string;
   createdAt: Date;
   articles: Article[];
+  share_token?: string;
+  owner_name?: string;
 }

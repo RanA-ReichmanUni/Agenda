@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useParams, Link, useLocation } from "react-router-dom";
 import AddArticleForm from "../components/AddArticleForm";
-import { Article } from "../lib/types";
+import { Article, Agenda } from "../lib/types";
 import ArticleCard from "../components/ArticleCard";
 import { API_ENDPOINTS, authFetch } from "../lib/api";
 import { useToastContext } from "../context/ToastContext";
@@ -10,26 +10,30 @@ import { useTutorial } from "../context/TutorialContext";
 import { DEMO_AGENDA_STEPS, DEMO_MODE_EXPLANATION } from "../lib/tutorialSteps";
 
 export default function AgendaPage() {
-  const { id } = useParams();
+  const { id, token } = useParams();
   const location = useLocation();
   const isDemo = location.pathname.startsWith('/demo');
+  const isShared = Boolean(token);
+  const isReadOnly = isShared;
+
   const demoContext = useDemo();
   const { startTutorial, hasSeenTutorial, isActive } = useTutorial();
 
-  if (!id) {
+  if (!id && !token) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100">
         <div className="backdrop-blur-xl bg-white/60 border border-red-200 rounded-2xl p-8 shadow-2xl animate-fade-in">
-          <div className="text-3xl font-bold text-red-600 mb-2">Invalid agenda ID</div>
+          <div className="text-3xl font-bold text-red-600 mb-2">Invalid agenda</div>
           <p className="text-gray-500">Please check the URL and try again.</p>
         </div>
       </div>
     );
   }
+
   const { showUndo, setShowUndo, undoDelete, setUndoDelete } = useToastContext();
   const agendaId = id as string;
 
-  const [agenda, setAgenda] = useState<{ title: string; createdAt: string } | null>(null);
+  const [agenda, setAgenda] = useState<Agenda | null>(null);
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -37,6 +41,10 @@ export default function AgendaPage() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [iframeError, setIframeError] = useState<boolean>(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  
+  // Share Modal State
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareLoading, setShareLoading] = useState(false);
 
   useEffect(() => {
     if (isDemo && !loading && !hasSeenTutorial('agenda') && !isActive) {
@@ -50,12 +58,36 @@ export default function AgendaPage() {
     const fetchAgendaAndArticles = async () => {
       setLoading(true);
       try {
-        if (isDemo) {
+        if (isShared && token) {
+            // Shared Mode (Public)
+            const agendaRes = await fetch(API_ENDPOINTS.sharedAgenda(token));
+            if (!agendaRes.ok) throw new Error("Failed to fetch shared agenda");
+            const agendaData = await agendaRes.json();
+
+            const articlesRes = await fetch(API_ENDPOINTS.sharedArticles(token));
+            if (!articlesRes.ok) throw new Error("Failed to fetch articles");
+            const articlesData = await articlesRes.json();
+
+            setAgenda({ 
+                ...agendaData, 
+                createdAt: agendaData.createdAt 
+            });
+            setArticles(articlesData);
+
+        } else if (isDemo) {
+            // Demo Mode
             const demoAgenda = demoContext.getAgenda(Number(agendaId));
             if (!demoAgenda) throw new Error("Agenda not found");
-            setAgenda({ title: demoAgenda.title, createdAt: demoAgenda.createdAt });
+            setAgenda({ 
+                id: demoAgenda.id,
+                title: demoAgenda.title, 
+                createdAt: demoAgenda.createdAt,
+                articles: demoAgenda.articles
+            });
             setArticles(demoAgenda.articles);
+
         } else {
+            // Owner Mode (Auth)
             const agendaRes = await authFetch(API_ENDPOINTS.agenda(agendaId));
             if (!agendaRes.ok) throw new Error("Failed to fetch agenda");
             const agendaData = await agendaRes.json();
@@ -64,7 +96,7 @@ export default function AgendaPage() {
             if (!articlesRes.ok) throw new Error("Failed to fetch articles");
             const articlesData = await articlesRes.json();
 
-            setAgenda({ title: agendaData.title, createdAt: agendaData.createdAt });
+            setAgenda(agendaData);
             setArticles(articlesData);
         }
         setError(null);
@@ -76,7 +108,7 @@ export default function AgendaPage() {
     };
 
     fetchAgendaAndArticles();
-  }, [agendaId, isDemo, demoContext]); // Added demoContext as dep if isDemo changes (unlikely)
+  }, [agendaId, token, isDemo, isShared, demoContext]);
 
   const handleAddArticle = async (newArticle: Omit<Article, "id">) => {
     try {
@@ -104,9 +136,6 @@ export default function AgendaPage() {
     const restoreLastArticle = async (articleToRestore: Article) => {
     try {
       if (isDemo) {
-         // The demoContext.createArticle expects Omit<Article, id...>. 
-         // But here we want to restore exact ID if possible? 
-         // demoData creates new ID. It's fine for demo.
          const { id, createdAt, agenda_id, ...rest } = articleToRestore;
          await demoContext.createArticle(Number(agendaId), rest);
          setShowUndo(false);  
@@ -159,7 +188,6 @@ export default function AgendaPage() {
       setUndoDelete(() => undoFunc);
       setShowUndo(true);
 
-      // Auto-hide toast after 5 seconds
       setTimeout(() => {
         setShowUndo(false);
         setArticleToDelete(null);
@@ -167,6 +195,35 @@ export default function AgendaPage() {
 
     } catch (err: any) {
       alert("Failed to delete article: " + err.message);
+    }
+  };
+
+  const handleShare = async () => {
+    if (!agenda) return;
+    setShareLoading(true);
+    try {
+        const res = await authFetch(API_ENDPOINTS.shareAgenda(agenda.id), { method: 'POST' });
+        if (!res.ok) throw new Error("Failed to generate share link");
+        const updatedAgenda = await res.json();
+        setAgenda(prev => prev ? ({ ...prev, share_token: updatedAgenda.share_token }) : null);
+    } catch (e: any) {
+        alert("Error sharing: " + e.message);
+    } finally {
+        setShareLoading(false);
+    }
+  };
+
+  const handleUnshare = async () => {
+    if (!agenda) return;
+    setShareLoading(true);
+    try {
+        const res = await authFetch(API_ENDPOINTS.unshareAgenda(agenda.id), { method: 'POST' });
+        if (!res.ok) throw new Error("Failed to unshare");
+        setAgenda(prev => prev ? ({ ...prev, share_token: undefined }) : null);
+    } catch (e: any) {
+        alert("Error unsharing: " + e.message);
+    } finally {
+        setShareLoading(false);
     }
   };
 
@@ -241,23 +298,39 @@ export default function AgendaPage() {
         </div>
       )}
 
-      <div className="fixed left-10 top-8 z-30 animate-fade-in">
-        <Link
-          to={isDemo ? "/demo" : "/"}
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/60 backdrop-blur-xl border border-gray-200 shadow-lg text-blue-800 font-semibold text-base transition hover:bg-blue-100/80 hover:text-blue-900 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
-        >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
-          Back
-        </Link>
+      {/* Shared Banner */}
+      {isShared && (
+         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-30">
+          <div className="bg-blue-100 border border-blue-300 text-blue-800 px-4 py-1 rounded-full text-sm font-semibold shadow-md whitespace-nowrap">
+            Shared by {agenda.owner_name || 'User'}
+          </div>
+        </div>
+      )}
+
+      <div className="fixed left-4 md:left-10 top-8 z-30 animate-fade-in flex gap-2">
+        {!isShared && (
+            <Link
+            to={isDemo ? "/demo" : "/"}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/60 backdrop-blur-xl border border-gray-200 shadow-lg text-blue-800 font-semibold text-base transition hover:bg-blue-100/80 hover:text-blue-900 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
+            >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+            Back
+            </Link>
+        )}
+        {/* Share Button (Only Owner) */}
+        {!isReadOnly && !isDemo && (
+             <button
+                onClick={() => setShowShareModal(true)}
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/60 backdrop-blur-xl border border-gray-200 shadow-lg text-purple-800 font-semibold text-base transition hover:bg-purple-100/80 hover:text-purple-900 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-purple-400"
+            >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                </svg>
+                Share
+            </button>
+        )}
       </div>
 
       <div className="max-w-4xl mx-auto space-y-12 py-12">
@@ -272,9 +345,11 @@ export default function AgendaPage() {
           </div>
         </div>
 
-        <div id="tutorial-add-article" className="relative z-10 animate-form-float max-w-2xl mx-auto w-full">
-          <AddArticleForm onAdd={handleAddArticle} />
-        </div>
+        {!isReadOnly && (
+            <div id="tutorial-add-article" className="relative z-10 animate-form-float max-w-2xl mx-auto w-full">
+            <AddArticleForm onAdd={handleAddArticle} />
+            </div>
+        )}
 
         <div className="relative z-10 space-y-8 animate-articles-container">
           <div className="flex items-center mb-6 pl-2 border-l-4 border-blue-500 ml-2">
@@ -290,7 +365,7 @@ export default function AgendaPage() {
             <div className="text-center py-20 bg-white/40 backdrop-blur-md rounded-3xl border border-dashed border-gray-300 animate-empty-state">
               <div className="text-6xl mb-4 opacity-20">📂</div>
               <p className="text-gray-500 text-lg font-medium">No articles yet.</p>
-              <p className="text-gray-400 text-sm">Paste a URL above to add your first source.</p>
+              {!isReadOnly && <p className="text-gray-400 text-sm">Paste a URL above to add your first source.</p>}
             </div>
           ) : (
             <div id="tutorial-evidence-grid" className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -304,9 +379,9 @@ export default function AgendaPage() {
                   <div className="h-full bg-white/70 backdrop-blur-md border border-gray-100 hover:border-blue-200 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 p-2 relative overflow-hidden transform hover:-translate-y-1">
                      <ArticleCard
                         article={article}
-                        onDelete={() => {
+                        onDelete={!isReadOnly ? () => {
                           setArticleToDelete(article);
-                        }}
+                        } : undefined}
                       />
                   </div>
                 </div>
@@ -315,6 +390,73 @@ export default function AgendaPage() {
           )}
         </div>
       </div>
+
+      {/* Share Modal */}
+      {showShareModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+          <div className="bg-white/90 backdrop-blur-xl border border-gray-200 rounded-2xl shadow-2xl p-8 max-w-md w-full animate-fade-in relative">
+            <button 
+                onClick={() => setShowShareModal(false)}
+                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+            >
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">Share Agenda</h3>
+            
+            {shareLoading ? (
+                 <div className="flex justify-center p-4"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>
+            ) : (
+                <>
+                    {agenda?.share_token ? (
+                        <div className="space-y-4">
+                             <p className="text-sm text-gray-600 text-center">
+                                Anyone with this link can view this agenda.
+                            </p>
+                            <div className="flex gap-2">
+                                <input 
+                                    readOnly 
+                                    className="flex-1 bg-gray-100 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-600"
+                                    value={`${window.location.origin}/shared/${agenda.share_token}`}
+                                />
+                                <button 
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(`${window.location.origin}/shared/${agenda.share_token}`);
+                                        alert("Link copied!");
+                                    }}
+                                    className="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-semibold hover:bg-blue-200"
+                                >
+                                    Copy
+                                </button>
+                            </div>
+                            <div className="pt-4 flex justify-center">
+                                <button 
+                                    onClick={handleUnshare}
+                                    className="text-red-600 text-sm font-medium hover:text-red-800 hover:underline"
+                                >
+                                    Stop sharing
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                         <div className="text-center">
+                            <p className="text-gray-600 mb-6">
+                                Create a public link to share this agenda with others. They will be able to view it but not edit it.
+                            </p>
+                            <button
+                                onClick={handleShare}
+                                className="px-6 py-2 rounded-full bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 transition w-full"
+                            >
+                                Generate Link
+                            </button>
+                        </div>
+                    )}
+                </>
+            )}
+          </div>
+        </div>
+      )}
 
       {articleToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">

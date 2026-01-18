@@ -44,8 +44,11 @@ class CreateAgenda(BaseModel):
 class Agenda(BaseModel):
     """Model for agenda response"""
     id: int
+    user_id: int
     title: str
     createdAt: datetime
+    share_token: Optional[str] = None
+    owner_name: Optional[str] = None
 
 # ============================================
 # ARTICLE MODELS

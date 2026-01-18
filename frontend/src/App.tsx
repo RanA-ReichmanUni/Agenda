@@ -53,6 +53,12 @@ export default function App() {
             element={<AgendaPage />} 
           />
 
+          {/* Shared Agendas - Publicly accessible */}
+          <Route 
+            path="/shared/:token" 
+            element={<AgendaPage />} 
+          />
+
           {/* Protected App Routes */}
           <Route
             path="/"
