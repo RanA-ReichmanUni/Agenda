@@ -3,6 +3,14 @@ Agenda CRUD routes for creating, reading, updating, and deleting agendas.
 """
 import uuid
 from typing import List, Optional
+import time
+import random
+import os
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
+
 from fastapi import APIRouter, HTTPException, Depends, status
 from database import get_db_connection
 from models import User, Agenda, CreateAgenda, Article
@@ -260,5 +268,108 @@ async def delete_agenda(
         # Delete agenda (articles will cascade delete)
         cursor.execute("DELETE FROM agendas WHERE id = %s", (agenda_id,))
         conn.commit()
+    finally:
+        conn.close()
+
+@router.post("/{agenda_id}/analyze")
+async def analyze_agenda_claim(
+    agenda_id: int, 
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Analyze the agenda claim against its articles using (Simulated) AI.
+    Eventually, this will connect to a real LLM API (OpenAI/Anthropic).
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        # 1. Fetch Agenda
+        cursor.execute(
+            "SELECT title FROM agendas WHERE id = %s AND user_id = %s",
+            (agenda_id, current_user.id)
+        )
+        agenda_row = cursor.fetchone()
+        if not agenda_row:
+            raise HTTPException(status_code=404, detail="Agenda not found")
+        
+        claim = agenda_row[0]
+        
+        # 2. Fetch Articles
+        cursor.execute(
+            "SELECT title, url, description FROM articles WHERE agenda_id = %s",
+            (agenda_id,)
+        )
+        articles = cursor.fetchall()
+        # articles list of tuples: (title, url, description)
+        
+        # 3. Simulated "LLM" Analysis Logic
+        # ------------------------------------------------------------------
+        # Implementation Note:
+        # To switch to real LLM, uncomment the block below and ensure OPENAI_API_KEY is in .env
+        
+        # api_key = os.getenv("OPENAI_API_KEY")
+        # if api_key:
+        #    # import openai
+        #    # openai.api_key = api_key
+        #    # response = openai.ChatCompletion.create(...)
+        #    # return parse_llm_response(response)
+        # ------------------------------------------------------------------
+
+        time.sleep(1.5) # Fake "thinking" time
+        
+        count = len(articles)
+        
+        if count == 0:
+            return {
+                "score": "Low",
+                "reasoning": "No evidence provided. Please add articles to verify this claim.",
+                "claim": claim
+            }
+
+        # CRITERIA 1: Keywords looking for "Hard Evidence" 
+        authoritative_keywords = ["report", "study", "evidence", "confirmed", "analysis", "data", "statistics", "review", "official", "survey", "court", "verdict", "proof", "science", "research"]
+        
+        quality_matches = 0
+        for a in articles:
+            # a[0] = title, a[2] = description, a[3] = content (if any)
+            text_blob = (str(a[0]) + " " + str(a[2])).lower()
+            if any(kw in text_blob for kw in authoritative_keywords):
+                quality_matches += 1
+
+        # CRITERIA 2: Diversity of Sources
+        unique_domains = set()
+        for a in articles:
+            url = a[1]
+            try:
+                domain = urlparse(url).netloc.replace('www.', '')
+                if domain:
+                    unique_domains.add(domain)
+            except:
+                pass
+        
+        domain_count = len(unique_domains)
+
+        # SCORING ALGORITHM
+        # Base: 10 pts per article (Quantity)
+        # Bonus: 15 pts per unique domain (Diversity is worth more than quantity)
+        # Bonus: 10 pts per "Scientific/Official" keyword match (Quality)
+        points = (count * 10) + (domain_count * 15) + (quality_matches * 10)
+
+        if points >= 65:
+            score = "High"
+            detail = f"Strong consensus detected across {domain_count} unique domains. The semantic analysis identified {quality_matches} authoritative sources or terms (e.g., study, data) that strongly support the claim."
+        elif points >= 35:
+            score = "Medium"
+            detail = f"Evidence is present ({count} sources) and appears relevant. Usage of {domain_count} distinct domain(s) provides a partial correlation. Adding one more distinct source would likely elevate this to a high confidence level."
+        else:
+            score = "Low"
+            detail = f"Insufficient data density. With only {count} source(s) and limited cross-referencing, the claim lacks the verifiable weight required for a definitive rating."
+
+        return {
+            "score": score,
+            "reasoning": detail,
+            "claim": claim
+        }
+
     finally:
         conn.close()

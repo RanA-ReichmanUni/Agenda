@@ -9,6 +9,13 @@ import { useDemo } from "../context/DemoContext";
 import { useTutorial } from "../context/TutorialContext";
 import { DEMO_AGENDA_STEPS, DEMO_MODE_EXPLANATION } from "../lib/tutorialSteps";
 
+// Add types for Analysis
+type AnalysisResult = {
+  score: 'High' | 'Medium' | 'Low';
+  reasoning: string;
+  claim: string;
+};
+
 export default function AgendaPage() {
   const { id, token } = useParams();
   const location = useLocation();
@@ -45,6 +52,11 @@ export default function AgendaPage() {
   // Share Modal State
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareLoading, setShareLoading] = useState(false);
+
+  // Analysis State
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [showAnalysisModal, setShowAnalysisModal] = useState(false);
 
   useEffect(() => {
     if (isDemo && !loading && !hasSeenTutorial('agenda') && !isActive) {
@@ -269,6 +281,87 @@ export default function AgendaPage() {
     }
   };
 
+  const handleAnalyzeClaim = async () => {
+    setIsAnalyzing(true);
+    setAnalysisResult(null);
+    try {
+        if (isDemo) {
+            // Demo Mode Simulation
+            await new Promise(r => setTimeout(r, 2000));
+            
+            const count = articles.length;
+            if (count === 0) {
+                 setAnalysisResult({
+                    score: 'Low',
+                    reasoning: "(Demo Simulation) No evidence provided. Please add articles to verify this claim.",
+                    claim: agenda?.title || ""
+                });
+                setIsAnalyzing(false);
+                setShowAnalysisModal(true);
+                return;
+            }
+
+            // CRITERIA 1: Keywords looking for "Hard Evidence" 
+            const authoritativeKeywords = ["report", "study", "evidence", "confirmed", "analysis", "data", "statistics", "review", "official", "survey", "court", "verdict", "proof", "science", "research"];
+            const qualityMatches = articles.filter(a => 
+                authoritativeKeywords.some(kw => (a.title + " " + (a.description || "")).toLowerCase().includes(kw))
+            ).length;
+
+            // CRITERIA 2: Diversity of Sources 
+            const uniqueDomains = new Set(articles.map(a => {
+                try { 
+                    return new URL(a.url).hostname.replace('www.', ''); 
+                } catch { 
+                    return a.url || 'unknown_source'; 
+                }
+            })).size;
+
+            // SCORING ALGORITHM
+            // Base: 10 pts per article (Quantity)
+            // Bonus: 15 pts per unique domain (Diversity is worth more than quantity)
+            // Bonus: 10 pts per "Scientific/Official" keyword match (Quality)
+            let points = (count * 10) + (uniqueDomains * 15) + (qualityMatches * 10);
+
+            let score: 'High'|'Medium'|'Low' = 'Low';
+            let reasoningDetail = "";
+
+            if (points >= 65) { 
+                score = 'High';
+                reasoningDetail = `Strong consensus detected across about ${uniqueDomains} unique domains. The semantic analysis identified authoritative terminology (e.g., study, data) that strongly supports the claim.`;
+            } else if (points >= 35) { 
+                score = 'Medium';
+                reasoningDetail = `Evidence is present (${count} sources) and appears relevant. Usage of ${uniqueDomains === 1 ? 'a single source' : 'diverse sources'} provides a partial correlation. Adding one more distinct source would likely elevate this to a high confidence level.`;
+            } else {
+                score = 'Low';
+                reasoningDetail = `Insufficient data density. With only ${count} source(s) and limited cross-referencing, the claim lacks the verifiable weight required for a definitive rating.`;
+            }
+            
+            setAnalysisResult({
+                score,
+                reasoning: `(Demo Simulation) ${reasoningDetail}`, 
+                claim: agenda?.title || ""
+            });
+        } else {
+            // Real Backend Call
+            const response = await authFetch(`${API_ENDPOINTS.agendas}/${id}/analyze`, {
+                method: 'POST'
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setAnalysisResult(data);
+            } else {
+                throw new Error("Analysis failed");
+            }
+        }
+        setShowAnalysisModal(true);
+    } catch (error) {
+        console.error(error);
+        alert("Failed to analyze claim. Please try again.");
+    } finally {
+        setIsAnalyzing(false);
+    }
+  };
+
   const handleArticleClick = (url: string) => {
     setIframeError(false);
     setPreviewUrl(url);
@@ -361,17 +454,19 @@ export default function AgendaPage() {
             Back
             </Link>
         )}
-        {/* Share Button (Only Owner) */}
+        {/* Share & Analyze Buttons (Only Owner) */}
         {!isReadOnly && (
-             <button
-                onClick={() => setShowShareModal(true)}
-                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/60 backdrop-blur-xl border border-gray-200 shadow-lg text-purple-800 font-semibold text-base transition hover:bg-purple-100/80 hover:text-purple-900 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-purple-400"
-            >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                </svg>
-                Share
-            </button>
+             <div className="flex gap-2">
+                <button
+                    onClick={() => setShowShareModal(true)}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/60 backdrop-blur-xl border border-gray-200 shadow-lg text-purple-800 font-semibold text-base transition hover:bg-purple-100/80 hover:text-purple-900 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-purple-400"
+                >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                    </svg>
+                    Share
+                </button>
+             </div>
         )}
       </div>
 
@@ -381,15 +476,39 @@ export default function AgendaPage() {
             <h1 id="tutorial-agenda-subject" className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-gray-800 via-blue-800 to-gray-900 mb-6 drop-shadow-sm tracking-tight leading-tight" style={{ fontFamily: "'Playfair Display', serif" }}>
             {agenda.title}
           </h1>
-          <div className="flex items-center gap-2 text-sm text-gray-500 font-medium bg-white/50 backdrop-blur-sm px-4 py-2 rounded-full border border-gray-100 shadow-sm">
-            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-            Created <span className="font-mono text-gray-700">{new Date(agenda.createdAt).toLocaleDateString()}</span>
+          <div className="flex flex-col items-center gap-4">
+            <div className="flex items-center gap-2 text-sm text-gray-500 font-medium bg-white/50 backdrop-blur-sm px-4 py-2 rounded-full border border-gray-100 shadow-sm">
+                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                Created <span className="font-mono text-gray-700">{new Date(agenda.createdAt).toLocaleDateString()}</span>
+            </div>
           </div>
         </div>
 
         {!isReadOnly && (
             <div id="tutorial-add-article" className="relative z-10 animate-form-float max-w-2xl mx-auto w-full">
             <AddArticleForm onAdd={handleAddArticle} />
+             {/* Verify Button beneath add form */}
+             <div className="flex justify-center mt-8">
+                <button
+                    onClick={handleAnalyzeClaim}
+                    disabled={isAnalyzing}
+                    className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-full backdrop-blur-xl border shadow-md font-bold text-lg transition-all transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-400
+                     ${isAnalyzing ? 'bg-indigo-50 border-indigo-200 text-indigo-400 cursor-not-allowed' : 'bg-gradient-to-r from-white to-indigo-50 border-indigo-100 text-indigo-700 hover:to-indigo-100 hover:text-indigo-900 hover:shadow-lg hover:border-indigo-200'}
+                    `}
+                >
+                    {isAnalyzing ? (
+                        <>
+                            <div className="animate-spin h-5 w-5 border-2 border-indigo-500 rounded-full border-t-transparent"></div>
+                            <span className="text-base">Running Analysis...</span>
+                        </>
+                    ) : (
+                        <>
+                            <span className="text-2xl">✨</span>
+                            Verify Evidence with AI
+                        </>
+                    )}
+                </button>
+             </div>
             </div>
         )}
 
@@ -502,6 +621,52 @@ export default function AgendaPage() {
                 </>
             )}
           </div>
+        </div>
+      )}
+
+      {showAnalysisModal && analysisResult && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
+            <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-gray-100 flex flex-col max-h-[90vh]">
+                <div className={`p-6 ${
+                    analysisResult.score === 'High' ? 'bg-green-50' : 
+                    analysisResult.score === 'Medium' ? 'bg-yellow-50' : 'bg-red-50'
+                }`}>
+                    <div className="flex justify-between items-start mb-4">
+                        <h3 className="text-sm font-bold uppercase tracking-wider text-gray-500">AI Claim Verification</h3>
+                        <button onClick={() => setShowAnalysisModal(false)} className="text-gray-400 hover:text-gray-600 transition-colors bg-white/50 rounded-full p-1 hover:bg-white">
+                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                    </div>
+                    
+                    <div className="flex items-center gap-4 mb-2">
+                        <div className={`text-5xl transition-all duration-500 ${analysisResult.score === 'High' ? 'scale-110 drop-shadow-md' : 'grayscale opacity-30 scale-90'}`}>🟢</div>
+                        <div className={`text-5xl transition-all duration-500 ${analysisResult.score === 'Medium' ? 'scale-110 drop-shadow-md' : 'grayscale opacity-30 scale-90'}`}>🟡</div>
+                        <div className={`text-5xl transition-all duration-500 ${analysisResult.score === 'Low' ? 'scale-110 drop-shadow-md' : 'grayscale opacity-30 scale-90'}`}>🔴</div>
+                    </div>
+                    
+                    <h2 className={`text-3xl font-black mb-1 ${
+                        analysisResult.score === 'High' ? 'text-green-800' : 
+                        analysisResult.score === 'Medium' ? 'text-yellow-800' : 'text-red-800'
+                    }`}>{analysisResult.score} Confidence</h2>
+                    <p className="text-gray-600 font-medium italic truncate">"{analysisResult.claim}"</p>
+                </div>
+                
+                <div className="p-8 flex-grow overflow-y-auto">
+                     <h4 className="font-bold text-gray-900 mb-3 text-lg">Analysis Reasoning</h4>
+                     <p className="text-gray-600 leading-relaxed text-lg">
+                        {analysisResult.reasoning}
+                     </p>
+                     
+                     <div className="mt-8 flex justify-end">
+                        <button 
+                            onClick={() => setShowAnalysisModal(false)}
+                            className="bg-gray-900 text-white px-8 py-3 rounded-2xl font-bold shadow hover:bg-black hover:scale-105 transition-all"
+                        >
+                            Close Analysis
+                        </button>
+                     </div>
+                </div>
+            </div>
         </div>
       )}
 
