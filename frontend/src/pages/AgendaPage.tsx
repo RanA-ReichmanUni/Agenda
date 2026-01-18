@@ -59,20 +59,47 @@ export default function AgendaPage() {
       setLoading(true);
       try {
         if (isShared && token) {
-            // Shared Mode (Public)
-            const agendaRes = await fetch(API_ENDPOINTS.sharedAgenda(token));
-            if (!agendaRes.ok) throw new Error("Failed to fetch shared agenda");
-            const agendaData = await agendaRes.json();
+            // Check for Demo Token
+            if (token.startsWith('valid-demo-token-')) {
+                // Shared Demo Mode (Simulated)
+                const demoId = parseInt(token.replace('valid-demo-token-', ''), 10);
+                const demoAgenda = demoContext.getAgenda(demoId);
+                
+                if (!demoAgenda) throw new Error("Demo agenda not found");
 
-            const articlesRes = await fetch(API_ENDPOINTS.sharedArticles(token));
-            if (!articlesRes.ok) throw new Error("Failed to fetch articles");
-            const articlesData = await articlesRes.json();
+                if (demoAgenda.share_token !== token) {
+                     throw new Error("This agenda is not shared or the link has expired.");
+                }
+                
+                // Simulate network delay
+                await new Promise(resolve => setTimeout(resolve, 500));
 
-            setAgenda({ 
-                ...agendaData, 
-                createdAt: agendaData.createdAt 
-            });
-            setArticles(articlesData);
+                setAgenda({ 
+                    id: demoAgenda.id,
+                    title: demoAgenda.title, 
+                    createdAt: new Date(demoAgenda.createdAt), 
+                    articles: demoAgenda.articles,
+                    share_token: token,
+                    owner_name: "Demo User"
+                });
+                setArticles(demoAgenda.articles);
+
+            } else {
+                // Shared Mode (Public - Real Backend)
+                const agendaRes = await fetch(API_ENDPOINTS.sharedAgenda(token));
+                if (!agendaRes.ok) throw new Error("Failed to fetch shared agenda");
+                const agendaData = await agendaRes.json();
+
+                const articlesRes = await fetch(API_ENDPOINTS.sharedArticles(token));
+                if (!articlesRes.ok) throw new Error("Failed to fetch articles");
+                const articlesData = await articlesRes.json();
+
+                setAgenda({ 
+                    ...agendaData, 
+                    createdAt: agendaData.createdAt 
+                });
+                setArticles(articlesData);
+            }
 
         } else if (isDemo) {
             // Demo Mode
@@ -81,8 +108,9 @@ export default function AgendaPage() {
             setAgenda({ 
                 id: demoAgenda.id,
                 title: demoAgenda.title, 
-                createdAt: demoAgenda.createdAt,
-                articles: demoAgenda.articles
+                createdAt: new Date(demoAgenda.createdAt),
+                articles: demoAgenda.articles,
+                share_token: demoAgenda.share_token
             });
             setArticles(demoAgenda.articles);
 
@@ -202,10 +230,17 @@ export default function AgendaPage() {
     if (!agenda) return;
     setShareLoading(true);
     try {
-        const res = await authFetch(API_ENDPOINTS.shareAgenda(agenda.id), { method: 'POST' });
-        if (!res.ok) throw new Error("Failed to generate share link");
-        const updatedAgenda = await res.json();
-        setAgenda(prev => prev ? ({ ...prev, share_token: updatedAgenda.share_token }) : null);
+        if (isDemo) {
+            // Simulated Share for Demo Mode
+            await new Promise(resolve => setTimeout(resolve, 800)); // Fake delay
+            const demoToken = await demoContext.shareAgenda(Number(agenda.id));
+            setAgenda(prev => prev ? ({ ...prev, share_token: demoToken }) : null);
+        } else {
+            const res = await authFetch(API_ENDPOINTS.shareAgenda(agenda.id), { method: 'POST' });
+            if (!res.ok) throw new Error("Failed to generate share link");
+            const updatedAgenda = await res.json();
+            setAgenda(prev => prev ? ({ ...prev, share_token: updatedAgenda.share_token }) : null);
+        }
     } catch (e: any) {
         alert("Error sharing: " + e.message);
     } finally {
@@ -217,9 +252,16 @@ export default function AgendaPage() {
     if (!agenda) return;
     setShareLoading(true);
     try {
-        const res = await authFetch(API_ENDPOINTS.unshareAgenda(agenda.id), { method: 'POST' });
-        if (!res.ok) throw new Error("Failed to unshare");
-        setAgenda(prev => prev ? ({ ...prev, share_token: undefined }) : null);
+        if (isDemo) {
+             // Simulated Unshare
+             await new Promise(resolve => setTimeout(resolve, 600));
+             await demoContext.unshareAgenda(Number(agenda.id));
+             setAgenda(prev => prev ? ({ ...prev, share_token: undefined }) : null);
+        } else {
+            const res = await authFetch(API_ENDPOINTS.unshareAgenda(agenda.id), { method: 'POST' });
+            if (!res.ok) throw new Error("Failed to unshare");
+            setAgenda(prev => prev ? ({ ...prev, share_token: undefined }) : null);
+        }
     } catch (e: any) {
         alert("Error unsharing: " + e.message);
     } finally {
@@ -320,7 +362,7 @@ export default function AgendaPage() {
             </Link>
         )}
         {/* Share Button (Only Owner) */}
-        {!isReadOnly && !isDemo && (
+        {!isReadOnly && (
              <button
                 onClick={() => setShowShareModal(true)}
                 className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/60 backdrop-blur-xl border border-gray-200 shadow-lg text-purple-800 font-semibold text-base transition hover:bg-purple-100/80 hover:text-purple-900 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-purple-400"
@@ -411,6 +453,11 @@ export default function AgendaPage() {
                 <>
                     {agenda?.share_token ? (
                         <div className="space-y-4">
+                            {isDemo && (
+                                <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 text-xs p-2 rounded">
+                                    <strong>Demo Mode:</strong> This link is simulated. It will only work in this browser session.
+                                </div>
+                            )}
                              <p className="text-sm text-gray-600 text-center">
                                 Anyone with this link can view this agenda.
                             </p>

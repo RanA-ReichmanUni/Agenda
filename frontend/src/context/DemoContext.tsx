@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { DemoAgenda, INITIAL_DEMO_AGENDAS, DEMO_USER } from '../data/demoData';
 import { Article } from '../lib/types';
 
@@ -10,12 +10,26 @@ interface DemoContextType {
   createArticle: (agendaId: number, article: Omit<Article, "id" | "createdAt" | "agenda_id">) => Promise<Article>;
   deleteArticle: (agendaId: number, articleId: number) => Promise<void>;
   getAgenda: (id: number) => DemoAgenda | undefined;
+  shareAgenda: (id: number) => Promise<string>;
+  unshareAgenda: (id: number) => Promise<void>;
 }
 
 const DemoContext = createContext<DemoContextType | undefined>(undefined);
 
 export function DemoProvider({ children }: { children: ReactNode }) {
-  const [agendas, setAgendas] = useState<DemoAgenda[]>(INITIAL_DEMO_AGENDAS);
+  const [agendas, setAgendas] = useState<DemoAgenda[]>(() => {
+    try {
+      const saved = localStorage.getItem('demo_agendas');
+      return saved ? JSON.parse(saved) : INITIAL_DEMO_AGENDAS;
+    } catch (e) {
+      console.warn("Failed to load demo agendas", e);
+      return INITIAL_DEMO_AGENDAS;
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('demo_agendas', JSON.stringify(agendas));
+  }, [agendas]);
 
   const addAgenda = async (title: string) => {
     const newAgenda: DemoAgenda = {
@@ -65,6 +79,27 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     }));
   };
 
+  const shareAgenda = async (id: number): Promise<string> => {
+    const token = `valid-demo-token-${id}`;
+    setAgendas(prev => prev.map(a => {
+      if (a.id === id) {
+        return { ...a, share_token: token };
+      }
+      return a;
+    }));
+    return token;
+  };
+
+  const unshareAgenda = async (id: number): Promise<void> => {
+    setAgendas(prev => prev.map(a => {
+      if (a.id === id) {
+        const { share_token, ...rest } = a;
+        return rest;
+      }
+      return a;
+    }));
+  };
+
   const getAgenda = (id: number) => {
     return agendas.find(a => a.id === id);
   };
@@ -77,7 +112,9 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       deleteAgenda, 
       createArticle,
       deleteArticle,
-      getAgenda
+      getAgenda,
+      shareAgenda,
+      unshareAgenda
     }}>
       {children}
     </DemoContext.Provider>

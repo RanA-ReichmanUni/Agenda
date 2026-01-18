@@ -5,7 +5,7 @@ export interface DemoAgenda {
   title: string;
   createdAt: string;
   articles: Article[];
-
+  share_token?: string;
 }
 
 export const INITIAL_DEMO_AGENDAS: DemoAgenda[] = [
