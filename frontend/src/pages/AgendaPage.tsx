@@ -508,6 +508,7 @@ export default function AgendaPage() {
         {!isReadOnly && (
              <div className="flex gap-2">
                 <button
+                    id="tutorial-share-button"
                     onClick={() => setShowShareModal(true)}
                     className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/60 backdrop-blur-xl border border-gray-200 shadow-lg text-purple-800 font-semibold text-base transition hover:bg-purple-100/80 hover:text-purple-900 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-purple-400"
                 >
@@ -595,6 +596,7 @@ export default function AgendaPage() {
              {/* Verify Button beneath add form */}
              <div className="flex justify-center mt-8">
                 <button
+                    id="tutorial-verify-ai"
                     onClick={handleAnalyzeClaim}
                     disabled={isAnalyzing}
                     className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-full backdrop-blur-xl border shadow-md font-bold text-lg transition-all transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-400

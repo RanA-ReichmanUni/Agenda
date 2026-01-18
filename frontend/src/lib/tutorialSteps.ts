@@ -53,5 +53,17 @@ export const DEMO_AGENDA_STEPS: TutorialStep[] = [
     title: 'The Evidence',
     content: 'All your collected articles appear here. Click them to preview content without leaving the page.',
     position: 'top'
+  },
+  {
+    targetId: 'tutorial-verify-ai',
+    title: 'Verify with AI',
+    content: 'Use our AI to analyze the credibility of your collected evidence and generate a reliability score for your narrative.',
+    position: 'top'
+  },
+  {
+    targetId: 'tutorial-share-button',
+    title: 'Share Your Agenda',
+    content: 'Ready to publish? Generate a public link to share your curated narrative with others.',
+    position: 'bottom'
   }
 ];
