@@ -325,7 +325,7 @@ export default function AgendaPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-gray-50 to-blue-100 pt-0 pb-2 px-2 md:px-0 relative overflow-x-hidden">
+    <div className="min-h-[125vh] bg-gradient-to-br from-white via-gray-50 to-blue-100 pt-0 pb-2 px-2 md:px-0 relative overflow-x-hidden">
       
       {/* Background Orbs */}
       <div className="fixed top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-400 via-purple-400 to-pink-400 opacity-30 rounded-full blur-3xl pointer-events-none -z-10 animate-float" style={{ filter: 'blur(120px)' }} />
