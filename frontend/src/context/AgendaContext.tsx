@@ -4,8 +4,9 @@ import { API_ENDPOINTS, authFetch } from '../lib/api';
 export interface AgendaItem {
   id: number;
   title: string;
-  created_at: string;
-  createdAt?: Date;
+  createdAt: Date;
+  articles?: any[];
+  share_token?: string;
 }
 
 interface AgendaContextType {
@@ -33,7 +34,7 @@ export const AgendaProvider = ({ children }: { children: React.ReactNode }) => {
       setAgendas(
         data.map((agenda: any) => ({
           ...agenda,
-          createdAt: new Date(agenda.created_at),
+          createdAt: new Date(agenda.createdAt || agenda.created_at),
         }))
       );
       setError(null);
