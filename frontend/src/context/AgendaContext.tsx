@@ -14,6 +14,7 @@ interface AgendaContextType {
   loading: boolean;
   error: string | null;
   refetch: () => void;
+  updateAgendaItem: (id: number, updates: Partial<AgendaItem>) => void;
 }
 
 const AgendaContext = createContext<AgendaContextType | undefined>(undefined);
@@ -46,12 +47,18 @@ export const AgendaProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const updateAgendaItem = (id: number, updates: Partial<AgendaItem>) => {
+    setAgendas((prev) => 
+      prev.map((item) => (item.id === id ? { ...item, ...updates } : item))
+    );
+  };
+
   useEffect(() => {
     fetchAgendas();
   }, []);
 
   return (
-    <AgendaContext.Provider value={{ agendas, loading, error, refetch: fetchAgendas }}>
+    <AgendaContext.Provider value={{ agendas, loading, error, refetch: fetchAgendas, updateAgendaItem }}>
       {children}
     </AgendaContext.Provider>
   );

@@ -6,6 +6,7 @@ import ArticleCard from "../components/ArticleCard";
 import { API_ENDPOINTS, authFetch } from "../lib/api";
 import { useToastContext } from "../context/ToastContext";
 import { useDemo } from "../context/DemoContext";
+import { AgendaContext } from "../context/AgendaContext";
 import { useTutorial } from "../context/TutorialContext";
 import { DEMO_AGENDA_STEPS, DEMO_MODE_EXPLANATION } from "../lib/tutorialSteps";
 
@@ -24,6 +25,7 @@ export default function AgendaPage() {
   const isReadOnly = isShared;
 
   const demoContext = useDemo();
+  const agendaContext = React.useContext(AgendaContext);
   const { startTutorial, hasSeenTutorial, isActive } = useTutorial();
 
   if (!id && !token) {
@@ -57,6 +59,11 @@ export default function AgendaPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
+
+  // Edit Title State
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editTitleValue, setEditTitleValue] = useState("");
+  const [isUpdatingTitle, setIsUpdatingTitle] = useState(false);
 
   useEffect(() => {
     if (isDemo && !loading && !hasSeenTutorial('agenda') && !isActive) {
@@ -362,6 +369,49 @@ export default function AgendaPage() {
     }
   };
 
+  const startEditingTitle = () => {
+    if (agenda) {
+        setEditTitleValue(agenda.title);
+        setIsEditingTitle(true);
+    }
+  };
+
+  const cancelEditingTitle = () => {
+    setIsEditingTitle(false);
+    setEditTitleValue("");
+  };
+
+  const handleUpdateTitle = async () => {
+    if (!agenda || !editTitleValue.trim()) return;
+    
+    setIsUpdatingTitle(true);
+    try {
+        if (isDemo) {
+            // Demo Mode Simulation
+            await new Promise(resolve => setTimeout(resolve, 500));
+            const updated = demoContext.updateAgendaTitle(Number(agenda.id), editTitleValue);
+            setAgenda(prev => prev ? ({ ...prev, title: updated.title }) : null);
+        } else {
+            const res = await authFetch(API_ENDPOINTS.agenda(agenda.id), {
+                method: 'PATCH',
+                body: JSON.stringify({ title: editTitleValue }), 
+            });
+            
+            if (!res.ok) throw new Error("Failed to update title");
+            
+            const updated = await res.json();
+            setAgenda(prev => prev ? ({ ...prev, title: updated.title }) : null);
+             // Update global context so homepage reflects changes
+             agendaContext?.updateAgendaItem(Number(agenda.id), { title: updated.title });
+        }
+        setIsEditingTitle(false);
+    } catch (e: any) {
+        alert("Failed to update title: " + e.message);
+    } finally {
+        setIsUpdatingTitle(false);
+    }
+  };
+
   const handleArticleClick = (url: string) => {
     setIframeError(false);
     setPreviewUrl(url);
@@ -473,9 +523,64 @@ export default function AgendaPage() {
       <div className="max-w-4xl mx-auto space-y-12 py-12">
         <div className="relative z-10 flex flex-col items-center animate-agenda-header text-center">
             <span className="text-sm font-bold tracking-[0.3em] text-blue-600 uppercase mb-4 opacity-80 animate-subtitle-reveal">My Narrative</span>
-            <h1 id="tutorial-agenda-subject" className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-gray-800 via-blue-800 to-gray-900 mb-6 drop-shadow-sm tracking-tight leading-tight" style={{ fontFamily: "'Playfair Display', serif" }}>
-            {agenda.title}
-          </h1>
+            
+            <div className="w-full flex justify-center mb-6">
+                {isEditingTitle ? (
+                    <div className="flex w-full max-w-2xl gap-2 items-center justify-center animate-fade-in relative z-20">
+                        <input 
+                            type="text"
+                            value={editTitleValue}
+                            onChange={(e) => setEditTitleValue(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleUpdateTitle();
+                                if (e.key === 'Escape') cancelEditingTitle();
+                            }}
+                            className="w-full text-center text-3xl md:text-5xl font-black text-gray-800 bg-white/50 border-b-2 border-blue-500 focus:outline-none focus:border-blue-700 py-2 rounded-t-lg transition shadow-lg backdrop-blur-sm"
+                            style={{ fontFamily: "'Playfair Display', serif" }}
+                            autoFocus
+                        />
+                        <div className="flex flex-col gap-1 absolute -right-12">
+                            <button 
+                                onClick={handleUpdateTitle}
+                                disabled={isUpdatingTitle}
+                                className="p-2 bg-green-100 text-green-700 rounded-full hover:bg-green-200 transition shadow-md"
+                                title="Save"
+                            >
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                            </button>
+                            <button 
+                                onClick={cancelEditingTitle}
+                                disabled={isUpdatingTitle}
+                                className="p-2 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition shadow-md"
+                                title="Cancel"
+                            >
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="relative group inline-block">
+                        <h1 id="tutorial-agenda-subject" className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-gray-800 via-blue-800 to-gray-900 drop-shadow-sm tracking-tight leading-tight px-4" style={{ fontFamily: "'Playfair Display', serif" }}>
+                        {agenda.title}
+                        </h1>
+                        {!isReadOnly && (
+                            <button
+                                onClick={startEditingTitle}
+                                className="absolute -right-10 md:-right-14 top-1/2 -translate-y-1/2 p-2 opacity-0 group-hover:opacity-100 transition text-gray-400 hover:text-blue-600 bg-white/30 backdrop-blur-sm rounded-full"
+                                title="Edit Title"
+                            >
+                                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
+                            </button>
+                        )}
+                    </div>
+                )}
+            </div>
           <div className="flex flex-col items-center gap-4">
             <div className="flex items-center gap-2 text-sm text-gray-500 font-medium bg-white/50 backdrop-blur-sm px-4 py-2 rounded-full border border-gray-100 shadow-sm">
                 <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>

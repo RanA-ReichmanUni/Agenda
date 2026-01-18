@@ -10,8 +10,10 @@ interface DemoContextType {
   createArticle: (agendaId: number, article: Omit<Article, "id" | "createdAt" | "agenda_id">) => Promise<Article>;
   deleteArticle: (agendaId: number, articleId: number) => Promise<void>;
   getAgenda: (id: number) => DemoAgenda | undefined;
+  updateAgendaTitle: (id: number, title: string) => { title: string };
   shareAgenda: (id: number) => Promise<string>;
   unshareAgenda: (id: number) => Promise<void>;
+  resetDemo: () => void;
 }
 
 const DemoContext = createContext<DemoContextType | undefined>(undefined);
@@ -31,6 +33,11 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('demo_agendas', JSON.stringify(agendas));
   }, [agendas]);
 
+  const resetDemo = () => {
+    localStorage.removeItem('demo_agendas');
+    setAgendas(INITIAL_DEMO_AGENDAS);
+  };
+
   const addAgenda = async (title: string) => {
     const newAgenda: DemoAgenda = {
       id: Date.now(),
@@ -39,6 +46,11 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       articles: []
     };
     setAgendas(prev => [newAgenda, ...prev]);
+  };
+  
+  const updateAgendaTitle = (id: number, title: string) => {
+    setAgendas(prev => prev.map(a => a.id === id ? { ...a, title } : a));
+    return { title };
   };
 
   const deleteAgenda = async (id: number) => {
@@ -113,8 +125,10 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       createArticle,
       deleteArticle,
       getAgenda,
+      updateAgendaTitle,
       shareAgenda,
-      unshareAgenda
+      unshareAgenda,
+      resetDemo
     }}>
       {children}
     </DemoContext.Provider>

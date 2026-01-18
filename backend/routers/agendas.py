@@ -246,6 +246,37 @@ async def unshare_agenda(
         conn.close()
 
 
+@router.patch("/{agenda_id}", response_model=Agenda)
+async def update_agenda(
+    agenda_id: int,
+    agenda_update: CreateAgenda, 
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Update an agenda title.
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        # Verify ownership
+        cursor.execute(
+            "SELECT id FROM agendas WHERE id = %s AND user_id = %s",
+            (agenda_id, current_user.id)
+        )
+        if not cursor.fetchone():
+            raise HTTPException(status_code=404, detail="Agenda not found")
+        
+        cursor.execute(
+            "UPDATE agendas SET title = %s WHERE id = %s RETURNING id, user_id, title, created_at, share_token",
+            (agenda_update.title, agenda_id)
+        )
+        row = cursor.fetchone()
+        conn.commit()
+        return Agenda(id=row[0], user_id=row[1], title=row[2], createdAt=row[3], share_token=row[4])
+    finally:
+        conn.close()
+
+
 @router.delete("/{agenda_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_agenda(
     agenda_id: int,

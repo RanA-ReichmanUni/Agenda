@@ -2,7 +2,7 @@ import React, { useEffect, useState, useContext } from "react";
 import CreateAgendaForm from "../components/CreateAgendaForm";
 import { AgendaContext, AgendaItem } from "../context/AgendaContext";
 import { useDemo } from "../context/DemoContext";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { API_ENDPOINTS, authFetch } from "../lib/api";
 import { useTutorial } from "../context/TutorialContext";
@@ -10,6 +10,7 @@ import { DEMO_HOME_STEPS, DEMO_MODE_EXPLANATION } from "../lib/tutorialSteps";
 
 export default function HomePage() {
   const location = useLocation();
+  const navigate = useNavigate();
   const isDemo = location.pathname.startsWith('/demo');
   const { startTutorial, hasSeenTutorial, isActive } = useTutorial();
 
@@ -143,12 +144,15 @@ export default function HomePage() {
             <span className="text-sm text-gray-700">
               Welcome, <span className="font-semibold text-blue-700">Demo User</span>
             </span>
-             <Link
-            to="/login"
+             <button
+            onClick={() => {
+                demoContext.resetDemo();
+                navigate("/login");
+            }}
             className="text-sm bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded-md transition"
           >
             Exit Demo
-          </Link>
+          </button>
           </div>
         </div>
       )}
