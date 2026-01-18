@@ -11,6 +11,7 @@ import { ToastProvider } from './context/ToastContext';
 import ShowToast from './components/Toast';
 import { TutorialProvider } from './context/TutorialContext';
 import { TutorialOverlay } from './components/TutorialOverlay';
+import FooterBadge from './components/FooterBadge';
 
 // Protected Route wrapper
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -81,6 +82,7 @@ export default function App() {
             }
           />
         </Routes>
+        <FooterBadge />
         </TutorialProvider>
       </ToastProvider>
     </AuthProvider>

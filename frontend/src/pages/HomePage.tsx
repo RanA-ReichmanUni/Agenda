@@ -175,7 +175,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      <div className="max-w-[90%] 2xl:max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 mt-16">
+      <div className="max-w-[90%] 2xl:max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24 mt-16">
         <div className="relative z-10 space-y-8 animate-agendas-reveal">
           <h2 id="tutorial-agenda-list" className="text-3xl font-bold text-blue-800 tracking-tight flex items-center gap-2 animate-title-bounce justify-center md:justify-start">
             <span>My Agendas</span>
