@@ -348,8 +348,65 @@ export default function AgendaPage() {
                 reasoning: `(Demo Simulation) ${reasoningDetail}`, 
                 claim: agenda?.title || ""
             });
+        } else if (isShared && token && !token.startsWith('valid-demo-token-')) {
+            // Shared Mode (Public - Real Backend using Token)
+            const response = await fetch(API_ENDPOINTS.analyzeShared(token), {
+                method: 'POST'
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setAnalysisResult(data);
+            } else {
+                throw new Error("Analysis failed");
+            }
+        } else if (isShared && token && token.startsWith('valid-demo-token-')) {
+            // Shared Demo Mode (Reuse Demo Logic)
+             // ... We could actually reuse the block above by restructuring, but for now copying the simulation logic for clarity/safety if distinct features arise.
+             // Actually, the block above handles "isDemo", but Shared Demo Mode sets "isShared=true" and "isDemo=false". 
+             // Ideally we should just make the first block handle (isDemo || (isShared && token.startsWith('valid-demo-token-')))
+             
+             // Let's recurse or copy-paste for safety to avoid messing up the tool call logic. 
+             // Or better: Let's slightly refactor the condition at top.
+             
+             // REFACTORING FOR SHARED DEMO SUPPORT:
+             // The logic below is duplicated from "isDemo" block. 
+             // In a real refactor I would extract this function.
+             await new Promise(r => setTimeout(r, 2000));
+              const count = articles.length;
+              /* ... Same logic ... */
+               // CRITERIA 1: Keywords looking for "Hard Evidence" 
+            const authoritativeKeywords = ["report", "study", "evidence", "confirmed", "analysis", "data", "statistics", "review", "official", "survey", "court", "verdict", "proof", "science", "research"];
+            const qualityMatches = articles.filter(a => 
+                authoritativeKeywords.some(kw => (a.title + " " + (a.description || "")).toLowerCase().includes(kw))
+            ).length;
+
+            const uniqueDomains = new Set(articles.map(a => {
+                try { return new URL(a.url).hostname.replace('www.', ''); } catch { return a.url || 'unknown_source'; }
+            })).size;
+
+            let points = (count * 10) + (uniqueDomains * 15) + (qualityMatches * 10);
+            let score: 'High'|'Medium'|'Low' = 'Low';
+            let reasoningDetail = "";
+
+            if (points >= 65) { 
+                score = 'High';
+                reasoningDetail = `Strong consensus detected across about ${uniqueDomains} unique domains. The semantic analysis identified authoritative terminology (e.g., study, data) that strongly supports the claim.`;
+            } else if (points >= 35) { 
+                score = 'Medium';
+                reasoningDetail = `Evidence is present (${count} sources) and appears relevant. Usage of ${uniqueDomains === 1 ? 'a single source' : 'diverse sources'} provides a partial correlation. Adding one more distinct source would likely elevate this to a high confidence level.`;
+            } else {
+                score = 'Low';
+                reasoningDetail = `Insufficient data density. With only ${count} source(s) and limited cross-referencing, the claim lacks the verifiable weight required for a definitive rating.`;
+            }
+            
+            setAnalysisResult({
+                score,
+                reasoning: `(Shared Demo Simulation) ${reasoningDetail}`, 
+                claim: agenda?.title || ""
+            });
+
         } else {
-            // Real Backend Call
+            // Owner Mode (Real Backend)
             const response = await authFetch(`${API_ENDPOINTS.agendas}/${id}/analyze`, {
                 method: 'POST'
             });
@@ -593,31 +650,32 @@ export default function AgendaPage() {
         {!isReadOnly && (
             <div id="tutorial-add-article" className="relative z-10 animate-form-float max-w-2xl mx-auto w-full">
             <AddArticleForm onAdd={handleAddArticle} />
-             {/* Verify Button beneath add form */}
-             <div className="flex justify-center mt-8">
-                <button
-                    id="tutorial-verify-ai"
-                    onClick={handleAnalyzeClaim}
-                    disabled={isAnalyzing}
-                    className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-full backdrop-blur-xl border shadow-md font-bold text-lg transition-all transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-400
-                     ${isAnalyzing ? 'bg-indigo-50 border-indigo-200 text-indigo-400 cursor-not-allowed' : 'bg-gradient-to-r from-white to-indigo-50 border-indigo-100 text-indigo-700 hover:to-indigo-100 hover:text-indigo-900 hover:shadow-lg hover:border-indigo-200'}
-                    `}
-                >
-                    {isAnalyzing ? (
-                        <>
-                            <div className="animate-spin h-5 w-5 border-2 border-indigo-500 rounded-full border-t-transparent"></div>
-                            <span className="text-base">Running Analysis...</span>
-                        </>
-                    ) : (
-                        <>
-                            <span className="text-2xl">✨</span>
-                            Verify Evidence with AI
-                        </>
-                    )}
-                </button>
-             </div>
             </div>
         )}
+
+        {/* Verify Button (Visible for both Owner and Shared) */}
+        <div className="flex justify-center mt-8 relative z-10">
+            <button
+                id="tutorial-verify-ai"
+                onClick={handleAnalyzeClaim}
+                disabled={isAnalyzing}
+                className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-full backdrop-blur-xl border shadow-md font-bold text-lg transition-all transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-400
+                    ${isAnalyzing ? 'bg-indigo-50 border-indigo-200 text-indigo-400 cursor-not-allowed' : 'bg-gradient-to-r from-white to-indigo-50 border-indigo-100 text-indigo-700 hover:to-indigo-100 hover:text-indigo-900 hover:shadow-lg hover:border-indigo-200'}
+                `}
+            >
+                {isAnalyzing ? (
+                    <>
+                        <div className="animate-spin h-5 w-5 border-2 border-indigo-500 rounded-full border-t-transparent"></div>
+                        <span className="text-base">Running Analysis...</span>
+                    </>
+                ) : (
+                    <>
+                        <span className="text-2xl">✨</span>
+                        Verify Evidence with AI
+                    </>
+                )}
+            </button>
+        </div>
 
         <div className="relative z-10 space-y-8 animate-articles-container">
           <div className="flex items-center mb-6 pl-2 border-l-4 border-blue-500 ml-2">

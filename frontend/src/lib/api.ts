@@ -14,6 +14,7 @@ export const API_ENDPOINTS = {
   // Shared (Public)
   sharedAgenda: (token: string) => `${API_URL}/agendas/shared/${token}`,
   sharedArticles: (token: string) => `${API_URL}/agendas/shared/${token}/articles`,
+  analyzeShared: (token: string) => `${API_URL}/agendas/shared/${token}/analyze`,
 
   // Articles
   articles: (agendaId: number | string) => `${API_URL}/agendas/${agendaId}/articles`,

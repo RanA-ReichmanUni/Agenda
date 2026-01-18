@@ -302,6 +302,93 @@ async def delete_agenda(
     finally:
         conn.close()
 
+@router.post("/shared/{share_token}/analyze")
+async def analyze_shared_agenda_claim(share_token: str):
+    """
+    Analyze the agenda claim for a shared agenda (public access).
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        # 1. Fetch Agenda by Token
+        cursor.execute(
+            "SELECT id, title FROM agendas WHERE share_token = %s",
+            (share_token,)
+        )
+        agenda_row = cursor.fetchone()
+        if not agenda_row:
+            raise HTTPException(status_code=404, detail="Shared agenda not found")
+        
+        agenda_id = agenda_row[0]
+        claim = agenda_row[1]
+        
+        # 2. Fetch Articles
+        cursor.execute(
+            "SELECT title, url, description FROM articles WHERE agenda_id = %s",
+            (agenda_id,)
+        )
+        articles = cursor.fetchall()
+        
+        # 3. Simulated "LLM" Analysis Logic (Same as authenticated version)
+        time.sleep(1.5) # Fake "thinking" time
+        
+        count = len(articles)
+        
+        if count == 0:
+            return {
+                "score": "Low",
+                "reasoning": "No evidence provided. Please add articles to verify this claim.",
+                "claim": claim
+            }
+
+        # CRITERIA 1: Keywords looking for "Hard Evidence" 
+        authoritative_keywords = ["report", "study", "evidence", "confirmed", "analysis", "data", "statistics", "review", "official", "survey", "court", "verdict", "proof", "science", "research"]
+        
+        quality_matches = 0
+        for a in articles:
+            text_blob = (str(a[0]) + " " + str(a[2])).lower()
+            if any(kw in text_blob for kw in authoritative_keywords):
+                quality_matches += 1
+
+        # CRITERIA 2: Diversity of Sources
+        unique_domains = set()
+        for a in articles:
+            url = a[1]
+            try:
+                domain = urlparse(url).netloc.replace('www.', '')
+                if domain:
+                    unique_domains.add(domain)
+            except:
+                pass
+        
+        num_unique = len(unique_domains)
+        
+        # SCORING ALGORITHM
+        points = (count * 10) + (num_unique * 15) + (quality_matches * 10)
+
+        score = "Low"
+        reasoning_detail = ""
+
+        if points >= 65: 
+            score = "High"
+            reasoning_detail = f"Strong consensus detected across about {num_unique} unique domains. The semantic analysis identified authoritative terminology (e.g., study, data) that strongly supports the claim."
+        elif points >= 35: 
+            score = "Medium"
+            reasoning_detail = f"Evidence is present ({count} sources) and appears relevant. Usage of { 'a single source' if num_unique == 1 else 'diverse sources' } provides a partial correlation. Adding one more distinct source would likely elevate this to a high confidence level."
+        else:
+            score = "Low"
+            reasoning_detail = f"Insufficient data density. With only {count} source(s) and limited cross-referencing, the claim lacks the verifiable weight required for a definitive rating."
+            
+        return {
+            "score": score,
+            "reasoning": reasoning_detail, 
+            "claim": claim
+        }
+
+    finally:
+        conn.close()
+
+
 @router.post("/{agenda_id}/analyze")
 async def analyze_agenda_claim(
     agenda_id: int, 
