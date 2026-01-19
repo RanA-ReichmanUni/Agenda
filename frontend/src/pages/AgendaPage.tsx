@@ -68,6 +68,14 @@ const DEMO_ANALYSIS_RESULTS: Record<number, AnalysisResult> = {
     is_cached: true,
     is_stale: false,
     articleCount: 2
+  },
+  8: {
+    score: 'High',
+    reasoning: "The debate between Bamba and Bissli is a classic cultural standoff, but the evidence leans towards Bamba due to its peanut-powered nutritional profile (and its ability to potentially reduce peanut allergies, as noted in studies). However, this comparison is largely subjective and humoristic in nature—taste is the ultimate arbiter!",
+    claim: "במבה עדיפה על ביסלי",
+    is_cached: true,
+    is_stale: false,
+    articleCount: 2
   }
 };
 
@@ -406,7 +414,7 @@ export default function AgendaPage() {
 
             // 1. Check if Static Result is valid for the current state
             // Logic: Static results are valid ONLY if the article count matches the default for that specific agenda
-            const demoDefaultCounts: Record<number, number> = {1:4, 2:4, 3:3, 4:3, 5:2, 6:2, 7:2};
+            const demoDefaultCounts: Record<number, number> = {1:4, 2:4, 3:3, 4:3, 5:2, 6:2, 7:2, 8:2};
             const isModified = (demoDefaultCounts[demoId] || 0) !== articles.length;
 
             if (staticResult && !forceRefresh) {

@@ -243,7 +243,32 @@ export const INITIAL_DEMO_AGENDAS: DemoAgenda[] = [
         image: "https://www.apa.org/images/2025-01-workweek-tile_tcm7-334468.jpg"
       }
     ]
-  }
+  },
+  {
+  id: 8,
+  title: "במבה עדיפה על ביסלי (נכון?)",
+  createdAt: new Date().toISOString(),
+  articles: [
+
+    {
+      id: "704",
+      title: "The Twisted History of Bissli, Israel's Most Iconic Snack",
+      url: "https://www.myjewishlearning.com/the-nosher/the-twisted-history-of-bissli-israels-most-iconic-snack/",
+      description: "ביסלי נוצר כתגובה למבמבה, אבל מבמבה נשארת מלכת החטיפים עם 80% פחות אלרגיות לבוטנים בישראל.",
+      createdAt: new Date().toISOString(),
+      agenda_id: "8",
+      image: "https://www.myjewishlearning.com/wp-content/uploads/2024/10/history-of-bissli.jpg"
+    },
+        {
+      id: "704",
+      title: "The Twisted History of Bissli, Israel's Most Iconic Snack",
+      url: "https://www.osem-nestle.co.il/brands/%D7%91%D7%9E%D7%91%D7%94",
+      description: "ביסלי נוצר כתגובה למבמבה, אבל מבמבה נשארת מלכת החטיפים עם 80% פחות אלרגיות לבוטנים בישראל.",
+      createdAt: new Date().toISOString(),
+      agenda_id: "8",
+      image: "https://www.osem-nestle.co.il/sites/site.prod.osem-nestle.co.il/files/2022-10/b62554_digital-header-bamba2_1440x512_0.png"
+    }
+
 
     
   ]
