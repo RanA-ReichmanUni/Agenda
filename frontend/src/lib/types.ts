@@ -8,6 +8,15 @@ export interface Article {
   createdAt?: string;
 }
 
+export type AnalysisResult = {
+  score: 'High' | 'Medium' | 'Low';
+  reasoning: string;
+  claim: string;
+  is_cached?: boolean;
+  is_stale?: boolean;
+  articleCount?: number;
+};
+
 export interface Agenda {
   id: string | number;
   user_id?: string | number;
@@ -16,4 +25,5 @@ export interface Agenda {
   articles: Article[];
   share_token?: string;
   owner_name?: string;
+  analysisResult?: AnalysisResult;
 }

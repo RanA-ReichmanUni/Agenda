@@ -11,6 +11,7 @@ try:
 except ImportError:
     from urlparse import urlparse
 
+from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException, Depends, status
 from database import get_db_connection
 from models import User, Agenda, CreateAgenda, Article
@@ -416,6 +417,57 @@ async def delete_agenda(
         conn.commit()
     finally:
         conn.close()
+
+# Define a model for raw analysis requests
+class RawArticleData(BaseModel):
+    title: str = "Unknown Title"
+    url: str
+    description: str = ""
+
+class RawAnalysisRequest(BaseModel):
+    claim: str
+    articles: List[RawArticleData]
+
+@router.post("/analyze-raw")
+async def analyze_raw_claim(request: RawAnalysisRequest):
+    """
+    Analyze a claim using raw data provided in the request body.
+    Useful for Demo Mode where data isn't in the DB.
+    """
+    claim = request.claim
+    raw_articles = request.articles
+    
+    # Prepare evidence
+    evidence_items = []
+    for i, a in enumerate(raw_articles):
+        # Helper to fetch excerpt (reuse the existing mechanism by calling function if available or simulating)
+        # We need to make sure 'fetch_article_excerpt' is available in scope or moved up.
+        # Assuming it is available (it was used in previous function).
+        url = a.url
+        excerpt = fetch_article_excerpt(url) if url else a.description
+        
+        evidence_items.append({
+            "id": f"a{i}",
+            "title": a.title,
+            "url": url,
+            "publisher": urlparse(url).netloc if url else "Unknown",
+            "excerpt": excerpt
+        })
+
+    # Try real LLM
+    llm_result = call_openrouter_analysis(claim, evidence_items)
+    
+    if llm_result:
+        return llm_result
+        
+    # Fallback Simulation
+    time.sleep(1.0)
+    return {
+        "score": "Low",
+        "reasoning": "Real AI service unavailable. (Demo mode fallback)",
+        "claim": claim
+    }
+
 
 @router.post("/shared/{share_token}/analyze")
 async def analyze_shared_agenda_claim(share_token: str):

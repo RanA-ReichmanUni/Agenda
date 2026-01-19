@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { DemoAgenda, INITIAL_DEMO_AGENDAS, DEMO_USER } from '../data/demoData';
-import { Article } from '../lib/types';
+import { Article, AnalysisResult } from '../lib/types';
 
 interface DemoContextType {
   user: typeof DEMO_USER;
@@ -13,6 +13,7 @@ interface DemoContextType {
   updateAgendaTitle: (id: number, title: string) => { title: string };
   shareAgenda: (id: number) => Promise<string>;
   unshareAgenda: (id: number) => Promise<void>;
+  saveAnalysis: (id: number, result: AnalysisResult) => void;
   resetDemo: () => void;
 }
 
@@ -36,6 +37,12 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   const resetDemo = () => {
     localStorage.removeItem('demo_agendas');
     setAgendas(INITIAL_DEMO_AGENDAS);
+  };
+
+  const saveAnalysis = (id: number, result: AnalysisResult) => {
+    setAgendas(prev => prev.map(a => 
+      a.id === id ? { ...a, analysisResult: result } : a
+    ));
   };
 
   const addAgenda = async (title: string) => {
@@ -116,8 +123,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     return agendas.find(a => a.id === id);
   };
 
-  return (
-    <DemoContext.Provider value={{ 
+  const value = React.useMemo(() => ({
       user: DEMO_USER, 
       agendas, 
       addAgenda, 
@@ -128,8 +134,12 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       updateAgendaTitle,
       shareAgenda,
       unshareAgenda,
+      saveAnalysis,
       resetDemo
-    }}>
+  }), [agendas]);
+
+  return (
+    <DemoContext.Provider value={value}>
       {children}
     </DemoContext.Provider>
   );

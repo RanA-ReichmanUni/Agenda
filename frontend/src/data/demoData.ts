@@ -1,4 +1,4 @@
-import { Article } from "../lib/types";
+import { Article, AnalysisResult } from "../lib/types";
 
 export interface DemoAgenda {
   id: number;
@@ -6,6 +6,7 @@ export interface DemoAgenda {
   createdAt: string;
   articles: Article[];
   share_token?: string;
+  analysisResult?: AnalysisResult;
 }
 
 export const INITIAL_DEMO_AGENDAS: DemoAgenda[] = [

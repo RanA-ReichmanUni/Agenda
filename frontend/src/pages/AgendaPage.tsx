@@ -9,14 +9,66 @@ import { useDemo } from "../context/DemoContext";
 import { AgendaContext } from "../context/AgendaContext";
 import { useTutorial } from "../context/TutorialContext";
 import { DEMO_AGENDA_STEPS, DEMO_MODE_EXPLANATION } from "../lib/tutorialSteps";
+import { AnalysisResult } from "../lib/types";
 
-// Add types for Analysis
-type AnalysisResult = {
-  score: 'High' | 'Medium' | 'Low';
-  reasoning: string;
-  claim: string;
-  is_cached?: boolean;
-  is_stale?: boolean;
+// --- Hardcoded Static Analysis Results for Demo Mode ---
+const DEMO_ANALYSIS_RESULTS: Record<number, AnalysisResult> = {
+  1: {
+    score: 'High',
+    reasoning: "Analysis of 4 technology sources (Gizmodo, HowToGeek, TechRadar, PhoneArena) indicates a strong consensus. The articles consistently report that form factors have converged ('plateaued') due to physical optimization and consumer demand for reliability, supporting the claim of convergence.",
+    claim:  "All Smartphones Are Bland and Converged",
+    is_cached: true,
+    is_stale: false,
+    articleCount: 4
+  },
+  2: {
+    score: 'Medium',
+    reasoning: "The provided articles from CashMatters, WEF, and BEUC strongly argue for cash's privacy benefits. However, the claim 'Cash is Superior' is broad; while superior for privacy/anonymity (High confidence), the sources do not comprehensively address convenience or security risks compared to digital, resulting in a Medium overall score for the general superiority claim.",
+    claim: "Cash Is Superior to Digital Payments",
+    is_cached: true,
+    is_stale: false,
+    articleCount: 4
+  },
+  3: {
+    score: 'High',
+    reasoning: "Sources from PBS, KFF, and NYT provide substantial evidence that political maneuvering often prioritizes election strategy over patient outcomes. The analysis highlights a pattern of 'weaponizing' healthcare policy rather than solving cost/coverage trade-offs, supporting the claim that political interests frequently supersede patient care.",
+    claim: "U.S. Health Care Politics Put Insurance Companies First, Patients Second",
+    is_cached: true,
+    is_stale: false,
+    articleCount: 3
+  },
+  4: {
+    score: 'High',
+    reasoning: "Multiple studies cited (including MIT research reported by Time and TechNewsWorld) directly support the claim. The evidence links AI chatbot usage to reduced 'brain engagement' (EEG data) and cognitive offloading, confirming the negative impact on critical thinking skills.",
+    claim: "AI Chatbots Make People Dumber",
+    is_cached: true,
+    is_stale: false,
+    articleCount: 3
+  },
+  5: {
+    score: 'Medium',
+    reasoning: "Research provided (phys.org, Oxford Learning) supports the sub-claim that paper improves reading comprehension and retention. However, 'Superior' is a subjective value judgment. The evidence strongly supports paper for *learning*, but does not address portability or accessibility where screens excel.",
+    claim: "Paper Books Are Superior to Screens",
+    is_cached: true,
+    is_stale: false,
+    articleCount: 2
+  },
+  6: {
+    score: 'High',
+    reasoning: "The claim is well-supported by the provided medical and psychiatric sources (News-Medical, Columbia Psychiatry). The articles cite specific correlations between early smartphone use and increased rates of suicidal thoughts, aggression, and poor mental health in young adults.",
+    claim: "Smartphones Destroying Our Mental Health",
+    is_cached: true,
+    is_stale: false,
+    articleCount: 2
+  },
+  7: {
+    score: 'High',
+    reasoning: "Evidence from large-scale trials (UK Pilot, Microsoft Japan) cited by Autonomy and APA strongly supports the claim. The data shows clear improvements in revenue, productivity, and reduced burnout, validating the 'Ideal' characterization in a business context.",
+    claim: "The 4-Day Work Week Is Ideal",
+    is_cached: true,
+    is_stale: false,
+    articleCount: 2
+  }
 };
 
 export default function AgendaPage() {
@@ -61,6 +113,21 @@ export default function AgendaPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
+  // Track the content hash (or length) of articles when analysis ran
+  const [analyzedArticleCount, setAnalyzedArticleCount] = useState<number | null>(null);
+
+  // Watch for Changes to Articles to invalidate Analysis
+  useEffect(() => {
+    // We check against analysisResult.articleCount if available, or fallback to analyzedArticleCount for safety
+    const recordedCount = analysisResult?.articleCount ?? analyzedArticleCount;
+
+    if (analysisResult && !analysisResult.is_stale && recordedCount !== null) {
+        if (articles.length !== recordedCount) {
+             console.log("Articles changed locally - Marking analysis as stale");
+             setAnalysisResult(prev => prev ? ({ ...prev, is_stale: true }) : null);
+        }
+    }
+  }, [articles, analyzedArticleCount, analysisResult]);
 
   // Edit Title State
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -131,9 +198,20 @@ export default function AgendaPage() {
                 title: demoAgenda.title, 
                 createdAt: new Date(demoAgenda.createdAt),
                 articles: demoAgenda.articles,
-                share_token: demoAgenda.share_token
+                share_token: demoAgenda.share_token,
+                analysisResult: demoAgenda.analysisResult // Load cached result
             });
             setArticles(demoAgenda.articles);
+            
+            // If we have a stored analysis, load it into state
+            if (demoAgenda.analysisResult) {
+                setAnalysisResult(demoAgenda.analysisResult);
+                // Trust the count stored in the result, falling back to current length only if missing (legacy safety)
+                setAnalyzedArticleCount(demoAgenda.analysisResult.articleCount ?? demoAgenda.articles.length);
+            } else {
+                 setAnalysisResult(null); // Explicit clear if no saved result
+                 setAnalyzedArticleCount(null);
+            }
 
         } else {
             // Owner Mode (Auth)
@@ -163,6 +241,9 @@ export default function AgendaPage() {
     try {
       if (isDemo) {
         await demoContext.createArticle(Number(agendaId), newArticle);
+        // We do *not* manually update local state here. 
+        // The Context update will trigger the useEffect hook, which will sync 'articles' correctly.
+        // This prevents race conditions where we add it locally AND via effect, causing doubles.
         return;
       }
       
@@ -187,6 +268,7 @@ export default function AgendaPage() {
       if (isDemo) {
          const { id, createdAt, agenda_id, ...rest } = articleToRestore;
          await demoContext.createArticle(Number(agendaId), rest);
+         // Same here: rely on Context propagation to avoid duplication
          setShowUndo(false);  
          setArticleToDelete(null);
          return;
@@ -222,6 +304,11 @@ export default function AgendaPage() {
 
       if (isDemo) {
           await demoContext.deleteArticle(Number(agendaId), articleId);
+          // For deletion, local optimistic update is less risky (doesn't create dupes), 
+          // but for consistency we should probably let the effect handle it.
+          // However, the effect might be slightly slower. Let's keep local update for responsiveness
+          // UNLESS the effect is fast enough. Let's try relying on context for consistency.
+          // actually, let's keep the manual filter for instant feedback, it won't dupe anything.
       } else {
           const res = await authFetch(API_ENDPOINTS.article(articleId), { method: "DELETE" });
           if (!res.ok) {
@@ -291,65 +378,86 @@ export default function AgendaPage() {
   };
 
   const handleAnalyzeClaim = async (forceRefresh = false) => {
+    // 1. Exact Match Cache: If we have a valid result for current state, show it.
+    if (!forceRefresh && analysisResult && analyzedArticleCount === articles.length) {
+        setShowAnalysisModal(true);
+        return;
+    }
+
+    // 2. Stale Cache Preservation: If we have a result but it's stale (counts differ), 
+    // and we aren't forcing a refresh, show the stale result instead of overwriting with static default.
+    if (!forceRefresh && analysisResult) {
+         setShowAnalysisModal(true);
+         return;
+    }
+
     setIsAnalyzing(true);
     setAnalysisResult(null);
     try {
         if (isDemo) {
-            // Demo Mode Simulation
-            await new Promise(r => setTimeout(r, 2000));
-            
-            const count = articles.length;
-            if (count === 0) {
-                 setAnalysisResult({
-                    score: 'Low',
-                    reasoning: "(Demo Simulation) No evidence provided. Please add articles to verify this claim.",
-                    claim: agenda?.title || ""
-                });
-                setIsAnalyzing(false);
-                setShowAnalysisModal(true);
-                return;
+            await new Promise(r => setTimeout(r, 800)); // Slight delay for effect
+
+            const demoId = Number(agendaId);
+            const staticResult = DEMO_ANALYSIS_RESULTS[demoId];
+
+            // 1. Check if Static Result is valid for the current state
+            // Logic: Static results are valid ONLY if the article count matches the default for that specific agenda
+            const demoDefaultCounts: Record<number, number> = {1:4, 2:4, 3:3, 4:3, 5:2, 6:2, 7:2};
+            const isModified = (demoDefaultCounts[demoId] || 0) !== articles.length;
+
+            if (staticResult && !forceRefresh) {
+                 const resultToSet = {
+                    ...staticResult,
+                    is_stale: isModified,
+                    articleCount: articles.length 
+                 };
+                 setAnalysisResult(resultToSet);
+                 setAnalyzedArticleCount(articles.length); // Record current state
+                 
+                 // Persist static/stale state too so navigation preserves it
+                 demoContext.saveAnalysis(demoId, resultToSet);
+
+                 setShowAnalysisModal(true);
+                 setIsAnalyzing(false);
+                 return;
             }
 
-            // CRITERIA 1: Keywords looking for "Hard Evidence" 
-            const authoritativeKeywords = ["report", "study", "evidence", "confirmed", "analysis", "data", "statistics", "review", "official", "survey", "court", "verdict", "proof", "science", "research"];
-            const qualityMatches = articles.filter(a => 
-                authoritativeKeywords.some(kw => (a.title + " " + (a.description || "")).toLowerCase().includes(kw))
-            ).length;
+            // 2. If Force Refresh (User clicked Recheck) or No Static Result (New Agenda)
+            const payload = {
+                claim: agenda?.title || "",
+                articles: articles.map(a => ({
+                    title: a.title,
+                    url: a.url,
+                    description: a.description || ""
+                }))
+            };
 
-            // CRITERIA 2: Diversity of Sources 
-            const uniqueDomains = new Set(articles.map(a => {
-                try { 
-                    return new URL(a.url).hostname.replace('www.', ''); 
-                } catch { 
-                    return a.url || 'unknown_source'; 
-                }
-            })).size;
-
-            // SCORING ALGORITHM
-            // Base: 10 pts per article (Quantity)
-            // Bonus: 15 pts per unique domain (Diversity is worth more than quantity)
-            // Bonus: 10 pts per "Scientific/Official" keyword match (Quality)
-            let points = (count * 10) + (uniqueDomains * 15) + (qualityMatches * 10);
-
-            let score: 'High'|'Medium'|'Low' = 'Low';
-            let reasoningDetail = "";
-
-            if (points >= 65) { 
-                score = 'High';
-                reasoningDetail = `Strong consensus detected across about ${uniqueDomains} unique domains. The semantic analysis identified authoritative terminology (e.g., study, data) that strongly supports the claim.`;
-            } else if (points >= 35) { 
-                score = 'Medium';
-                reasoningDetail = `Evidence is present (${count} sources) and appears relevant. Usage of ${uniqueDomains === 1 ? 'a single source' : 'diverse sources'} provides a partial correlation. Adding one more distinct source would likely elevate this to a high confidence level.`;
-            } else {
-                score = 'Low';
-                reasoningDetail = `Insufficient data density. With only ${count} source(s) and limited cross-referencing, the claim lacks the verifiable weight required for a definitive rating.`;
-            }
-            
-            setAnalysisResult({
-                score,
-                reasoning: `(Demo Simulation) ${reasoningDetail}`, 
-                claim: agenda?.title || ""
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+            const response = await fetch(`${apiUrl}/agendas/analyze-raw`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
             });
+
+            if (response.ok) {
+                const data = await response.json();
+                const newResult: AnalysisResult = {
+                    ...data,
+                    reasoning: `(Real-time Analysis) ${data.reasoning}`,
+                    articleCount: articles.length
+                };
+                 setAnalysisResult(newResult);
+                setAnalyzedArticleCount(articles.length); // Sync state
+
+                // Persist to Context/LocalStorage
+                demoContext.saveAnalysis(demoId, newResult);
+
+            } else {
+                 throw new Error("Demo analysis failed");
+            }
+            
+            setShowAnalysisModal(true);
+
         } else if (isShared && token && !token.startsWith('valid-demo-token-')) {
             // Shared Mode (Public - Real Backend using Token)
             const response = await fetch(API_ENDPOINTS.analyzeShared(token), {
@@ -363,16 +471,8 @@ export default function AgendaPage() {
             }
         } else if (isShared && token && token.startsWith('valid-demo-token-')) {
             // Shared Demo Mode (Reuse Demo Logic)
-             // ... We could actually reuse the block above by restructuring, but for now copying the simulation logic for clarity/safety if distinct features arise.
-             // Actually, the block above handles "isDemo", but Shared Demo Mode sets "isShared=true" and "isDemo=false". 
-             // Ideally we should just make the first block handle (isDemo || (isShared && token.startsWith('valid-demo-token-')))
-             
-             // Let's recurse or copy-paste for safety to avoid messing up the tool call logic. 
-             // Or better: Let's slightly refactor the condition at top.
-             
-             // REFACTORING FOR SHARED DEMO SUPPORT:
-             // The logic below is duplicated from "isDemo" block. 
-             // In a real refactor I would extract this function.
+            // For now, simplify and just reuse the same logic as above or simple simulation
+            // Since shared demo is read-only usually, it is likely the default one.
              await new Promise(r => setTimeout(r, 2000));
               const count = articles.length;
               /* ... Same logic ... */
