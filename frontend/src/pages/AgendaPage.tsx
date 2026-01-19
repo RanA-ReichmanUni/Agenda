@@ -113,6 +113,7 @@ export default function AgendaPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
+  const [isLongWait, setIsLongWait] = useState(false);
   // Track the content hash (or length) of articles when analysis ran
   const [analyzedArticleCount, setAnalyzedArticleCount] = useState<number | null>(null);
 
@@ -392,6 +393,9 @@ export default function AgendaPage() {
     }
 
     setIsAnalyzing(true);
+    setIsLongWait(false);
+    const timer = setTimeout(() => setIsLongWait(true), 5000); // 6s wait triggers rainbow
+
     setAnalysisResult(null);
     try {
         if (isDemo) {
@@ -525,6 +529,8 @@ export default function AgendaPage() {
         alert("Failed to analyze claim. Please try again.");
     } finally {
         setIsAnalyzing(false);
+        setIsLongWait(false);
+        clearTimeout(timer);
     }
   };
 
@@ -762,7 +768,9 @@ export default function AgendaPage() {
                 onClick={() => handleAnalyzeClaim(false)}
                 disabled={isAnalyzing}
                 className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-full backdrop-blur-xl border shadow-md font-bold text-lg transition-all transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-400
-                    ${isAnalyzing ? 'bg-indigo-50 border-indigo-200 text-indigo-400 cursor-not-allowed' : 'bg-gradient-to-r from-white to-indigo-50 border-indigo-100 text-indigo-700 hover:to-indigo-100 hover:text-indigo-900 hover:shadow-lg hover:border-indigo-200'}
+                    ${isAnalyzing 
+                        ? (isLongWait ? 'bg-indigo-50 text-indigo-400 cursor-not-allowed animate-rainbow-border' : 'bg-indigo-50 border-indigo-200 text-indigo-400 cursor-not-allowed')
+                        : 'bg-gradient-to-r from-white to-indigo-50 border-indigo-100 text-indigo-700 hover:to-indigo-100 hover:text-indigo-900 hover:shadow-lg hover:border-indigo-200'}
                 `}
             >
                 {isAnalyzing ? (
@@ -1057,6 +1065,19 @@ export default function AgendaPage() {
         
         @keyframes empty-state { 0% { opacity: 0; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); } }
         .animate-empty-state { animation: empty-state 0.6s ease-out 0.8s both; }
+
+        @keyframes rainbow-border { 
+            0% { border-color: #ff5f6d; box-shadow: 0 0 0px #ff5f6d; }
+            25% { border-color: #ffc371; box-shadow: 0 0 8px #ffc371; }
+            50% { border-color: #23a6d5; box-shadow: 0 0 12px #23a6d5; }
+            75% { border-color: #23d5ab; box-shadow: 0 0 8px #23d5ab; }
+            100% { border-color: #ff5f6d; box-shadow: 0 0 0px #ff5f6d; }
+        }
+        .animate-rainbow-border {
+            animation: rainbow-border 3s linear infinite;
+            border-width: 2px;
+            border-style: solid;
+        }
       `}</style>
     </div>
   );
