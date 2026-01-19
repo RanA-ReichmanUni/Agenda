@@ -15,9 +15,124 @@ from fastapi import APIRouter, HTTPException, Depends, status
 from database import get_db_connection
 from models import User, Agenda, CreateAgenda, Article
 from security import get_current_user
+import requests
+from bs4 import BeautifulSoup
+import json
 
 router = APIRouter()
 
+def fetch_article_excerpt(url: str, max_words: int = 200) -> str:
+    """
+    Fetches the URL and extracts text from the first few paragraphs.
+    """
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        }
+        # Short timeout to not stall the request too long
+        response = requests.get(url, headers=headers, timeout=4)
+        if response.status_code != 200:
+            return "Could not fetch content."
+            
+        soup = BeautifulSoup(response.content, 'lxml')
+        
+        # Remove script and style elements
+        for script in soup(["script", "style", "nav", "footer", "header", "aside"]):
+            script.decompose()
+            
+        # Get text
+        text = soup.get_text()
+        
+        # Clean up whitespace
+        lines = (line.strip() for line in text.splitlines())
+        chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+        text = ' '.join(chunk for chunk in chunks if chunk)
+        
+        # Truncate
+        words = text.split()
+        if len(words) > max_words:
+            return ' '.join(words[:max_words]) + "..."
+        return text
+    except Exception as e:
+        return f"Error extracting content: {str(e)}"
+
+def call_openrouter_analysis(claim: str, evidence: list) -> Optional[dict]:
+    """
+    Calls OpenRouter LLM to analyze the claim based on evidence.
+    """
+    api_key = os.getenv("OPENROUTER_API_KEY")
+    print(f"DEBUG: Checking for API Key... Found? {bool(api_key)}")
+    if not api_key:
+        print("DEBUG: No API Key found, skipping LLM.")
+        return None
+
+    print(f"DEBUG: Calling OpenRouter with {len(evidence)} evidence items...")
+
+    messages = [
+      {
+        "role": "system",
+        "content": """You are an evidence-evaluation assistant. You must evaluate claims ONLY based on the provided excerpts. 
+        You must not assume facts, browse the web, or rely on outside knowledge. 
+        If evidence is insufficient, explicitly say so and lower confidence. Do not overstate certainty. 
+        
+        You must output a VALID JSON object with exactly these fields:
+        {
+            "score": "High" | "Medium" | "Low",
+            "reasoning": "A concise paragraph explaining the evaluation."
+        }
+        """
+      },
+      {
+        "role": "user",
+        "content": json.dumps({
+          "task": "Evaluate whether the provided evidence supports the agenda claim.",
+          "agenda_claim": claim,
+          "evidence_items": evidence,
+          "instructions": {
+            "evaluate_source_credibility": True,
+            "evaluate_relevance_to_claim": True,
+            "identify_missing_information": True,
+            "return_confidence_level": ["Low", "Medium", "High"]
+          }
+        })
+      }
+    ]
+
+    try:
+        response = requests.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+                "HTTP-Referer": "http://localhost:3000", 
+                "X-Title": "Agenda App"
+            },
+            json={
+                "model": "xiaomi/mimo-v2-flash:free",
+                "messages": messages
+            },
+            timeout=45
+        )
+        
+        if response.status_code == 200:
+            result = response.json()
+            content = result['choices'][0]['message']['content']
+            # Clean content if it has markdown code blocks
+            if "```json" in content:
+                content = content.replace("```json", "").replace("```", "")
+            
+            parsed = json.loads(content)
+            return {
+                "score": parsed.get("score", "Low"),
+                "reasoning": parsed.get("reasoning", "Analysis failed to produce reasoning."),
+                "claim": claim
+            }
+        else:
+            print(f"LLM API Error: {response.status_code} - {response.text}")
+            return None
+    except Exception as e:
+        print(f"LLM Exception: {str(e)}")
+        return None
 
 @router.post("", response_model=Agenda, status_code=status.HTTP_201_CREATED)
 async def create_agenda(
@@ -329,7 +444,28 @@ async def analyze_shared_agenda_claim(share_token: str):
         )
         articles = cursor.fetchall()
         
-        # 3. Simulated "LLM" Analysis Logic (Same as authenticated version)
+        # 3. LLM Analysis Logic
+        
+        # Prepare evidence
+        evidence_items = []
+        for i, a in enumerate(articles):
+            # a = (title, url, description)
+            url = a[1]
+            excerpt = fetch_article_excerpt(url)
+            evidence_items.append({
+                "id": f"a{i}",
+                "title": a[0],
+                "url": url,
+                "publisher": urlparse(url).netloc,
+                "excerpt": excerpt
+            })
+            
+        # Try real LLM first
+        llm_result = call_openrouter_analysis(claim, evidence_items)
+        if llm_result:
+            return llm_result
+
+        # Fallback to Simulation
         time.sleep(1.5) # Fake "thinking" time
         
         count = len(articles)
@@ -420,19 +556,28 @@ async def analyze_agenda_claim(
         articles = cursor.fetchall()
         # articles list of tuples: (title, url, description)
         
-        # 3. Simulated "LLM" Analysis Logic
-        # ------------------------------------------------------------------
-        # Implementation Note:
-        # To switch to real LLM, uncomment the block below and ensure OPENAI_API_KEY is in .env
+        # 3. LLM Analysis Logic
         
-        # api_key = os.getenv("OPENAI_API_KEY")
-        # if api_key:
-        #    # import openai
-        #    # openai.api_key = api_key
-        #    # response = openai.ChatCompletion.create(...)
-        #    # return parse_llm_response(response)
-        # ------------------------------------------------------------------
+        # Prepare evidence
+        evidence_items = []
+        for i, a in enumerate(articles):
+            # a = (title, url, description)
+            url = a[1]
+            excerpt = fetch_article_excerpt(url)
+            evidence_items.append({
+                "id": f"a{i}",
+                "title": a[0],
+                "url": url,
+                "publisher": urlparse(url).netloc,
+                "excerpt": excerpt
+            })
+            
+        # Try real LLM first
+        llm_result = call_openrouter_analysis(claim, evidence_items)
+        if llm_result:
+            return llm_result
 
+        # Fallback to Simulation if LLM fails or no key
         time.sleep(1.5) # Fake "thinking" time
         
         count = len(articles)
