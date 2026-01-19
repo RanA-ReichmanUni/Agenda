@@ -105,7 +105,7 @@ export default function LoginPage() {
           <div className="border-t border-gray-200 pt-4">
             <button
               onClick={() => {
-                // Clear tutorial seen flag so it always shows on fresh demo entry
+                // Clear tutorial seen flag in local storage so it always shows on fresh demo entry from login
                 localStorage.removeItem('agenda_demo_tutorial_home');
                 localStorage.removeItem('agenda_demo_tutorial_agenda');
                 navigate('/demo');

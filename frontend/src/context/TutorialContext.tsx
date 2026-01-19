@@ -38,7 +38,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     setIsActive(false);
     setSteps([]);
     setStepIndex(0);
-    // Mark as seen in local storage
+    // Mark as seen in local storage (persistent across sessions)
     if (isDemo && currentKey) {
         localStorage.setItem(`agenda_demo_tutorial_${currentKey}`, 'true');
     }
@@ -86,6 +86,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
   }, [stepIndex]);
 
   const hasSeenTutorial = useCallback((key: string) => {
+      // Check local storage.
       return localStorage.getItem(`agenda_demo_tutorial_${key}`) === 'true';
   }, []);
 
