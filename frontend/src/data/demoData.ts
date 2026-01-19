@@ -243,7 +243,12 @@ export const INITIAL_DEMO_AGENDAS: DemoAgenda[] = [
         image: "https://www.apa.org/images/2025-01-workweek-tile_tcm7-334468.jpg"
       }
     ]
-  },
+  }
+
+    
+  ]
+}
+
 
 ];
 

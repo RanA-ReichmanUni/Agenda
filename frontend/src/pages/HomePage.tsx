@@ -238,7 +238,7 @@ export default function HomePage() {
                             <div className="p-6 flex flex-col justify-between flex-grow bg-white relative">
                                 <div>
                                     <h3 
-                                        className="text-xl font-bold text-gray-900 mb-2 leading-tight group-hover:text-blue-600 transition-colors line-clamp-2" 
+                                        className="text-xl font-bold text-gray-900 mb-2 leading-tight group-hover:text-blue-600 transition-colors line-clamp-2 drop-shadow-sm" 
                                         style={{ fontFamily: "'Playfair Display', serif" }}
                                     >
                                         {agenda.title}
