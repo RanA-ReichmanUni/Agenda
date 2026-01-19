@@ -15,6 +15,8 @@ type AnalysisResult = {
   score: 'High' | 'Medium' | 'Low';
   reasoning: string;
   claim: string;
+  is_cached?: boolean;
+  is_stale?: boolean;
 };
 
 export default function AgendaPage() {
@@ -288,7 +290,7 @@ export default function AgendaPage() {
     }
   };
 
-  const handleAnalyzeClaim = async () => {
+  const handleAnalyzeClaim = async (forceRefresh = false) => {
     setIsAnalyzing(true);
     setAnalysisResult(null);
     try {
@@ -407,7 +409,7 @@ export default function AgendaPage() {
 
         } else {
             // Owner Mode (Real Backend)
-            const response = await authFetch(`${API_ENDPOINTS.agendas}/${id}/analyze`, {
+            const response = await authFetch(`${API_ENDPOINTS.agendas}/${id}/analyze?force_refresh=${forceRefresh}`, {
                 method: 'POST'
             });
             if (response.ok) {
@@ -657,7 +659,7 @@ export default function AgendaPage() {
         <div className="flex justify-center mt-8 relative z-10">
             <button
                 id="tutorial-verify-ai"
-                onClick={handleAnalyzeClaim}
+                onClick={() => handleAnalyzeClaim(false)}
                 disabled={isAnalyzing}
                 className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-full backdrop-blur-xl border shadow-md font-bold text-lg transition-all transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-400
                     ${isAnalyzing ? 'bg-indigo-50 border-indigo-200 text-indigo-400 cursor-not-allowed' : 'bg-gradient-to-r from-white to-indigo-50 border-indigo-100 text-indigo-700 hover:to-indigo-100 hover:text-indigo-900 hover:shadow-lg hover:border-indigo-200'}
@@ -817,6 +819,24 @@ export default function AgendaPage() {
                 </div>
                 
                 <div className="p-8 flex-grow overflow-y-auto">
+                     {analysisResult.is_stale && (
+                        <div className="mb-4 bg-yellow-50 border border-yellow-200 p-4 rounded-xl flex flex-col md:flex-row gap-4 items-center justify-between animate-fade-in">
+                            <div className="flex gap-3 items-center">
+                                <span className="text-2xl">⚠️</span>
+                                <div>
+                                    <p className="font-bold text-yellow-800">New Evidence Detected</p>
+                                    <p className="text-sm text-yellow-700">Sources have changed since the last analysis.</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => handleAnalyzeClaim(true)}
+                                className="whitespace-nowrap px-4 py-2 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 rounded-lg font-semibold transition shadow-sm border border-yellow-200"
+                            >
+                                Recheck Claims
+                            </button>
+                        </div>
+                     )}
+
                      <h4 className="font-bold text-gray-900 mb-3 text-lg">Analysis Reasoning</h4>
                      <p className="text-gray-600 leading-relaxed text-lg">
                         {analysisResult.reasoning}

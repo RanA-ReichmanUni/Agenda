@@ -528,6 +528,7 @@ async def analyze_shared_agenda_claim(share_token: str):
 @router.post("/{agenda_id}/analyze")
 async def analyze_agenda_claim(
     agenda_id: int, 
+    force_refresh: bool = False,
     current_user: User = Depends(get_current_user)
 ):
     """
@@ -539,7 +540,7 @@ async def analyze_agenda_claim(
     try:
         # 1. Fetch Agenda
         cursor.execute(
-            "SELECT title FROM agendas WHERE id = %s AND user_id = %s",
+            "SELECT title, analysis_score, analysis_reasoning, last_analyzed_at, analysis_article_count FROM agendas WHERE id = %s AND user_id = %s",
             (agenda_id, current_user.id)
         )
         agenda_row = cursor.fetchone()
@@ -547,6 +548,9 @@ async def analyze_agenda_claim(
             raise HTTPException(status_code=404, detail="Agenda not found")
         
         claim = agenda_row[0]
+        cached_score = agenda_row[1]
+        cached_reasoning = agenda_row[2]
+        cached_count = agenda_row[4]
         
         # 2. Fetch Articles
         cursor.execute(
@@ -554,11 +558,28 @@ async def analyze_agenda_claim(
             (agenda_id,)
         )
         articles = cursor.fetchall()
-        # articles list of tuples: (title, url, description)
+        current_count = len(articles)
+
+        # Check for cache validity
+        if cached_score and cached_reasoning and not force_refresh:
+             if cached_count == current_count:
+                 return {
+                     "score": cached_score,
+                     "reasoning": cached_reasoning,
+                     "claim": claim,
+                     "is_cached": True,
+                     "is_stale": False
+                 }
+             else:
+                 # Return STALE cache so user can decide to re-run
+                 return {
+                     "score": cached_score,
+                     "reasoning": cached_reasoning,
+                     "claim": claim,
+                     "is_cached": True,
+                     "is_stale": True
+                 }
         
-        # 3. LLM Analysis Logic
-        
-        # Prepare evidence
         evidence_items = []
         for i, a in enumerate(articles):
             # a = (title, url, description)
@@ -574,65 +595,50 @@ async def analyze_agenda_claim(
             
         # Try real LLM first
         llm_result = call_openrouter_analysis(claim, evidence_items)
+        
+        result = None
         if llm_result:
-            return llm_result
-
-        # Fallback to Simulation if LLM fails or no key
-        time.sleep(1.5) # Fake "thinking" time
-        
-        count = len(articles)
-        
-        if count == 0:
-            return {
-                "score": "Low",
-                "reasoning": "No evidence provided. Please add articles to verify this claim.",
-                "claim": claim
-            }
-
-        # CRITERIA 1: Keywords looking for "Hard Evidence" 
-        authoritative_keywords = ["report", "study", "evidence", "confirmed", "analysis", "data", "statistics", "review", "official", "survey", "court", "verdict", "proof", "science", "research"]
-        
-        quality_matches = 0
-        for a in articles:
-            # a[0] = title, a[2] = description, a[3] = content (if any)
-            text_blob = (str(a[0]) + " " + str(a[2])).lower()
-            if any(kw in text_blob for kw in authoritative_keywords):
-                quality_matches += 1
-
-        # CRITERIA 2: Diversity of Sources
-        unique_domains = set()
-        for a in articles:
-            url = a[1]
-            try:
-                domain = urlparse(url).netloc.replace('www.', '')
-                if domain:
-                    unique_domains.add(domain)
-            except:
-                pass
-        
-        domain_count = len(unique_domains)
-
-        # SCORING ALGORITHM
-        # Base: 10 pts per article (Quantity)
-        # Bonus: 15 pts per unique domain (Diversity is worth more than quantity)
-        # Bonus: 10 pts per "Scientific/Official" keyword match (Quality)
-        points = (count * 10) + (domain_count * 15) + (quality_matches * 10)
-
-        if points >= 65:
-            score = "High"
-            detail = f"Strong consensus detected across {domain_count} unique domains. The semantic analysis identified {quality_matches} authoritative sources or terms (e.g., study, data) that strongly support the claim."
-        elif points >= 35:
-            score = "Medium"
-            detail = f"Evidence is present ({count} sources) and appears relevant. Usage of {domain_count} distinct domain(s) provides a partial correlation. Adding one more distinct source would likely elevate this to a high confidence level."
+            result = llm_result
         else:
-            score = "Low"
-            detail = f"Insufficient data density. With only {count} source(s) and limited cross-referencing, the claim lacks the verifiable weight required for a definitive rating."
+            # Fallback to Simulation if LLM fails or no key
+            time.sleep(1.5) # Fake "thinking" time
+            
+            count = len(articles)
+            
+            if count == 0:
+                result = {
+                    "score": "Low",
+                    "reasoning": "No evidence provided. Please add articles to verify this claim.",
+                    "claim": claim
+                }
+            else:
+                 # Sim Logic
+                result = {
+                    "score": "Low",
+                    "reasoning": f"Analysis simulation (Real AI failed). Based on {count} articles.",
+                    "claim": claim
+                }
 
-        return {
-            "score": score,
-            "reasoning": detail,
-            "claim": claim
-        }
+        # Save Cache
+        if result and result.get("score"):
+             try:
+                cursor.execute("""
+                    UPDATE agendas 
+                    SET analysis_score = %s, 
+                        analysis_reasoning = %s, 
+                        last_analyzed_at = CURRENT_TIMESTAMP, 
+                        analysis_article_count = %s 
+                    WHERE id = %s
+                """, (result["score"], result["reasoning"], current_count, agenda_id))
+                conn.commit()
+             except Exception as e:
+                print(f"Cache update failed: {e}")
+                conn.rollback()
+
+        # Add stale flag to result (it's fresh now)
+        result["is_cached"] = False
+        result["is_stale"] = False
+        return result
 
     finally:
         conn.close()
