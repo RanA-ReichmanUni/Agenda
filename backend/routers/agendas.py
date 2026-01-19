@@ -68,18 +68,31 @@ def call_openrouter_analysis(claim: str, evidence: list) -> Optional[dict]:
         return None
 
     print(f"DEBUG: Calling OpenRouter with {len(evidence)} evidence items...")
+    # DEBUG: Print the evidence being sent to checking for empty/malformed content
+    for item in evidence:
+        print(f"DEBUG EVIDENCE ITEM {item['id']}: URL={item['url']} CONTENT_PREVIEW={item['excerpt'][:100]}...")
 
     messages = [
       {
         "role": "system",
-        "content": """You are an evidence-evaluation assistant. You must evaluate claims ONLY based on the provided excerpts. 
-        You must not assume facts, browse the web, or rely on outside knowledge. 
-        If evidence is insufficient, explicitly say so and lower confidence. Do not overstate certainty. 
-        
-        You must output a VALID JSON object with exactly these fields:
+        "content": """You are a strict fact-checking analyst. 
+        Your ONLY job is to verify if the *actual content* of the provided articles supports the user's claim.
+
+        CRITICAL INSTRUCTIONS:
+        1. **Summarize First**: For EACH evidence item, you MUST first write a 1-sentence summary of what it *actually* says.
+        2. **Translate if needed**: If the text is not English, translate the main topic in your summary to verify relevance.
+        3. **Strict Relevance Check**: 
+           - Compare the article's *actual topic* to the user's *claim*.
+           - If the topics are unrelated (e.g. claim is about "Technology" but article is about "Politics"), mark it as **IRRELEVANT**.
+           - Do NOT force a connection where none exists.
+
+        Output Format (JSON):
         {
+            "article_audits": [
+                { "id": "a0", "detected_topic": "...", "verdict": "Relevant" | "Irrelevant" }
+            ],
             "score": "High" | "Medium" | "Low",
-            "reasoning": "A concise paragraph explaining the evaluation."
+            "reasoning": "Combine audits into a final judgment. Explicitly mention any rejected articles."
         }
         """
       },
@@ -123,9 +136,21 @@ def call_openrouter_analysis(claim: str, evidence: list) -> Optional[dict]:
                 content = content.replace("```json", "").replace("```", "")
             
             parsed = json.loads(content)
+            
+            # Construct final reasoning from the new structured format
+            reasoning = parsed.get("reasoning", "Analysis failed.")
+            audits = parsed.get("article_audits", [])
+            
+            # Append audit details to reasoning for better visibility
+            if audits and isinstance(audits, list):
+                audit_summary = "\n\nSource Breakdown:\n" + "\n".join(
+                    [f"- {a.get('id', '?')}: {a.get('detected_topic', 'Unknown')} ({a.get('verdict', 'Unknown')})" for a in audits]
+                )
+                reasoning += audit_summary
+
             return {
                 "score": parsed.get("score", "Low"),
-                "reasoning": parsed.get("reasoning", "Analysis failed to produce reasoning."),
+                "reasoning": reasoning,
                 "claim": claim
             }
         else:
