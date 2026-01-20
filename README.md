@@ -6,6 +6,12 @@
 Each **agenda** represents a specific claim or statement (e.g., "Biden is unfit to be president" or the contrast, "Biden is a great president").  
 The user then attaches **articles from reputable news outlets** that serve as evidence supporting the claim.
 
+The user attaches articles that serve as evidence, and the system **automatically scrapes metadata** (title, thumbnail, description) to generate a rich visual preview. 
+
+Crucially, an integrated **AI Verification Pipeline** then analyzes the actual text content of these sources, cross-referencing them against the user's claim to generate an objective **Credibility Score**, validating whether the cited evidence genuinely supports the stated narrative.
+
+Check out the demo ! https://cutt.ly/Vtl6slaE
+
 ![Agenda Front Page](https://i.imgur.com/QcFIh6V.jpeg)
 ---
 
