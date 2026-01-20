@@ -15,8 +15,8 @@ import { AnalysisResult } from "../lib/types";
 const DEMO_ANALYSIS_RESULTS: Record<number, AnalysisResult> = {
   1: {
     score: 'High',
-    reasoning: "Analysis of 4 technology sources (Gizmodo, HowToGeek, TechRadar, PhoneArena) indicates a strong consensus. The articles consistently report that form factors have converged ('plateaued') due to physical optimization and consumer demand for reliability, supporting the claim of convergence.",
-    claim:  "All Smartphones Are Bland and Converged",
+    reasoning: "Analysis of 4 technology sources (Gizmodo, HowToGeek, TechRadar, PhoneArena) indicates a strong consensus. The articles consistently report that form factors have plateaued and become 'boring' due to physical optimization and consumer demand for reliability, supporting the claim.",
+    claim:  "All Smartphones Are Bland and Boring",
     is_cached: true,
     is_stale: false,
     articleCount: 4

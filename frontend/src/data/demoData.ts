@@ -12,7 +12,7 @@ export interface DemoAgenda {
 export const INITIAL_DEMO_AGENDAS: DemoAgenda[] = [
   {
   id: 1,
-  title: "All Smartphones Are Bland and Converged",
+  title: "All Smartphones Are Bland and Boring",
   createdAt: new Date().toISOString(),
   articles: [
     {
@@ -54,49 +54,82 @@ export const INITIAL_DEMO_AGENDAS: DemoAgenda[] = [
   ]
 },
 {
-  id: 2,
-  title: "Cash Is Superior to Digital Payments",
+  id: 4,
+  title: "AI Chatbots Make People Dumber",
   createdAt: new Date().toISOString(),
   articles: [
     {
-      id: "301",
-      title: "Cash is… protection of privacy, identity and data",
-      url: "https://www.cashmatters.org/blog/cash-isprivate-and-protects-freedom-of-choice/",
-      description: "Explains that cash is the only payment method offering complete privacy, protecting from data and identity theft.",
+      id: "401",
+      title: "MIT Study Finds ChatGPT Can Harm Critical Thinking Over Time",
+      url: "https://www.technewsworld.com/story/mit-study-finds-chatgpt-can-harm-critical-thinking-over-time-179801.html",
+      description: "MIT research shows ChatGPT users had the lowest brain engagement in EEG measurements and became less diligent over time.",
       createdAt: new Date().toISOString(),
-      agenda_id: "5",
-      image: "https://faisalkhan.com/wp-content/uploads/2024/11/Cash-vs-Digital-Payments-Why-Cash-is-King.png"
+      agenda_id: "4",
+      image: "https://www.technewsworld.com/wp-content/uploads/sites/3/2025/04/students-in-classroom.jpg"
     },
     {
-      id: "302",
-      title: "Can CBDCs give us the same freedom as cash?",
-      url: "https://www.weforum.org/stories/2023/09/digital-currencies-privacy-freedom/",
-      description: "World Economic Forum acknowledges that electronic payment systems do not provide the same personal freedom that cash offers.",
+      id: "402",
+      title: "ChatGPT's Impact On Our Brains According to an MIT Study",
+      url: "https://time.com/7295195/ai-chatgpt-google-learning-school/",
+      description: "Reports that increasing reliance on AI tools could reduce critical thinking, creativity, and problem-solving across populations.",
       createdAt: new Date().toISOString(),
-      agenda_id: "5",
-      image: "https://assets.weforum.org/article/image/responsive_big_webp_gpQefyNTBkws-owy4xxUe6BBG6yWzwyJDb1pDOFETxo.webp"
+      agenda_id: "4",
+      image: "https://cdn.mos.cms.futurecdn.net/kSArVmiGReJ4zKxxhr5Bm7.jpg"
     },
     {
-      id: "303",
-      title: "Why digital can't replace cash",
-      url: "https://blog.beuc.eu/why-digital-cant-replace-cash/",
-      description: "Consumer advocacy group argues cash is the only payment instrument guaranteeing privacy and anonymity.",
+      id: "404",
+      title: "Generative AI and the risk of cognitive offloading",
+      url: "https://siliconangle.com/2025/09/05/hidden-risks-cognitive-offloading/",
+      description: "Explores how constant AI assistance encourages cognitive offloading, where people stop practicing core mental skills.",
       createdAt: new Date().toISOString(),
-      agenda_id: "5",
-      image: "https://blog.beuc.eu/wp-content/uploads/2016/06/shutterstock_113056159-1300x867.jpg"
-    },
-    {
-      id: "304",
-      title: "Cash vs Digital Payments: Why Cash is King",
-      url: "https://faisalkhan.com/2024/11/11/cash-vs-digital-payments-why-cash-is-king/",
-      description: "Claims every digital transaction erodes value via fees, while cash preserves full value across exchanges.",
-      createdAt: new Date().toISOString(),
-      agenda_id: "5",
-      image: "https://faisalkhan.com/wp-content/uploads/2024/11/Cash-vs-Digital-Payments-Why-Cash-is-King.png"
+      agenda_id: "4",
+      image: "https://d15shllkswkct0.cloudfront.net/wp-content/blogs.dir/1/files/2025/09/AI-human-relationship.png"
     }
   ]
 },
-
+// {
+//   id: 2,
+//   title: "Cash Is Superior to Digital Payments",
+//   createdAt: new Date().toISOString(),
+//   articles: [
+//     {
+//       id: "301",
+//       title: "Cash is… protection of privacy, identity and data",
+//       url: "https://www.cashmatters.org/blog/cash-isprivate-and-protects-freedom-of-choice/",
+//       description: "Explains that cash is the only payment method offering complete privacy, protecting from data and identity theft.",
+//       createdAt: new Date().toISOString(),
+//       agenda_id: "5",
+//       image: "https://faisalkhan.com/wp-content/uploads/2024/11/Cash-vs-Digital-Payments-Why-Cash-is-King.png"
+//     },
+//     {
+//       id: "302",
+//       title: "Can CBDCs give us the same freedom as cash?",
+//       url: "https://www.weforum.org/stories/2023/09/digital-currencies-privacy-freedom/",
+//       description: "World Economic Forum acknowledges that electronic payment systems do not provide the same personal freedom that cash offers.",
+//       createdAt: new Date().toISOString(),
+//       agenda_id: "5",
+//       image: "https://assets.weforum.org/article/image/responsive_big_webp_gpQefyNTBkws-owy4xxUe6BBG6yWzwyJDb1pDOFETxo.webp"
+//     },
+//     {
+//       id: "303",
+//       title: "Why digital can't replace cash",
+//       url: "https://blog.beuc.eu/why-digital-cant-replace-cash/",
+//       description: "Consumer advocacy group argues cash is the only payment instrument guaranteeing privacy and anonymity.",
+//       createdAt: new Date().toISOString(),
+//       agenda_id: "5",
+//       image: "https://blog.beuc.eu/wp-content/uploads/2016/06/shutterstock_113056159-1300x867.jpg"
+//     },
+//     {
+//       id: "304",
+//       title: "Cash vs Digital Payments: Why Cash is King",
+//       url: "https://faisalkhan.com/2024/11/11/cash-vs-digital-payments-why-cash-is-king/",
+//       description: "Claims every digital transaction erodes value via fees, while cash preserves full value across exchanges.",
+//       createdAt: new Date().toISOString(),
+//       agenda_id: "5",
+//       image: "https://faisalkhan.com/wp-content/uploads/2024/11/Cash-vs-Digital-Payments-Why-Cash-is-King.png"
+//     }
+//   ]
+// },
 {
   id: 3,
   title: "U.S. Health Care Politics Put Insurance Companies First, Patients Second",
@@ -128,40 +161,6 @@ export const INITIAL_DEMO_AGENDAS: DemoAgenda[] = [
       createdAt: new Date().toISOString(),
       agenda_id: "3",
       image: "https://static01.nyt.com/images/2025/12/16/opinion/16orszag-image/16orszag-image-superJumbo.jpg"
-    }
-  ]
-},
-{
-  id: 4,
-  title: "AI Chatbots Make People Dumber",
-  createdAt: new Date().toISOString(),
-  articles: [
-    {
-      id: "401",
-      title: "MIT Study Finds ChatGPT Can Harm Critical Thinking Over Time",
-      url: "https://www.technewsworld.com/story/mit-study-finds-chatgpt-can-harm-critical-thinking-over-time-179801.html",
-      description: "MIT research shows ChatGPT users had the lowest brain engagement in EEG measurements and became less diligent over time.",
-      createdAt: new Date().toISOString(),
-      agenda_id: "4",
-      image: "https://www.technewsworld.com/wp-content/uploads/sites/3/2025/04/students-in-classroom.jpg"
-    },
-    {
-      id: "402",
-      title: "ChatGPT's Impact On Our Brains According to an MIT Study",
-      url: "https://time.com/7295195/ai-chatgpt-google-learning-school/",
-      description: "Reports that increasing reliance on AI tools could reduce critical thinking, creativity, and problem-solving across populations.",
-      createdAt: new Date().toISOString(),
-      agenda_id: "4",
-      image: "https://cdn.mos.cms.futurecdn.net/kSArVmiGReJ4zKxxhr5Bm7.jpg"
-    },
-    {
-      id: "404",
-      title: "Generative AI and the risk of cognitive offloading",
-      url: "https://siliconangle.com/2025/09/05/hidden-risks-cognitive-offloading/",
-      description: "Explores how constant AI assistance encourages cognitive offloading, where people stop practicing core mental skills.",
-      createdAt: new Date().toISOString(),
-      agenda_id: "4",
-      image: "https://d15shllkswkct0.cloudfront.net/wp-content/blogs.dir/1/files/2025/09/AI-human-relationship.png"
     }
   ]
 },
@@ -246,7 +245,7 @@ export const INITIAL_DEMO_AGENDAS: DemoAgenda[] = [
   },
   {
   id: 8,
-  title: "במבה עדיפה על ביסלי (נכון?)",
+  title: "במבה עדיפה על ביסלי",
   createdAt: new Date().toISOString(),
   articles: [
 

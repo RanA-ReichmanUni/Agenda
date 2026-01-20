@@ -18,18 +18,18 @@ export const DEMO_HOME_STEPS: TutorialStep[] = [
   {
     targetId: 'tutorial-branding',
     title: 'Welcome to Agenda',
-    content: 'Agenda allows you to curate narratives and back them up with sources. This is a demo version - feel free to explore!',
+    content: 'Agenda allows you to curate narratives and back them up with evidence. This is a demo version - feel free to explore!',
     position: 'bottom'
   },
   {
     targetId: 'tutorial-create-agenda',
     title: 'Create a Topic',
-    content: 'Start by creating a new Agenda. Think of it as a folder for a specific argument or storyline you want to track.',
+    content: 'Start by creating a new Agenda. Think of it as a folder for a specific argument or narrative you want to argue.',
     position: 'top'
   },
   {
     targetId: 'tutorial-agenda-list',
-    title: 'Your Collection',
+    title: 'Your Agendas',
     content: 'Your agendas live here. We have pre-loaded a few examples for you to check out.',
     position: 'bottom'
   }
@@ -51,7 +51,7 @@ export const DEMO_AGENDA_STEPS: TutorialStep[] = [
   {
     targetId: 'tutorial-evidence-grid',
     title: 'The Evidence',
-    content: 'All your collected articles appear here. Click them to preview content without leaving the page.',
+    content: 'All your collected sources and evidence appear here. Click them to preview content without leaving the page.',
     position: 'top'
   },
   {
