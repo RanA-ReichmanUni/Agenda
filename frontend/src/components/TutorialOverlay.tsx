@@ -104,12 +104,19 @@ export function TutorialOverlay() {
   // Use the calculated placement or fallback
   const finalPlacement = position.placement;
 
+  // Ghost mode uses larger, more prominent styling
+  const isGhostMode = isGhostControlled;
+
   return (
     <div className="fixed inset-0 z-50 pointer-events-none">
       {/* The Bubble */}
       <div 
         ref={bubbleRef}
-        className="absolute transition-all duration-300 ease-in-out pointer-events-auto bg-white/95 backdrop-blur-sm p-6 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-blue-200 w-80 z-50"
+        className={`absolute transition-all duration-300 ease-in-out pointer-events-auto backdrop-blur-sm rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] z-50 ${
+          isGhostMode 
+            ? 'bg-gradient-to-br from-purple-50 to-blue-50 border-2 border-purple-300 p-8 w-[420px]' 
+            : 'bg-white/95 border border-blue-200 p-6 w-80'
+        }`}
         style={{ 
             top: position.top, 
             left: position.left,
@@ -117,25 +124,37 @@ export function TutorialOverlay() {
                        finalPlacement === 'left' ? 'translateX(-100%)' : 'none'
         }}
       >
-        <div className="flex justify-between items-start mb-3">
-            <h3 className="font-bold text-lg text-slate-800 tracking-tight">{currentStep.title}</h3>
-            <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-full border border-blue-100">
-                {stepIndex + 1} / {totalSteps}
-            </span>
+        <div className={`flex justify-between items-start ${isGhostMode ? 'mb-4' : 'mb-3'}`}>
+            <h3 className={`font-bold tracking-tight ${
+              isGhostMode 
+                ? 'text-2xl text-purple-800' 
+                : 'text-lg text-slate-800'
+            }`}>{currentStep.title}</h3>
+            {!isGhostMode && (
+              <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-full border border-blue-100">
+                  {stepIndex + 1} / {totalSteps}
+              </span>
+            )}
         </div>
         
-        <p className="text-slate-600 text-sm leading-relaxed">
+        <p className={`leading-relaxed ${
+          isGhostMode 
+            ? 'text-lg text-purple-900 font-medium' 
+            : 'text-slate-600 text-sm'
+        }`}>
             {currentStep.content}
         </p>
 
         {/* Arrow (Visual only, simplified) */}
-        <div 
-            className={`absolute w-4 h-4 bg-white border-blue-200 transform rotate-45 ${
-                finalPlacement === 'top' ? 'bottom-[-9px] border-b border-r border-t-0 border-l-0' :
-                finalPlacement === 'right' ? 'left-[-9px] border-b-0 border-r-0 border-t-0 border-l-[1px] bg-transparent' : 
-                'top-[-9px] left-8 border-t border-l border-b-0 border-r-0' // Default bottom
-            }`}
-        />
+        {!isGhostMode && (
+          <div 
+              className={`absolute w-4 h-4 bg-white border-blue-200 transform rotate-45 ${
+                  finalPlacement === 'top' ? 'bottom-[-9px] border-b border-r border-t-0 border-l-0' :
+                  finalPlacement === 'right' ? 'left-[-9px] border-b-0 border-r-0 border-t-0 border-l-[1px] bg-transparent' : 
+                  'top-[-9px] left-8 border-t border-l border-b-0 border-r-0'
+              }`}
+          />
+        )}
       </div>
     </div>
   );

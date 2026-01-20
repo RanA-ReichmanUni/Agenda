@@ -12,15 +12,16 @@ export default function HomePage() {
   const location = useLocation();
   const navigate = useNavigate();
   const isDemo = location.pathname.startsWith('/demo');
-  const { startTutorial, hasSeenTutorial, isActive } = useTutorial();
+  const { startTutorial, hasSeenTutorial, isActive, isSuppressed } = useTutorial();
 
   useEffect(() => {
-    if (isDemo && !hasSeenTutorial('home') && !isActive) {
+    // Don't auto-start tutorials if suppressed (ghost mode active/finished)
+    if (isDemo && !hasSeenTutorial('home') && !isActive && !isSuppressed) {
         setTimeout(() => {
              startTutorial(DEMO_HOME_STEPS, 'home');
         }, 800);
     }
-  }, [isDemo, startTutorial, hasSeenTutorial, isActive]);
+  }, [isDemo, startTutorial, hasSeenTutorial, isActive, isSuppressed]);
   
   // Real Context (might be undefined if in demo route)
   const agendaContext = useContext(AgendaContext);
