@@ -69,27 +69,6 @@ This tool is designed for:
 
 This project is developed by an independent developer with two academic degrees in Computer Science, combining deep theoretical foundations with practical, real-world full-stack engineering experience.
 
-
-
-
-
-**Agenda** is a web application that allows users to present a **personal agenda or narrative**, and back it up with **reliable external sources**, primarily news articles.
-
-Each **agenda** represents a specific claim or statement (e.g., “Biden is unfit to be president”).  
-The user then attaches **articles from reputable news outlets** that serve as evidence supporting the claim.
-
----
-
-## Use Case
-
-This tool is designed for:
-- Structuring personal beliefs or arguments with traceable sources
-- Gathering credible evidence for political, social, or personal narratives
-- Showcasing a curated, article-based "case" for a point of view
-- Simplifying research and content organization
-
-
-
 ---
 
 
