@@ -10,49 +10,6 @@ export interface DemoAgenda {
 }
 
 export const INITIAL_DEMO_AGENDAS: DemoAgenda[] = [
-  {
-  id: 1,
-  title: "All Smartphones Are Bland and Boring",
-  createdAt: new Date().toISOString(),
-  articles: [
-    {
-      id: "101",
-      title: "Smartphone Design Plateaued in 2024",
-      url: "https://gizmodo.com/smartphone-design-plateaued-in-2024-2000540663",
-      description: "Argues that Samsung, Google, and Apple prioritized AI features over genuine hardware innovation, leaving phones virtually indistinguishable.",
-      createdAt: new Date().toISOString(),
-      agenda_id: "4",
-      image: "https://gizmodo.com/app/uploads/2024/12/MAIN_Best-Smartphones.jpg"
-    },
-    {
-      id: "102",
-      title: "Smartphones Are Boring Now and It's Our Fault",
-      url: "https://www.howtogeek.com/smartphones-are-boring-now-and-its-our-fault/",
-      description: "Explains how consumer demand for reliability over novelty has pushed manufacturers toward identical, safe designs.",
-      createdAt: new Date().toISOString(),
-      agenda_id: "4",
-      image: "https://static0.howtogeekimages.com/wordpress/wp-content/uploads/2025/03/galaxy-s24-phones-on-a-table.jpg?q=70&fit=crop&w=1568&h=1078&dpr=1"
-    },
-    {
-      id: "103",
-      title: "Yes, many flagship phones now look the same – but I don't think it's a bad thing",
-      url: "https://www.techradar.com/phones/yes-many-flagship-phones-now-look-the-same-but-i-dont-think-its-a-bad-thing",
-      description: "Acknowledges that flagship phones from Apple, Samsung, Google, and OnePlus have blurred together in design.",
-      createdAt: new Date().toISOString(),
-      agenda_id: "4",
-      image: "https://cdn.mos.cms.futurecdn.net/6yXiWTRbSBYGXJqSgSfXeZ-1920-80.jpg.webp"
-    },
-    {
-      id: "104",
-      title: "Why do all smartphones look the same?",
-      url: "https://www.phonearena.com/news/Why-do-all-smartphones-look-the-same_id124123",
-      description: "Explains that bezel-less displays and large batteries leave little room for variety, and manufacturers keep choosing safe options.",
-      createdAt: new Date().toISOString(),
-      agenda_id: "4",
-      image: "https://m-cdn.phonearena.com/images/article/124123-wide-two_1200/Why-do-all-smartphones-look-the-same.webp?1589801759"
-    }
-  ]
-},
 {
   id: 4,
   title: "AI Chatbots Make People Dumber",

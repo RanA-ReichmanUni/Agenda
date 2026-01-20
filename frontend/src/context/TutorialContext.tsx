@@ -12,6 +12,8 @@ interface TutorialContextType {
   prevStep: () => void;
   endTutorial: () => void;
   hasSeenTutorial: (key: string) => boolean;
+  isSuppressed: boolean;
+  setSuppressed: (value: boolean) => void;
 }
 
 const TutorialContext = createContext<TutorialContextType | undefined>(undefined);
@@ -22,17 +24,19 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
   const [stepIndex, setStepIndex] = useState(0);
   const location = useLocation();
   const isDemo = location.pathname.startsWith('/demo');
+  const [isSuppressed, setSuppressed] = useState(false);
 
   const [currentKey, setCurrentKey] = useState<string>('');
 
   const startTutorial = useCallback((newSteps: TutorialStep[], key: string = 'default') => {
+    if (isSuppressed) return;
     if (newSteps.length > 0) {
       setSteps(newSteps);
       setStepIndex(0);
       setIsActive(true);
       setCurrentKey(key);
     }
-  }, []);
+  }, [isSuppressed]);
 
   const endTutorial = useCallback(() => {
     setIsActive(false);
@@ -105,8 +109,10 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       nextStep: nextStepAction, 
       prevStep: prevStepAction,
       endTutorial,
-      hasSeenTutorial
-  }), [isActive, steps, stepIndex, startTutorial, nextStepAction, prevStepAction, endTutorial, hasSeenTutorial]);
+      hasSeenTutorial,
+      isSuppressed,
+      setSuppressed
+  }), [isActive, steps, stepIndex, startTutorial, nextStepAction, prevStepAction, endTutorial, hasSeenTutorial, isSuppressed]);
 
   return (
     <TutorialContext.Provider value={value}>

@@ -12,6 +12,7 @@ import ShowToast from './components/Toast';
 import { TutorialProvider } from './context/TutorialContext';
 import { TutorialOverlay } from './components/TutorialOverlay';
 import FooterBadge from './components/FooterBadge';
+import { AutoPilotProvider } from './context/AutoPilotContext';
 
 // Protected Route wrapper
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -39,6 +40,7 @@ export default function App() {
       <ToastProvider>
         <ShowToast />
         <TutorialProvider>
+          <AutoPilotProvider>
           <TutorialOverlay />
           <Routes>
           <Route path="/login" element={<LoginPage />} />
@@ -83,6 +85,7 @@ export default function App() {
           />
         </Routes>
         <FooterBadge />
+        </AutoPilotProvider>
         </TutorialProvider>
       </ToastProvider>
     </AuthProvider>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useAutoPilot } from '../context/AutoPilotContext';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -8,6 +9,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
+  const { startAutoPilot } = useAutoPilot();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -113,6 +115,18 @@ export default function LoginPage() {
               className="inline-block w-full text-center bg-yellow-100 text-yellow-800 font-semibold py-3 px-6 rounded-lg hover:bg-yellow-200 transition shadow-inner"
             >
               Try Demo Mode (No Login)
+            </button>
+            
+            <button
+              onClick={() => {
+                localStorage.removeItem('agenda_demo_tutorial_home');
+                localStorage.removeItem('agenda_demo_tutorial_agenda');
+                navigate('/demo');
+                setTimeout(() => startAutoPilot(), 500);
+              }}
+              className="inline-block w-full text-center bg-purple-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-purple-700 transition shadow-lg mt-3"
+            >
+              🤖 Watch Ghost Demo
             </button>
           </div>
         </div>

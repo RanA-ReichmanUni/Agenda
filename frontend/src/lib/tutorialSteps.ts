@@ -19,7 +19,7 @@ export const DEMO_HOME_STEPS: TutorialStep[] = [
     targetId: 'tutorial-branding',
     title: 'Welcome to Agenda',
     content: 'Agenda allows you to curate narratives and back them up with evidence. This is a demo version - feel free to explore!',
-    position: 'bottom'
+    position: 'right'
   },
   {
     targetId: 'tutorial-create-agenda',
@@ -40,7 +40,7 @@ export const DEMO_AGENDA_STEPS: TutorialStep[] = [
     targetId: 'tutorial-agenda-subject',
     title: 'The Subject',
     content: 'This is the core topic of your agenda.',
-    position: 'bottom'
+    position: 'right'
   },
   {
     targetId: 'tutorial-add-article',
@@ -55,7 +55,7 @@ export const DEMO_AGENDA_STEPS: TutorialStep[] = [
     position: 'top'
   },
   {
-    targetId: 'tutorial-verify-ai',
+    targetId: 'analyze-agenda-btn',
     title: 'Verify with AI',
     content: 'Use our AI to analyze the credibility of your collected evidence and generate a reliability score for your narrative.',
     position: 'top'

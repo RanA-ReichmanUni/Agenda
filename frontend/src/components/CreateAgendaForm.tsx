@@ -31,7 +31,8 @@ export default function CreateAgendaForm({ onCreate }: CreateAgendaFormProps) {
     <div className="space-y-4">
       <form onSubmit={handleSubmit} className="relative">
         <input
-          id="title"
+          id="create-agenda-input"
+          data-testid="create-agenda-input"
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -42,6 +43,8 @@ export default function CreateAgendaForm({ onCreate }: CreateAgendaFormProps) {
         />
         
         <button
+          id="create-agenda-submit"
+          data-testid="create-agenda-submit"
           type="submit"
           disabled={loading || !title.trim()}
           className="absolute right-2 top-2 bottom-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 rounded-lg font-semibold hover:shadow-lg hover:scale-105 active:scale-95 transition disabled:opacity-50 disabled:cursor-not-allowed"

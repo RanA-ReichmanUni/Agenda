@@ -772,7 +772,8 @@ export default function AgendaPage() {
         {/* Verify Button (Visible for both Owner and Shared) */}
         <div className="flex justify-center mt-8 relative z-10">
             <button
-                id="tutorial-verify-ai"
+                id="analyze-agenda-btn"
+                data-testid="analyze-agenda-btn"
                 onClick={() => handleAnalyzeClaim(false)}
                 disabled={isAnalyzing}
                 className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-full backdrop-blur-xl border shadow-md font-bold text-lg transition-all transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-400
@@ -960,6 +961,8 @@ export default function AgendaPage() {
                      
                      <div className="mt-8 flex justify-end">
                         <button 
+                            id="close-analysis-btn"
+                            data-testid="close-analysis-btn"
                             onClick={() => setShowAnalysisModal(false)}
                             className="bg-gray-900 text-white px-8 py-3 rounded-2xl font-bold shadow hover:bg-black hover:scale-105 transition-all"
                         >
