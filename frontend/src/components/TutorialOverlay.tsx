@@ -126,13 +126,14 @@ export function TutorialOverlay() {
             )}
         </div>
         
-        <p className={`leading-relaxed ${
-          isGhostMode 
-            ? 'text-lg text-purple-900 font-medium' 
-            : 'text-slate-600 text-sm'
-        }`}>
-            {currentStep.content}
-        </p>
+        <p
+          className={`leading-relaxed ${
+            isGhostMode 
+              ? 'text-xl text-purple-900 font-semibold' 
+              : 'text-slate-600 text-sm'
+          }`}
+          dangerouslySetInnerHTML={{ __html: currentStep.content }}
+        />
 
           {/* Controls only in manual demo mode */}
           {!isGhostMode && (
