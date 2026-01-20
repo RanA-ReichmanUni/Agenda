@@ -1,11 +1,12 @@
 
-# Agenda - Source Driven Website
+# Agenda - Evidence Driven Website
 
 **Agenda** is a web application that allows users to present a **personal agenda or narrative**, and back it up with **reliable external sources**, primarily news articles.
 
 Each **agenda** represents a specific claim or statement (e.g., "Biden is unfit to be president" or the contrast, "Biden is a great president").  
 The user then attaches **articles from reputable news outlets** that serve as evidence supporting the claim.
 
+![Agenda Front Page](https://i.imgur.com/QcFIh6V.jpeg)
 ---
 
 ## Use Case
