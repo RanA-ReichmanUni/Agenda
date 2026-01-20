@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTutorial } from './TutorialContext';
 import { useDemo } from './DemoContext';
@@ -32,17 +32,29 @@ const ARTICLE_URLS = [
 export function AutoPilotProvider({ children }: { children: React.ReactNode }) {
   const [isRunning, setIsRunning] = useState(false);
   const [currentStatus, setCurrentStatus] = useState('Idle');
+  const cancelledRef = useRef(false); // Track cancellation across async operations
   
   const navigate = useNavigate();
   const location = useLocation();
   const { endTutorial, showSingleBubble, setSuppressed } = useTutorial();
   const { agendas } = useDemo();
 
+  // Check if cancelled and throw to stop execution
+  const checkCancelled = () => {
+    if (cancelledRef.current) {
+      throw new Error('CANCELLED');
+    }
+  };
+
   const waitForElement = (selector: string, timeout = 5000): Promise<Element> => {
     return new Promise((resolve, reject) => {
       const startTime = Date.now();
       
       const checkElement = () => {
+        if (cancelledRef.current) {
+          reject(new Error('CANCELLED'));
+          return;
+        }
         const element = document.querySelector(selector);
         if (element) {
           resolve(element);
@@ -57,7 +69,15 @@ export function AutoPilotProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+  const sleep = (ms: number) => new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      if (cancelledRef.current) {
+        reject(new Error('CANCELLED'));
+      } else {
+        resolve(undefined);
+      }
+    }, ms);
+  });
 
   const typeText = async (element: HTMLInputElement, text: string) => {
     element.focus();
@@ -69,6 +89,7 @@ export function AutoPilotProvider({ children }: { children: React.ReactNode }) {
     )?.set;
     
     for (let i = 0; i < text.length; i++) {
+      checkCancelled();
       const currentText = text.substring(0, i + 1);
       
       // Set value using native setter
@@ -280,6 +301,13 @@ export function AutoPilotProvider({ children }: { children: React.ReactNode }) {
       setSuppressed(false); // Re-enable normal tutorials for manual demo mode
       
     } catch (error: any) {
+      // Handle cancellation gracefully
+      if (error.message === 'CANCELLED') {
+        console.log('AutoPilot cancelled by user');
+        endTutorial();
+        setSuppressed(false);
+        return;
+      }
       console.error('AutoPilot error:', error);
       setCurrentStatus(`Error: ${error.message}`);
       endTutorial();
@@ -292,16 +320,19 @@ export function AutoPilotProvider({ children }: { children: React.ReactNode }) {
 
   const startAutoPilot = useCallback(() => {
     if (!isRunning) {
+      cancelledRef.current = false; // Reset cancellation flag
       setIsRunning(true);
       runScript();
     }
   }, [isRunning, navigate, location, endTutorial, agendas, showSingleBubble, setSuppressed]);
 
   const stopAutoPilot = useCallback(() => {
+    cancelledRef.current = true; // Signal cancellation to running script
     setIsRunning(false);
+    endTutorial();
     setCurrentStatus('Stopped by user');
     setTimeout(() => setCurrentStatus('Idle'), 2000);
-  }, []);
+  }, [endTutorial]);
 
   return (
     <AutoPilotContext.Provider value={{ isRunning, startAutoPilot, stopAutoPilot, currentStatus }}>
