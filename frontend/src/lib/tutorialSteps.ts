@@ -137,9 +137,9 @@ export const GHOST_NARRATION = {
     position: 'bottom' as const
   },
   complete: {
-    targetId: 'tutorial-branding',
-    title: '🎉 Demo Complete!',
-    content: 'That\'s Agenda! Create agendas, collect evidence, verify with AI, and share. Try it yourself!',
-    position: 'right' as const
+    targetId: 'tutorial-demo-banner',
+    title: '🎉 Tour Complete!',
+    content: 'You\'ve seen the full Agenda workflow: Create → Collect Evidence → Verify with AI → Share. Now it\'s your turn—explore the features yourself and build your own narrative!',
+    position: 'bottom' as const
   }
 };

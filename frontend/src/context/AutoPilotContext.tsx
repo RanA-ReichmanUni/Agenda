@@ -260,12 +260,19 @@ export function AutoPilotProvider({ children }: { children: React.ReactNode }) {
 
       setCurrentStatus('Sharing agenda...');
       shareButton.click();
-      await sleep(3000);
+      await sleep(4000); // Let user see the share modal with the link
 
-      // Narrate: Complete
+      // Close share modal
+      setCurrentStatus('Closing share modal...');
+      const closeShareBtn = await waitForElement('#close-share-modal-btn', 5000) as HTMLButtonElement;
+      await highlightElement(closeShareBtn, 1500);
+      closeShareBtn.click();
+      await sleep(1500);
+
+      // Narrate: Complete - Final invitation message (after modal is closed)
       showSingleBubble(GHOST_NARRATION.complete);
-      setCurrentStatus('Demo completed!');
-      await sleep(6000); // Let user read the final message
+      setCurrentStatus('🎉 Tour Complete!');
+      await sleep(8000); // Let user read the final invitation message
 
       endTutorial();
       setIsRunning(false);
