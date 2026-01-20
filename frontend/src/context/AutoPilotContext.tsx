@@ -107,7 +107,9 @@ export function AutoPilotProvider({ children }: { children: React.ReactNode }) {
       showSingleBubble(GHOST_NARRATION.welcome);
       await sleep(5000);
 
-      if (!location.pathname.startsWith('/demo')) {
+      const isDemoRoute = location.pathname.startsWith('/demo');
+      const isAutoPilotRoute = location.pathname.startsWith('/auto-pilot-demo');
+      if (!isDemoRoute && !isAutoPilotRoute) {
         setCurrentStatus('Navigating to demo...');
         navigate('/demo');
         await sleep(3000);
@@ -268,13 +270,14 @@ export function AutoPilotProvider({ children }: { children: React.ReactNode }) {
       endTutorial();
       setIsRunning(false);
       setCurrentStatus('Idle');
-      // Keep suppressed to prevent auto-tutorials from starting after ghost
+      setSuppressed(false); // Re-enable normal tutorials for manual demo mode
       
     } catch (error: any) {
       console.error('AutoPilot error:', error);
       setCurrentStatus(`Error: ${error.message}`);
       endTutorial();
       setIsRunning(false);
+      setSuppressed(false);
       await sleep(3000);
       setCurrentStatus('Idle');
     }

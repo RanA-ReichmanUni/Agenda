@@ -7,6 +7,7 @@ import HomePage from './pages/HomePage';
 import AgendaPage from './pages/AgendaPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import AutoPilotDemoPage from './pages/AutoPilotDemoPage';
 import { ToastProvider } from './context/ToastContext';
 import ShowToast from './components/Toast';
 import { TutorialProvider } from './context/TutorialContext';
@@ -53,6 +54,14 @@ export default function App() {
           />
           <Route 
             path="/demo/agenda/:id" 
+            element={<AgendaPage />} 
+          />
+          <Route 
+            path="/auto-pilot-demo" 
+            element={<AutoPilotDemoPage />} 
+          />
+          <Route 
+            path="/auto-pilot-demo/agenda/:id" 
             element={<AgendaPage />} 
           />
 

@@ -88,23 +88,12 @@ export function TutorialOverlay() {
     };
   }, [isActive, currentStep]);
 
-  // Auto-dismiss after 3 seconds (only for non-ghost-controlled tutorials)
-  useEffect(() => {
-    if (!isActive || !currentStep || isGhostControlled) return;
-    
-    const dismissTimer = setTimeout(() => {
-      nextStep();
-    }, 3000);
-
-    return () => clearTimeout(dismissTimer);
-  }, [isActive, currentStep, nextStep, isGhostControlled]);
-
   if (!isActive || !currentStep || !position) return null;
 
   // Use the calculated placement or fallback
   const finalPlacement = position.placement;
 
-  // Ghost mode uses larger, more prominent styling
+  // Ghost mode uses larger, more prominent styling; demo mode keeps classic sizing and controls
   const isGhostMode = isGhostControlled;
 
   return (
@@ -132,7 +121,7 @@ export function TutorialOverlay() {
             }`}>{currentStep.title}</h3>
             {!isGhostMode && (
               <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-full border border-blue-100">
-                  {stepIndex + 1} / {totalSteps}
+                {stepIndex + 1} / {totalSteps}
               </span>
             )}
         </div>
@@ -145,8 +134,36 @@ export function TutorialOverlay() {
             {currentStep.content}
         </p>
 
+          {/* Controls only in manual demo mode */}
+          {!isGhostMode && (
+            <div className="flex justify-between items-center mt-6">
+            <button 
+              onClick={endTutorial}
+              className="text-slate-400 hover:text-slate-600 text-sm font-medium transition-colors"
+            >
+              Skip
+            </button>
+            <div className="flex space-x-2">
+              {stepIndex > 0 && (
+                <button 
+                  onClick={prevStep}
+                  className="px-3 py-1.5 rounded-lg border border-blue-100 text-blue-600 hover:bg-blue-50 text-sm font-semibold transition-colors"
+                >
+                  Back
+                </button>
+              )}
+              <button 
+                onClick={nextStep}
+                className="px-4 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 text-sm font-semibold shadow-md shadow-blue-200 transition-all hover:shadow-lg"
+              >
+                {stepIndex === totalSteps - 1 ? 'Finish' : 'Next'}
+              </button>
+            </div>
+            </div>
+          )}
+
         {/* Arrow (Visual only, simplified) */}
-        {!isGhostMode && (
+          {!isGhostMode && (
           <div 
               className={`absolute w-4 h-4 bg-white border-blue-200 transform rotate-45 ${
                   finalPlacement === 'top' ? 'bottom-[-9px] border-b border-r border-t-0 border-l-0' :

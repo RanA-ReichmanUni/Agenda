@@ -82,7 +82,7 @@ const DEMO_ANALYSIS_RESULTS: Record<number, AnalysisResult> = {
 export default function AgendaPage() {
   const { id, token } = useParams();
   const location = useLocation();
-  const isDemo = location.pathname.startsWith('/demo');
+  const isDemo = location.pathname.startsWith('/demo') || location.pathname.startsWith('/auto-pilot-demo');
   const isShared = Boolean(token);
   const isReadOnly = isShared;
 

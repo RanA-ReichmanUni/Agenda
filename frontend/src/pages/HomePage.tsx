@@ -11,7 +11,8 @@ import { DEMO_HOME_STEPS, DEMO_MODE_EXPLANATION } from "../lib/tutorialSteps";
 export default function HomePage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const isDemo = location.pathname.startsWith('/demo');
+  const isDemo = location.pathname.startsWith('/demo') || location.pathname.startsWith('/auto-pilot-demo');
+  const demoPrefix = location.pathname.startsWith('/auto-pilot-demo') ? '/auto-pilot-demo' : '/demo';
   const { startTutorial, hasSeenTutorial, isActive, isSuppressed } = useTutorial();
 
   useEffect(() => {
@@ -208,7 +209,7 @@ export default function HomePage() {
                 const isNewlyCreated = agenda.title === "All Smartphones Are Bland and Boring" && (!agenda.articles || agenda.articles.length === 0);
                 return (
                 <div key={agenda.id} data-agenda-id={agenda.id} data-title={agenda.title} className={isNewlyCreated ? 'animate-rainbow-border' : ''}>
-                    <Link to={isDemo ? `/demo/agenda/${agenda.id}` : `/agenda/${agenda.id}`} className="block w-full group">
+                    <Link to={isDemo ? `${demoPrefix}/agenda/${agenda.id}` : `/agenda/${agenda.id}`} className="block w-full group">
                         <div className="bg-white border border-gray-200 rounded-3xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden group w-full h-auto flex flex-col">
                             
                             {/* Image Header with Badge Overlay */}
