@@ -7,11 +7,13 @@ import HomePage from './pages/HomePage';
 import AgendaPage from './pages/AgendaPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import AutoPilotDemoPage from './pages/AutoPilotDemoPage';
 import { ToastProvider } from './context/ToastContext';
 import ShowToast from './components/Toast';
 import { TutorialProvider } from './context/TutorialContext';
 import { TutorialOverlay } from './components/TutorialOverlay';
 import FooterBadge from './components/FooterBadge';
+import { AutoPilotProvider } from './context/AutoPilotContext';
 
 // Protected Route wrapper
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -39,6 +41,7 @@ export default function App() {
       <ToastProvider>
         <ShowToast />
         <TutorialProvider>
+          <AutoPilotProvider>
           <TutorialOverlay />
           <Routes>
           <Route path="/login" element={<LoginPage />} />
@@ -51,6 +54,14 @@ export default function App() {
           />
           <Route 
             path="/demo/agenda/:id" 
+            element={<AgendaPage />} 
+          />
+          <Route 
+            path="/auto-pilot-demo" 
+            element={<AutoPilotDemoPage />} 
+          />
+          <Route 
+            path="/auto-pilot-demo/agenda/:id" 
             element={<AgendaPage />} 
           />
 
@@ -83,6 +94,7 @@ export default function App() {
           />
         </Routes>
         <FooterBadge />
+        </AutoPilotProvider>
         </TutorialProvider>
       </ToastProvider>
     </AuthProvider>

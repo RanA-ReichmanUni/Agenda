@@ -82,7 +82,7 @@ const DEMO_ANALYSIS_RESULTS: Record<number, AnalysisResult> = {
 export default function AgendaPage() {
   const { id, token } = useParams();
   const location = useLocation();
-  const isDemo = location.pathname.startsWith('/demo');
+  const isDemo = location.pathname.startsWith('/demo') || location.pathname.startsWith('/auto-pilot-demo');
   const isShared = Boolean(token);
   const isReadOnly = isShared;
 
@@ -772,7 +772,8 @@ export default function AgendaPage() {
         {/* Verify Button (Visible for both Owner and Shared) */}
         <div className="flex justify-center mt-8 relative z-10">
             <button
-                id="tutorial-verify-ai"
+                id="analyze-agenda-btn"
+                data-testid="analyze-agenda-btn"
                 onClick={() => handleAnalyzeClaim(false)}
                 disabled={isAnalyzing}
                 className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-full backdrop-blur-xl border shadow-md font-bold text-lg transition-all transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-400
@@ -840,6 +841,7 @@ export default function AgendaPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
           <div className="bg-white/90 backdrop-blur-xl border border-gray-200 rounded-2xl shadow-2xl p-8 max-w-md w-full animate-fade-in relative">
             <button 
+                id="close-share-modal-btn"
                 onClick={() => setShowShareModal(false)}
                 className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
             >
@@ -960,6 +962,8 @@ export default function AgendaPage() {
                      
                      <div className="mt-8 flex justify-end">
                         <button 
+                            id="close-analysis-btn"
+                            data-testid="close-analysis-btn"
                             onClick={() => setShowAnalysisModal(false)}
                             className="bg-gray-900 text-white px-8 py-3 rounded-2xl font-bold shadow hover:bg-black hover:scale-105 transition-all"
                         >

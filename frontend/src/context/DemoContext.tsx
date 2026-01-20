@@ -46,8 +46,10 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   };
 
   const addAgenda = async (title: string) => {
+    // Give smartphone agenda ID 1 to match cached demo analysis
+    const newId = title === "All Smartphones Are Bland and Boring" ? 1 : Date.now();
     const newAgenda: DemoAgenda = {
-      id: Date.now(),
+      id: newId,
       title,
       createdAt: new Date().toISOString(),
       articles: []

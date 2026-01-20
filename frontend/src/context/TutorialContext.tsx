@@ -12,6 +12,10 @@ interface TutorialContextType {
   prevStep: () => void;
   endTutorial: () => void;
   hasSeenTutorial: (key: string) => boolean;
+  isSuppressed: boolean;
+  setSuppressed: (value: boolean) => void;
+  showSingleBubble: (step: TutorialStep) => void; // Ghost-controlled single bubble
+  isGhostControlled: boolean;
 }
 
 const TutorialContext = createContext<TutorialContextType | undefined>(undefined);
@@ -22,24 +26,37 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
   const [stepIndex, setStepIndex] = useState(0);
   const location = useLocation();
   const isDemo = location.pathname.startsWith('/demo');
+  const [isSuppressed, setSuppressed] = useState(false);
+  const [isGhostControlled, setIsGhostControlled] = useState(false);
 
   const [currentKey, setCurrentKey] = useState<string>('');
 
+  // Ghost-controlled single bubble - shows one step at a time, controlled by AutoPilot
+  const showSingleBubble = useCallback((step: TutorialStep) => {
+    setSteps([step]);
+    setStepIndex(0);
+    setIsActive(true);
+    setIsGhostControlled(true);
+    setCurrentKey('ghost');
+  }, []);
+
   const startTutorial = useCallback((newSteps: TutorialStep[], key: string = 'default') => {
+    if (isSuppressed) return;
     if (newSteps.length > 0) {
       setSteps(newSteps);
       setStepIndex(0);
       setIsActive(true);
       setCurrentKey(key);
     }
-  }, []);
+  }, [isSuppressed]);
 
   const endTutorial = useCallback(() => {
     setIsActive(false);
     setSteps([]);
     setStepIndex(0);
+    setIsGhostControlled(false);
     // Mark as seen in local storage (persistent across sessions)
-    if (isDemo && currentKey) {
+    if (isDemo && currentKey && currentKey !== 'ghost') {
         localStorage.setItem(`agenda_demo_tutorial_${currentKey}`, 'true');
     }
     setCurrentKey('');
@@ -105,8 +122,12 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       nextStep: nextStepAction, 
       prevStep: prevStepAction,
       endTutorial,
-      hasSeenTutorial
-  }), [isActive, steps, stepIndex, startTutorial, nextStepAction, prevStepAction, endTutorial, hasSeenTutorial]);
+      hasSeenTutorial,
+      isSuppressed,
+      setSuppressed,
+      showSingleBubble,
+      isGhostControlled
+  }), [isActive, steps, stepIndex, startTutorial, nextStepAction, prevStepAction, endTutorial, hasSeenTutorial, isSuppressed, showSingleBubble, isGhostControlled]);
 
   return (
     <TutorialContext.Provider value={value}>

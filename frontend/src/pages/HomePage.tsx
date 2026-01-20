@@ -11,16 +11,18 @@ import { DEMO_HOME_STEPS, DEMO_MODE_EXPLANATION } from "../lib/tutorialSteps";
 export default function HomePage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const isDemo = location.pathname.startsWith('/demo');
-  const { startTutorial, hasSeenTutorial, isActive } = useTutorial();
+  const isDemo = location.pathname.startsWith('/demo') || location.pathname.startsWith('/auto-pilot-demo');
+  const demoPrefix = location.pathname.startsWith('/auto-pilot-demo') ? '/auto-pilot-demo' : '/demo';
+  const { startTutorial, hasSeenTutorial, isActive, isSuppressed } = useTutorial();
 
   useEffect(() => {
-    if (isDemo && !hasSeenTutorial('home') && !isActive) {
+    // Don't auto-start tutorials if suppressed (ghost mode active/finished)
+    if (isDemo && !hasSeenTutorial('home') && !isActive && !isSuppressed) {
         setTimeout(() => {
              startTutorial(DEMO_HOME_STEPS, 'home');
         }, 800);
     }
-  }, [isDemo, startTutorial, hasSeenTutorial, isActive]);
+  }, [isDemo, startTutorial, hasSeenTutorial, isActive, isSuppressed]);
   
   // Real Context (might be undefined if in demo route)
   const agendaContext = useContext(AgendaContext);
@@ -202,9 +204,12 @@ export default function HomePage() {
             </div>
           ) : (
             <div className="grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
-              {agendasWithArticles.map((agenda) => (
-                <div key={agenda.id}>
-                    <Link to={isDemo ? `/demo/agenda/${agenda.id}` : `/agenda/${agenda.id}`} className="block w-full group">
+              {agendasWithArticles.map((agenda) => {
+                // Highlight newly created smartphone agenda (has title but no articles yet)
+                const isNewlyCreated = agenda.title === "All Smartphones Are Bland and Boring" && (!agenda.articles || agenda.articles.length === 0);
+                return (
+                <div key={agenda.id} data-agenda-id={agenda.id} data-title={agenda.title} className={isNewlyCreated ? 'animate-rainbow-border' : ''}>
+                    <Link to={isDemo ? `${demoPrefix}/agenda/${agenda.id}` : `/agenda/${agenda.id}`} className="block w-full group">
                         <div className="bg-white border border-gray-200 rounded-3xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden group w-full h-auto flex flex-col">
                             
                             {/* Image Header with Badge Overlay */}
@@ -249,6 +254,7 @@ export default function HomePage() {
                                 </div>
                                 
                                 <button
+                                    data-testid="delete-agenda-btn"
                                     onClick={(e) => {
                                         e.preventDefault();
                                         e.stopPropagation();
@@ -265,14 +271,15 @@ export default function HomePage() {
                         </div>
                     </Link>
                 </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>
       </div>
 
       {agendaToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+        <div id="delete-modal" className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
           <div className="bg-white/80 backdrop-blur-xl border border-gray-200 rounded-2xl shadow-2xl p-8 max-w-md w-full animate-fade-in">
             <h3 className="text-xl font-bold text-red-700 mb-4 text-center">Confirm Deletion</h3>
             <p className="text-gray-700 text-center mb-6">
@@ -280,6 +287,8 @@ export default function HomePage() {
             </p>
             <div className="flex justify-center gap-4">
               <button
+                id="confirm-delete-btn"
+                data-testid="confirm-delete-btn"
                 className="px-6 py-2 rounded-full bg-red-600 text-white font-semibold shadow hover:bg-red-700 transition"
                 onClick={async () => {
                   await handleDeleteAgenda(Number(agendaToDelete.id));
@@ -300,6 +309,19 @@ export default function HomePage() {
       )}
 
       <style>{`
+        @keyframes rainbow-border {
+          0% { box-shadow: 0 0 0 3px rgba(255, 0, 0, 0.8); }
+          16% { box-shadow: 0 0 0 3px rgba(255, 127, 0, 0.8); }
+          33% { box-shadow: 0 0 0 3px rgba(255, 255, 0, 0.8); }
+          50% { box-shadow: 0 0 0 3px rgba(0, 255, 0, 0.8); }
+          66% { box-shadow: 0 0 0 3px rgba(0, 0, 255, 0.8); }
+          83% { box-shadow: 0 0 0 3px rgba(139, 0, 255, 0.8); }
+          100% { box-shadow: 0 0 0 3px rgba(255, 0, 0, 0.8); }
+        }
+        .animate-rainbow-border {
+          animation: rainbow-border 2s linear infinite;
+          border-radius: 1.5rem;
+        }
         @keyframes title-gradient { 
           0% { background-position: 0% 50%; opacity: 0; transform: scale(0.9) translateY(-20px); filter: blur(10px); } 
           20% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0px); }

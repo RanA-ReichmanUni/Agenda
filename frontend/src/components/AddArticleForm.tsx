@@ -89,7 +89,8 @@ export default function AddArticleForm({ onAdd }: AddArticleFormProps) {
             Article URL
           </label>
           <input
-            id="url"
+            id="add-article-url"
+            data-testid="add-article-url"
             type="url"
             placeholder="https://example.com/article"
             value={url}
@@ -99,6 +100,8 @@ export default function AddArticleForm({ onAdd }: AddArticleFormProps) {
           />
         </div>
         <button
+          id="add-article-submit"
+          data-testid="add-article-submit"
           onClick={handleFetch}
           disabled={loading || !url}
           className={`w-full py-3 px-4 rounded-xl font-bold text-lg transition-all duration-300 transform active:scale-[0.98]
@@ -151,6 +154,8 @@ export default function AddArticleForm({ onAdd }: AddArticleFormProps) {
           )}
 
           <button
+            id="add-article-final-btn"
+            data-testid="add-article-final-btn"
             onClick={handleAdd}
             className="w-full mt-4 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-2 px-4 rounded-xl transition shadow-md hover:shadow-lg"
           >
