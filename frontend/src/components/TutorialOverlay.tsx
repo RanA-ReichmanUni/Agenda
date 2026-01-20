@@ -3,7 +3,7 @@ import { useTutorial } from '../context/TutorialContext';
 import { useAutoPilot } from '../context/AutoPilotContext';
 
 export function TutorialOverlay() {
-  const { isActive, currentStep, nextStep, prevStep, endTutorial, stepIndex, totalSteps } = useTutorial();
+  const { isActive, currentStep, nextStep, prevStep, endTutorial, stepIndex, totalSteps, isGhostControlled } = useTutorial();
   const { isRunning: isAutoPilotRunning } = useAutoPilot();
   const [position, setPosition] = useState<{ top: number; left: number; placement: string } | null>(null);
   const bubbleRef = useRef<HTMLDivElement>(null);
@@ -88,16 +88,16 @@ export function TutorialOverlay() {
     };
   }, [isActive, currentStep]);
 
-  // Auto-dismiss after 3 seconds
+  // Auto-dismiss after 3 seconds (only for non-ghost-controlled tutorials)
   useEffect(() => {
-    if (!isActive || !currentStep) return;
+    if (!isActive || !currentStep || isGhostControlled) return;
     
     const dismissTimer = setTimeout(() => {
       nextStep();
     }, 3000);
 
     return () => clearTimeout(dismissTimer);
-  }, [isActive, currentStep, nextStep]);
+  }, [isActive, currentStep, nextStep, isGhostControlled]);
 
   if (!isActive || !currentStep || !position) return null;
 

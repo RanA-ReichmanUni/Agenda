@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTutorial } from './TutorialContext';
 import { useDemo } from './DemoContext';
+import { GHOST_NARRATION } from '../lib/tutorialSteps';
 
 interface AutoPilotContextType {
   isRunning: boolean;
@@ -34,7 +35,7 @@ export function AutoPilotProvider({ children }: { children: React.ReactNode }) {
   
   const navigate = useNavigate();
   const location = useLocation();
-  const { setSuppressed, endTutorial } = useTutorial();
+  const { endTutorial, showSingleBubble } = useTutorial();
   const { agendas } = useDemo();
 
   const waitForElement = (selector: string, timeout = 5000): Promise<Element> => {
@@ -98,8 +99,12 @@ export function AutoPilotProvider({ children }: { children: React.ReactNode }) {
   const runScript = async () => {
     try {
       setCurrentStatus('Starting demo...');
-      endTutorial(); // Close any active tutorial but don't suppress future ones
-      await sleep(1500);
+      endTutorial(); // Close any existing tutorial
+      await sleep(800);
+
+      // Show welcome narration
+      showSingleBubble(GHOST_NARRATION.welcome);
+      await sleep(3000);
 
       if (!location.pathname.startsWith('/demo')) {
         setCurrentStatus('Navigating to demo...');
@@ -107,29 +112,33 @@ export function AutoPilotProvider({ children }: { children: React.ReactNode }) {
         await sleep(2500);
       }
 
+      // Narrate: Creating agenda
       setCurrentStatus('Finding create form...');
+      showSingleBubble(GHOST_NARRATION.createInput);
       const createInput = await waitForElement('#create-agenda-input') as HTMLInputElement;
       await highlightElement(createInput, 1500);
       
       setCurrentStatus('Typing agenda title...');
       await typeText(createInput, TARGET_AGENDA_TITLE);
-      await sleep(1500);
+      await sleep(1000);
 
+      // Narrate: Submitting
       setCurrentStatus('Submitting agenda...');
+      showSingleBubble(GHOST_NARRATION.submitAgenda);
       const submitButton = await waitForElement('#create-agenda-submit') as HTMLButtonElement;
       await highlightElement(submitButton, 1500);
       
-      // Trigger form submission
       const form = submitButton.closest('form');
       if (form) {
         form.requestSubmit();
       } else {
         submitButton.click();
       }
-      await sleep(3000); // Longer wait for creation
+      await sleep(2500);
 
-      // Wait for the agenda card to appear in DOM (more reliable than context)
+      // Narrate: Opening agenda
       setCurrentStatus('Waiting for new agenda card...');
+      showSingleBubble(GHOST_NARRATION.openAgenda);
       const agendaCard = await waitForElement(`[data-title="${TARGET_AGENDA_TITLE}"]`, 10000);
       await sleep(1500);
 
@@ -139,21 +148,30 @@ export function AutoPilotProvider({ children }: { children: React.ReactNode }) {
       if (agendaLink) {
         agendaLink.click();
       }
-      await sleep(2500); // Wait for page navigation
+      await sleep(2500);
 
-      // Add all articles
+      // Add articles with narration
       for (let i = 0; i < ARTICLE_URLS.length; i++) {
         const isFirstArticle = i === 0;
-        const typingDelay = isFirstArticle ? 100 : 30; // Slow first, faster rest
-        const highlightDuration = isFirstArticle ? 1500 : 600;
-        const pauseAfterTyping = isFirstArticle ? 1200 : 400;
-        const addWaitTime = isFirstArticle ? 1200 : 600;
+        const typingDelay = isFirstArticle ? 80 : 25;
+        const highlightDuration = isFirstArticle ? 1500 : 500;
+        const pauseAfterTyping = isFirstArticle ? 1000 : 300;
+        const addWaitTime = isFirstArticle ? 1000 : 500;
+        
+        // Show narration for first article, then show "building evidence" for rest
+        if (isFirstArticle) {
+          showSingleBubble(GHOST_NARRATION.addArticle);
+        } else if (i === 1) {
+          showSingleBubble(GHOST_NARRATION.moreArticles);
+        }
         
         setCurrentStatus(`Adding article ${i + 1} of ${ARTICLE_URLS.length}...`);
         const articleInput = await waitForElement('#add-article-url') as HTMLInputElement;
-        await highlightElement(articleInput, highlightDuration);
+        if (isFirstArticle) {
+          await highlightElement(articleInput, highlightDuration);
+        }
         
-        // Type with variable speed
+        // Type URL
         const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
           window.HTMLInputElement.prototype,
           'value'
@@ -172,18 +190,26 @@ export function AutoPilotProvider({ children }: { children: React.ReactNode }) {
           await sleep(typingDelay);
         }
         articleInput.dispatchEvent(new Event('change', { bubbles: true }));
-        
         await sleep(pauseAfterTyping);
 
+        // Narrate fetch for first article
+        if (isFirstArticle) {
+          showSingleBubble(GHOST_NARRATION.fetchArticle);
+        }
+        
         setCurrentStatus(`Fetching article ${i + 1}...`);
         const fetchButton = await waitForElement('#add-article-submit') as HTMLButtonElement;
         await highlightElement(fetchButton, highlightDuration);
         fetchButton.click();
         
-        // Wait for the add button to appear (means fetch completed)
         setCurrentStatus(`Waiting for article ${i + 1} data...`);
         const addButton = await waitForElement('#add-article-final-btn', 10000) as HTMLButtonElement;
-        await sleep(isFirstArticle ? 500 : 200); // Brief pause to see the fetched data
+        await sleep(isFirstArticle ? 500 : 150);
+        
+        // Narrate confirm for first article
+        if (isFirstArticle) {
+          showSingleBubble(GHOST_NARRATION.confirmArticle);
+        }
         
         setCurrentStatus(`Adding article ${i + 1} to agenda...`);
         await highlightElement(addButton, highlightDuration);
@@ -191,40 +217,52 @@ export function AutoPilotProvider({ children }: { children: React.ReactNode }) {
         await sleep(addWaitTime);
       }
 
-      setCurrentStatus('All articles added! Finding verify button...');
+      // Narrate: AI Verification
+      setCurrentStatus('All articles added! Preparing verification...');
+      showSingleBubble(GHOST_NARRATION.verifyAgenda);
       await sleep(2000);
+      
       const verifyButton = await waitForElement('#analyze-agenda-btn') as HTMLButtonElement;
       await highlightElement(verifyButton, 1500);
-      await sleep(1000);
+      await sleep(800);
 
       setCurrentStatus('Starting AI analysis...');
       verifyButton.click();
-      await sleep(4000);
+      await sleep(3500);
 
-      setCurrentStatus('Closing analysis modal...');
+      // Narrate: Analysis complete
+      setCurrentStatus('Analysis complete!');
+      showSingleBubble(GHOST_NARRATION.analysisComplete);
       const closeAnalysisBtn = await waitForElement('#close-analysis-btn', 5000) as HTMLButtonElement;
       await highlightElement(closeAnalysisBtn, 1500);
+      await sleep(800);
       closeAnalysisBtn.click();
-      await sleep(1200);
+      await sleep(1000);
 
+      // Narrate: Share
       setCurrentStatus('Finding share button...');
+      showSingleBubble(GHOST_NARRATION.shareAgenda);
       const shareButton = await waitForElement('#tutorial-share-button') as HTMLButtonElement;
       await highlightElement(shareButton, 1500);
-      await sleep(1500);
+      await sleep(1200);
 
       setCurrentStatus('Sharing agenda...');
       shareButton.click();
       await sleep(2500);
 
+      // Narrate: Complete
+      showSingleBubble(GHOST_NARRATION.complete);
       setCurrentStatus('Demo completed!');
-      await sleep(2000);
+      await sleep(4000);
 
+      endTutorial();
       setIsRunning(false);
       setCurrentStatus('Idle');
       
     } catch (error: any) {
       console.error('AutoPilot error:', error);
       setCurrentStatus(`Error: ${error.message}`);
+      endTutorial();
       setIsRunning(false);
       await sleep(3000);
       setCurrentStatus('Idle');
@@ -236,7 +274,7 @@ export function AutoPilotProvider({ children }: { children: React.ReactNode }) {
       setIsRunning(true);
       runScript();
     }
-  }, [isRunning, navigate, location, setSuppressed, endTutorial, agendas]);
+  }, [isRunning, navigate, location, endTutorial, agendas, showSingleBubble]);
 
   const stopAutoPilot = useCallback(() => {
     setIsRunning(false);
