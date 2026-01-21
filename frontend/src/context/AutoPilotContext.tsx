@@ -298,6 +298,7 @@ export function AutoPilotProvider({ children }: { children: React.ReactNode }) {
 
       setCurrentStatus('Starting AI analysis...');
       verifyButton.click();
+      endTutorial(); // Dismiss the bubble so it doesn't block the analysis modal
       await sleep(4000);
 
       // Narrate: Analysis complete
