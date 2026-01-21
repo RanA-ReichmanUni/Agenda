@@ -761,9 +761,33 @@ export default function AgendaPage() {
                 )}
             </div>
           <div className="flex flex-col items-center gap-4">
-            <div className="flex items-center gap-2 text-sm text-gray-500 font-medium bg-white/50 backdrop-blur-sm px-4 py-2 rounded-full border border-gray-100 shadow-sm">
-                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                Created <span className="font-mono text-gray-700">{new Date(agenda.createdAt).toLocaleDateString()}</span>
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-2 text-sm text-gray-500 font-medium bg-white/50 backdrop-blur-sm px-4 py-2 rounded-full border border-gray-100 shadow-sm">
+                  <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                  Created <span className="font-mono text-gray-700">{new Date(agenda.createdAt).toLocaleDateString()}</span>
+              </div>
+              {/* AI Score Summary moved here */}
+              {analysisResult && !isAnalyzing && (
+                <div className="flex items-center gap-2 text-sm text-gray-500 font-medium bg-white/50 backdrop-blur-sm px-4 py-2 rounded-full border border-gray-100 shadow-sm" title={analysisResult.score + ' reliability'}>
+                  <span className="text-gray-500 font-medium mr-1">AI Score:</span>
+                  <span
+                    className={`w-3 h-3 rounded-full inline-block mr-1 ${
+                      analysisResult.score === 'High' ? 'bg-green-500' :
+                      analysisResult.score === 'Medium' ? 'bg-yellow-400' :
+                      'bg-red-500'
+                    }`}
+                  ></span>
+                  <span className={
+                    analysisResult.score === 'High' ? 'text-green-700' :
+                    analysisResult.score === 'Medium' ? 'text-yellow-700' :
+                    'text-red-700'
+                  }>
+                    {analysisResult.score === 'High' ? 'High Reliability' :
+                     analysisResult.score === 'Medium' ? 'Moderate Reliability' :
+                     'Low Reliability'}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>
