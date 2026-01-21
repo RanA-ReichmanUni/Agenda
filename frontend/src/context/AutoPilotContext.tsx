@@ -36,7 +36,7 @@ export function AutoPilotProvider({ children }: { children: React.ReactNode }) {
   
   const navigate = useNavigate();
   const location = useLocation();
-  const { endTutorial, showSingleBubble, setSuppressed } = useTutorial();
+  const { endTutorial, showSingleBubble, setSuppressed, setGhostModeCompleted } = useTutorial();
   const { agendas } = useDemo();
 
   // Check if cancelled and throw to stop execution
@@ -298,21 +298,24 @@ export function AutoPilotProvider({ children }: { children: React.ReactNode }) {
       endTutorial();
       setIsRunning(false);
       setCurrentStatus('Idle');
-      // Keep tutorials suppressed after ghost mode - user has seen the full tour
+      setSuppressed(false); // Re-enable suppression flag
+      setGhostModeCompleted(true); // Mark ghost mode as completed - this persists
       
     } catch (error: any) {
       // Handle cancellation gracefully
       if (error.message === 'CANCELLED') {
         console.log('AutoPilot cancelled by user');
         endTutorial();
-        // Keep tutorials suppressed after ghost mode - user chose to stop
+        setSuppressed(false);
+        setGhostModeCompleted(true); // Mark ghost mode as completed even if stopped
         return;
       }
       console.error('AutoPilot error:', error);
       setCurrentStatus(`Error: ${error.message}`);
       endTutorial();
       setIsRunning(false);
-      // Keep tutorials suppressed after ghost mode error
+      setSuppressed(false);
+      setGhostModeCompleted(true); // Mark ghost mode as completed even on error
       await sleep(3000);
       setCurrentStatus('Idle');
     }

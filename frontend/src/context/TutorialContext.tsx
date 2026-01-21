@@ -16,6 +16,8 @@ interface TutorialContextType {
   setSuppressed: (value: boolean) => void;
   showSingleBubble: (step: TutorialStep) => void; // Ghost-controlled single bubble
   isGhostControlled: boolean;
+  ghostModeCompleted: boolean; // True after ghost tour finishes - suppresses tutorials permanently
+  setGhostModeCompleted: (value: boolean) => void;
 }
 
 const TutorialContext = createContext<TutorialContextType | undefined>(undefined);
@@ -28,6 +30,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
   const isDemo = location.pathname.startsWith('/demo');
   const [isSuppressed, setSuppressed] = useState(false);
   const [isGhostControlled, setIsGhostControlled] = useState(false);
+  const [ghostModeCompleted, setGhostModeCompleted] = useState(false);
 
   const [currentKey, setCurrentKey] = useState<string>('');
 
@@ -126,8 +129,10 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       isSuppressed,
       setSuppressed,
       showSingleBubble,
-      isGhostControlled
-  }), [isActive, steps, stepIndex, startTutorial, nextStepAction, prevStepAction, endTutorial, hasSeenTutorial, isSuppressed, showSingleBubble, isGhostControlled]);
+      isGhostControlled,
+      ghostModeCompleted,
+      setGhostModeCompleted
+  }), [isActive, steps, stepIndex, startTutorial, nextStepAction, prevStepAction, endTutorial, hasSeenTutorial, isSuppressed, showSingleBubble, isGhostControlled, ghostModeCompleted]);
 
   return (
     <TutorialContext.Provider value={value}>
