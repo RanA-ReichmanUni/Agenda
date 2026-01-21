@@ -88,7 +88,7 @@ export default function AgendaPage() {
 
   const demoContext = useDemo();
   const agendaContext = React.useContext(AgendaContext);
-  const { startTutorial, hasSeenTutorial, isActive } = useTutorial();
+  const { startTutorial, hasSeenTutorial, isActive, isSuppressed } = useTutorial();
 
   if (!id && !token) {
     return (
@@ -144,12 +144,13 @@ export default function AgendaPage() {
   const [isUpdatingTitle, setIsUpdatingTitle] = useState(false);
 
   useEffect(() => {
-    if (isDemo && !loading && !hasSeenTutorial('agenda') && !isActive) {
+    // Don't auto-start tutorials if suppressed (ghost mode active/finished)
+    if (isDemo && !loading && !hasSeenTutorial('agenda') && !isActive && !isSuppressed) {
         setTimeout(() => {
              startTutorial(DEMO_AGENDA_STEPS, 'agenda');
         }, 800);
     }
-  }, [isDemo, loading, startTutorial, hasSeenTutorial, isActive]);
+  }, [isDemo, loading, startTutorial, hasSeenTutorial, isActive, isSuppressed]);
 
   useEffect(() => {
     const fetchAgendaAndArticles = async () => {

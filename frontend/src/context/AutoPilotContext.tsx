@@ -298,21 +298,21 @@ export function AutoPilotProvider({ children }: { children: React.ReactNode }) {
       endTutorial();
       setIsRunning(false);
       setCurrentStatus('Idle');
-      setSuppressed(false); // Re-enable normal tutorials for manual demo mode
+      // Keep tutorials suppressed after ghost mode - user has seen the full tour
       
     } catch (error: any) {
       // Handle cancellation gracefully
       if (error.message === 'CANCELLED') {
         console.log('AutoPilot cancelled by user');
         endTutorial();
-        setSuppressed(false);
+        // Keep tutorials suppressed after ghost mode - user chose to stop
         return;
       }
       console.error('AutoPilot error:', error);
       setCurrentStatus(`Error: ${error.message}`);
       endTutorial();
       setIsRunning(false);
-      setSuppressed(false);
+      // Keep tutorials suppressed after ghost mode error
       await sleep(3000);
       setCurrentStatus('Idle');
     }
