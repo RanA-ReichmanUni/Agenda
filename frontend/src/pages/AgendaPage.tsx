@@ -88,7 +88,8 @@ export default function AgendaPage() {
 
   const demoContext = useDemo();
   const agendaContext = React.useContext(AgendaContext);
-  const { startTutorial, hasSeenTutorial, isActive } = useTutorial();
+  const { startTutorial, hasSeenTutorial, isActive, isSuppressed, ghostModeCompleted } = useTutorial();
+  const isGhostRoute = location.pathname.startsWith('/auto-pilot-demo');
 
   if (!id && !token) {
     return (
@@ -144,12 +145,16 @@ export default function AgendaPage() {
   const [isUpdatingTitle, setIsUpdatingTitle] = useState(false);
 
   useEffect(() => {
-    if (isDemo && !loading && !hasSeenTutorial('agenda') && !isActive) {
+    // Don't auto-start tutorials if:
+    // - On ghost route (auto-pilot handles its own narration)
+    // - Ghost mode already completed (user saw the full tour)
+    // - Currently suppressed (ghost mode running)
+    if (isDemo && !isGhostRoute && !loading && !hasSeenTutorial('agenda') && !isActive && !isSuppressed && !ghostModeCompleted) {
         setTimeout(() => {
              startTutorial(DEMO_AGENDA_STEPS, 'agenda');
         }, 800);
     }
-  }, [isDemo, loading, startTutorial, hasSeenTutorial, isActive]);
+  }, [isDemo, isGhostRoute, loading, startTutorial, hasSeenTutorial, isActive, isSuppressed, ghostModeCompleted]);
 
   useEffect(() => {
     const fetchAgendaAndArticles = async () => {

@@ -13,16 +13,20 @@ export default function HomePage() {
   const navigate = useNavigate();
   const isDemo = location.pathname.startsWith('/demo') || location.pathname.startsWith('/auto-pilot-demo');
   const demoPrefix = location.pathname.startsWith('/auto-pilot-demo') ? '/auto-pilot-demo' : '/demo';
-  const { startTutorial, hasSeenTutorial, isActive, isSuppressed } = useTutorial();
+  const { startTutorial, hasSeenTutorial, isActive, isSuppressed, ghostModeCompleted } = useTutorial();
+  const isGhostRoute = location.pathname.startsWith('/auto-pilot-demo');
 
   useEffect(() => {
-    // Don't auto-start tutorials if suppressed (ghost mode active/finished)
-    if (isDemo && !hasSeenTutorial('home') && !isActive && !isSuppressed) {
+    // Don't auto-start tutorials if:
+    // - On ghost route (auto-pilot handles its own narration)
+    // - Ghost mode already completed (user saw the full tour)
+    // - Currently suppressed (ghost mode running)
+    if (isDemo && !isGhostRoute && !hasSeenTutorial('home') && !isActive && !isSuppressed && !ghostModeCompleted) {
         setTimeout(() => {
              startTutorial(DEMO_HOME_STEPS, 'home');
         }, 800);
     }
-  }, [isDemo, startTutorial, hasSeenTutorial, isActive, isSuppressed]);
+  }, [isDemo, isGhostRoute, startTutorial, hasSeenTutorial, isActive, isSuppressed, ghostModeCompleted]);
   
   // Real Context (might be undefined if in demo route)
   const agendaContext = useContext(AgendaContext);
