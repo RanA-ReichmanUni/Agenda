@@ -128,7 +128,7 @@ export const GHOST_NARRATION = {
     targetId: 'close-analysis-btn',
     title: '📊 Analysis Complete',
     content: 'The AI has scored your evidence! Review the reliability and bias scores.<div dir="rtl" style="text-align:right;margin-top:8px;">הבינה המלאכותית נתנה ציון לראיות שלכם! עברו על ציוני האמינות וההטיה.</div>',
-    position: 'bottom' as const
+    position: 'center' as const
   },
   shareAgenda: {
     targetId: 'tutorial-share-button',
@@ -139,7 +139,7 @@ export const GHOST_NARRATION = {
   complete: {
     targetId: 'tutorial-demo-banner',
     title: '🎉 Tour Complete!',
-    content: 'You\'ve seen the full Agenda workflow: Create → Collect Evidence → Verify with AI → Share. Now it\'s your turn, explore the features yourself and build your own narrative!<div dir="rtl" style="text-align:right;margin-top:8px;">ראיתם את כל הזרימה של אג\'נדה: יצירה → איסוף ראיות → בדיקת בינה מלאכותית → שיתוף. עכשיו תורכם, גלו את הפיצ\'רים בעצמכם ובנו את האג\'נדה שלכם!</div>',
+    content: 'You\'ve seen the full Agenda workflow: Create → Collect Evidence → Verify with AI → Share. Now it\'s your turn, explore the features yourself and build your own narrative!<div dir="rtl" style="text-align:right;margin-top:8px;">ראיתם את כל הזרימה של אג\'נדה: יצירה -> איסוף ראיות -> בדיקת בינה מלאכותית -> שיתוף. עכשיו תורכם, גלו את הפיצ\'רים בעצמכם ובנו את האג\'נדה שלכם!</div>',
     position: 'bottom' as const
   }
 };

@@ -4,7 +4,7 @@ import { useAutoPilot } from '../context/AutoPilotContext';
 
 export function TutorialOverlay() {
   const { isActive, currentStep, nextStep, prevStep, endTutorial, stepIndex, totalSteps, isGhostControlled } = useTutorial();
-  const { isRunning: isAutoPilotRunning } = useAutoPilot();
+  const { isRunning: isAutoPilotRunning, speedUp } = useAutoPilot();
   const [position, setPosition] = useState<{ top: number; left: number; placement: string } | null>(null);
   const bubbleRef = useRef<HTMLDivElement>(null);
 
@@ -96,15 +96,23 @@ export function TutorialOverlay() {
   // Ghost mode uses larger, more prominent styling; demo mode keeps classic sizing and controls
   const isGhostMode = isGhostControlled;
 
+  const handleBubbleClick = () => {
+    if (isGhostMode) {
+      console.log('Bubble clicked - calling speedUp');
+      speedUp();
+    }
+  };
+
   return (
-    <div className="fixed inset-0 z-50 pointer-events-none">
+    <div className={`fixed inset-0 pointer-events-none ${isGhostMode ? 'z-[9995]' : 'z-50'}`}>
       {/* The Bubble */}
       <div 
         ref={bubbleRef}
-        className={`absolute transition-all duration-300 ease-in-out pointer-events-auto backdrop-blur-sm rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] z-50 ${
+        onClick={handleBubbleClick}
+        className={`ghost-tutorial-bubble absolute transition-all duration-300 ease-in-out pointer-events-auto backdrop-blur-sm rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] ${
           isGhostMode 
-            ? 'bg-gradient-to-br from-purple-50 to-blue-50 border-2 border-purple-300 p-8 w-[420px]' 
-            : 'bg-white/95 border border-blue-200 p-6 w-80'
+            ? 'bg-gradient-to-br from-purple-50 to-blue-50 border-2 border-purple-300 p-8 w-[420px] cursor-pointer hover:border-purple-400 hover:shadow-purple-200/50' 
+            : 'bg-white/95 border border-blue-200 p-6 w-80 z-50'
         }`}
         style={{ 
             top: position.top, 
@@ -134,6 +142,13 @@ export function TutorialOverlay() {
           }`}
           dangerouslySetInnerHTML={{ __html: currentStep.content }}
         />
+
+          {/* Speed up hint in ghost mode */}
+          {isGhostMode && (
+            <div className="mt-4 text-center text-sm text-purple-500 opacity-75">
+              (Auto Progress - Click bubble to speed up)
+            </div>
+          )}
 
           {/* Controls only in manual demo mode */}
           {!isGhostMode && (

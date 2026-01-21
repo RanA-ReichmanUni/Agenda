@@ -7,10 +7,10 @@ import { GHOST_NARRATION } from '../lib/tutorialSteps';
 // Blocking overlay component that intercepts user clicks during ghost mode
 function GhostModeBlocker({ onAttemptedInteraction }: { onAttemptedInteraction: () => void }) {
   const handleClick = (e: React.MouseEvent) => {
-    // Allow clicks on the Stop Demo button (check if target or parent has specific class)
+    // Allow clicks on the Stop Demo button and tutorial bubbles
     const target = e.target as HTMLElement;
-    if (target.closest('.ghost-mode-controls')) {
-      return; // Let the click through to Stop Demo
+    if (target.closest('.ghost-mode-controls') || target.closest('.ghost-tutorial-bubble')) {
+      return; // Let the click through
     }
     
     e.preventDefault();
@@ -31,6 +31,7 @@ interface AutoPilotContextType {
   isRunning: boolean;
   startAutoPilot: () => void;
   stopAutoPilot: () => void;
+  speedUp: () => void;
   currentStatus: string;
 }
 
@@ -57,6 +58,7 @@ export function AutoPilotProvider({ children }: { children: React.ReactNode }) {
   const [currentStatus, setCurrentStatus] = useState('Idle');
   const [warningMessage, setWarningMessage] = useState<string | null>(null);
   const cancelledRef = useRef(false); // Track cancellation across async operations
+  const currentSleepResolveRef = useRef<(() => void) | null>(null); // Ref to resolve current sleep early
   
   const navigate = useNavigate();
   const location = useLocation();
@@ -93,14 +95,27 @@ export function AutoPilotProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const sleep = (ms: number) => new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => {
+  const sleep = (ms: number) => new Promise<void>((resolve, reject) => {
+    console.log(`sleep(${ms}) called - setting up skip function`);
+    
+    const finish = () => {
+      console.log('sleep finishing');
+      currentSleepResolveRef.current = null;
       if (cancelledRef.current) {
         reject(new Error('CANCELLED'));
       } else {
-        resolve(undefined);
+        resolve();
       }
-    }, ms);
+    };
+    
+    const timeoutId = setTimeout(finish, ms);
+    
+    // Store a function that skips this sleep when user clicks bubble
+    currentSleepResolveRef.current = () => {
+      console.log('Skip function called - clearing timeout and finishing early');
+      clearTimeout(timeoutId);
+      finish();
+    };
   });
 
   const typeText = async (element: HTMLInputElement, text: string) => {
@@ -362,6 +377,19 @@ export function AutoPilotProvider({ children }: { children: React.ReactNode }) {
     setTimeout(() => setCurrentStatus('Idle'), 2000);
   }, [endTutorial]);
 
+  // Skip current wait when user clicks bubble
+  const speedUp = useCallback(() => {
+    console.log('speedUp called, currentSleepResolveRef:', currentSleepResolveRef.current);
+    if (currentSleepResolveRef.current) {
+      console.log('Resolving sleep early!');
+      currentSleepResolveRef.current();
+      setWarningMessage('⚡ Skipping ahead...');
+      setTimeout(() => setWarningMessage(null), 800);
+    } else {
+      console.log('No active sleep to skip');
+    }
+  }, []);
+
   // Show warning when user tries to interact during ghost mode
   const handleAttemptedInteraction = useCallback(() => {
     setWarningMessage('⚠️ Interaction disabled during Auto-Pilot. Click "Stop Demo" to take control.');
@@ -370,7 +398,7 @@ export function AutoPilotProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AutoPilotContext.Provider value={{ isRunning, startAutoPilot, stopAutoPilot, currentStatus }}>
+    <AutoPilotContext.Provider value={{ isRunning, startAutoPilot, stopAutoPilot, speedUp, currentStatus }}>
       {children}
       <style>{`
         @keyframes autopilot-rainbow {
