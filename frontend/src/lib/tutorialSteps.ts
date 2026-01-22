@@ -73,7 +73,7 @@ export const GHOST_NARRATION = {
   welcome: {
     targetId: 'tutorial-branding',
     title: '👻 Ghost Demo Starting',
-    content: 'Watch as we demonstrate Agenda\'s key features automatically. Sit back and enjoy the tour!<div dir="rtl" style="text-align:right;margin-top:8px;">צפו כיצד אנו מציגים באופן אוטומטי את היכולות המרכזיות של אג\'נדה. הישענו לאחור ותיהנו מהסיור!</div>',
+    content: 'Welcome ! watch as we demonstrate Agenda\'s key features automatically. Sit back and enjoy the tour!<div dir="rtl" style="text-align:right;margin-top:8px;">ברוכים הבאים ! צפו כיצד אנו מציגים באופן אוטומטי את היכולות המרכזיות של אג\'נדה. הישענו לאחור ותיהנו מהסיור!</div>',
     position: 'right' as const
   },
   createInput: {
@@ -97,7 +97,7 @@ export const GHOST_NARRATION = {
   addArticle: {
     targetId: 'add-article-url',
     title: '🔗 Adding Evidence',
-    content: 'Paste any URL to add it as evidence. We\'ll automatically extract the article metadata.<div dir="rtl" style="text-align:right;margin-top:8px;">הדביקו כל כתובת כדי להוסיף אותה כראיה. נחלץ אוטומטית את נתוני המטא של הכתבה.</div>',
+    content: 'Paste any URL to add it as evidence. We\'ll automatically extract the article metadata.<div dir="rtl" style="text-align:right;margin-top:8px;">הדביקו כל כתובת כדי להוסיף אותה כראיה. המערכת תחלץ אוטומטית את נתוני המטא של הכתבה.</div>',
     position: 'right' as const
   },
   fetchArticle: {
