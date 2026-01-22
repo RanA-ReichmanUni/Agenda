@@ -75,7 +75,31 @@ def init_db():
             """)
             conn.commit()
         except Exception as e:
-            print(f"⚠️  Migration note: {e}")
+            print(f"⚠️  Migration note (share_token): {e}")
+            conn.rollback()
+
+        # Migration: Add analysis columns if they don't exist
+        try:
+            cursor.execute("""
+                ALTER TABLE agendas 
+                ADD COLUMN IF NOT EXISTS analysis_score VARCHAR(10);
+            """)
+            cursor.execute("""
+                ALTER TABLE agendas 
+                ADD COLUMN IF NOT EXISTS analysis_reasoning TEXT;
+            """)
+            cursor.execute("""
+                ALTER TABLE agendas 
+                ADD COLUMN IF NOT EXISTS last_analyzed_at TIMESTAMP;
+            """)
+            cursor.execute("""
+                ALTER TABLE agendas 
+                ADD COLUMN IF NOT EXISTS analysis_article_count INTEGER;
+            """)
+            conn.commit()
+            print("✅ Analysis columns added/verified")
+        except Exception as e:
+            print(f"⚠️  Migration note (analysis columns): {e}")
             conn.rollback()
         
         # Create articles table
