@@ -1,5 +1,5 @@
 
-# Agenda - Evidence Driven Website
+# Agenda - Evidence Driven Platform
 
 **Agenda** is a web application that allows users to present a **personal agenda or narrative**, and back it up with **reliable external sources**, primarily news articles.
 
