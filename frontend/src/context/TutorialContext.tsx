@@ -35,6 +35,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
   const [currentKey, setCurrentKey] = useState<string>('');
 
   // Ghost-controlled single bubble - shows one step at a time, controlled by AutoPilot
+// useCallback prevents function re-creation on every render, only recreating when dependencies change.
   const showSingleBubble = useCallback((step: TutorialStep) => {
     setSteps([step]);
     setStepIndex(0);
@@ -116,6 +117,8 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     // We let the pages themselves trigger the tutorial if appropriate
   }, [location.pathname]);
 
+  // Memoize the context value to prevent unnecessary re-renders of consumers,
+  //like useCallback does for functions, but for objects.
   const value = useMemo(() => ({
       isActive, 
       currentStep: isActive && steps[stepIndex] ? steps[stepIndex] : null,
