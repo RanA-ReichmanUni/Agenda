@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: agenda_user
+      POSTGRES_PASSWORD: supersecret
+      POSTGRES_DB: agenda_cs_db
+    ports:
+      - "5433:5432" # Changed to 5433 to avoid port conflict
+    volumes:
+      - postgres_data_cs:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend-cs
+    ports:
+      - "8000:8080" # Map Docker's internal C# port 8080 to localhost's 8000
+    depends_on:
+      - postgres
+    environment:
+      # Inject overriding connection string targeting the docker postgres network alias
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=agenda_cs_db;Username=agenda_user;Password=supersecret"
+      JwtSettings__Secret: "super_secret_for_jwt_auth_1234567890_must_be_long_enough_for_hmac_sha256"
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    environment:
+      VITE_API_URL: http://localhost:8000
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm run dev -- --host 0.0.0.0 --force
+
+volumes:
+  postgres_data_cs:
