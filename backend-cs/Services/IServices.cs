@@ -1,3 +1,9 @@
+﻿/// <summary>
+/// Interface blueprints for all services.
+/// 
+/// Key Operations:
+/// - Interfaces: These act as blueprints. They tell the rest of the application what functions a service must have without worrying about how they are actually coded. This keeps the code flexible and organized.
+/// </summary>
 using AgendaCS.Backend.Dto;
 
 namespace AgendaCS.Backend.Services;
@@ -30,4 +36,6 @@ public interface IMetadataService
     Task<MetadataDto> ExtractMetadataAsync(string url);
 }
 
-public record MetadataDto(string Title, string Description, string ImageUrl, string Url);
+public record MetadataDto(string Title, string Description, string Image, string Url);
+
+

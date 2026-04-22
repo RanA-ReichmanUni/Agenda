@@ -1,3 +1,9 @@
+﻿/// <summary>
+/// Database model for an Agenda.
+/// 
+/// Key Operations:
+/// - Agenda Class: Represents a board or collection of articles. It holds a list of articles and remembers who created them.
+/// </summary>
 namespace AgendaCS.Backend.Entities;
 
 public class Agenda
@@ -12,3 +18,5 @@ public class Agenda
 
     public ICollection<Article> Articles { get; set; } = new List<Article>();
 }
+
+

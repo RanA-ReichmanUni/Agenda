@@ -1,4 +1,12 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿/// <summary>
+/// API endpoints for fetching website data.
+/// Used by the frontend to get link previews circumventing browser CORS blocks.
+/// 
+/// Key Operations:
+/// - /extract: Takes a website URL from the frontend, scrapes its title, description, and image from the web, and returns it.
+/// - /check-iframe: A small helper to check if a website can be embedded securely.
+/// </summary>
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using AgendaCS.Backend.Services;
 using System;
@@ -35,3 +43,6 @@ public static class MetadataEndpoints
         });
     }
 }
+
+
+

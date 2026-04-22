@@ -1,3 +1,11 @@
+﻿/// <summary>
+/// Handles password security and generates login tokens.
+/// 
+/// Key Operations:
+/// - RegisterAsync: Hashes the user's password for security, saves them to the database, and creates their login token.
+/// - LoginAsync: Verifies the typed password against the hashed password in the database.
+/// - GenerateJwtToken: Builds the actual secure text string (token) that the frontend uses to prove the user is logged in.
+/// </summary>
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -73,3 +81,6 @@ public class AuthService : IAuthService
         return tokenHandler.WriteToken(token);
     }
 }
+
+
+

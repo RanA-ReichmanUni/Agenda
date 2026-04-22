@@ -1,4 +1,11 @@
-﻿using AgendaCS.Backend.Dto;
+﻿/// <summary>
+/// API endpoints for article operations.
+/// Defines the URL routes used to delete articles from an agenda.
+/// 
+/// Key Operations:
+/// - MapDelete: Deletes a specific article. It checks to make sure the user actually owns the parent agenda before deleting it.
+/// </summary>
+using AgendaCS.Backend.Dto;
 using AgendaCS.Backend.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -32,3 +39,6 @@ public static class ArticleEndpoints
         return int.TryParse(claim?.Value, out int id) ? id : 0;
     }
 }
+
+
+

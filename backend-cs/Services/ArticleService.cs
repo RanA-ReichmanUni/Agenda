@@ -1,3 +1,11 @@
+﻿/// <summary>
+/// Processes the actual business logic for articles before talking to the database.
+/// 
+/// Key Operations:
+/// - GetArticlesByAgendaIdAsync: Retrieves all articles saved inside a specific agenda.
+/// - CreateArticleAsync: Adds a newly scraped URL (article) into an existing agenda.
+/// - DeleteArticleAsync: Removes a specific article, making sure to verify the user's permissions first.
+/// </summary>
 using Microsoft.EntityFrameworkCore;
 using AgendaCS.Backend.Data;
 using AgendaCS.Backend.Dto;
@@ -61,3 +69,5 @@ public class ArticleService : IArticleService
             .ToListAsync();
     }
 }
+
+

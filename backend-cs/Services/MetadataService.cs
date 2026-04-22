@@ -1,3 +1,10 @@
+﻿/// <summary>
+/// Handles going out to the internet to read information from links.
+/// 
+/// Key Operations:
+/// - ExtractMetadataAsync: Downloads the raw HTML code of a webpage online.
+/// - GetMetaTagContent: Looks through the downloaded HTML code to find specific HTML tags (like 'og:image' or 'title') to grab the thumbnail and description of a website.
+/// </summary>
 using HtmlAgilityPack;
 
 namespace AgendaCS.Backend.Services;
@@ -48,3 +55,5 @@ public class MetadataService : IMetadataService
         return node?.GetAttributeValue("content", null);
     }
 }
+
+

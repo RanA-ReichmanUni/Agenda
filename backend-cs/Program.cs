@@ -1,3 +1,14 @@
+﻿/// <summary>
+/// Application startup and configuration.
+/// Registers services, connects the database, and sets up authentication.
+/// 
+/// Key Operations:
+/// - AddDbContext: Connects the app to the PostgreSQL database.
+/// - AddAuthentication/AddJwtBearer: Secures the API using JWT tokens so only logged-in users can access data.
+/// - AddCors: Allows the Vite frontend (React) to communicate with this backend without browser security errors.
+/// - Database.Migrate: Automatically creates the missing database tables when the app starts.
+/// - MapGroup: Organizes our routes into sections like /auth, /agendas, etc.
+/// </summary>
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -91,3 +102,6 @@ ArticleEndpoints.Map(app);
 MetadataEndpoints.Map(app);
 
 app.Run();
+
+
+

@@ -1,4 +1,13 @@
-﻿using AgendaCS.Backend.Dto;
+﻿/// <summary>
+/// API endpoints for user authentication.
+/// Defines the URLs used for registration and logging in.
+/// 
+/// Key Operations:
+/// - /register: Takes a name, email, and password, creates a new user, and gives them a login token.
+/// - /login: Checks if the email and password are correct, and gives the frontend a secure session token.
+/// - /me: Reads the user's active token and returns their basic profile info so the frontend knows who is actively logged in.
+/// </summary>
+using AgendaCS.Backend.Dto;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using System.Linq;
@@ -35,3 +44,6 @@ public static class AuthEndpoints
         }).RequireAuthorization();
     }
 }
+
+
+

@@ -1,4 +1,14 @@
-﻿using AgendaCS.Backend.Dto;
+﻿/// <summary>
+/// API endpoints for agenda operations.
+/// Defines the URLs the frontend can call to manage agendas.
+/// 
+/// Key Operations:
+/// - MapGet (/agendas): Fetches a list of all agendas owned by the currently logged-in user.
+/// - MapPost (/agendas): Creates a new agenda for the user.
+/// - MapDelete: Deletes an agenda and all its articles from the database.
+/// - GetUserId: A helper function that reads the user's ID from their secure login token.
+/// </summary>
+using AgendaCS.Backend.Dto;
 using AgendaCS.Backend.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -126,3 +136,6 @@ public static class AgendaEndpoints
         return int.TryParse(claim?.Value, out int id) ? id : 0;
     }
 }
+
+
+

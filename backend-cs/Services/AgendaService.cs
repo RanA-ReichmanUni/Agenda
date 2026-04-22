@@ -1,3 +1,12 @@
+﻿/// <summary>
+/// Processes the actual business logic for agendas before talking to the database.
+/// 
+/// Key Operations:
+/// - GetUserAgendasAsync: Looks up all agendas matching a specific user ID in the database.
+/// - CreateAgendaAsync: Saves a new agenda to the database.
+/// - DeleteAgendaAsync: Finds an agenda, checks if the user owns it, and deletes it permanently.
+/// - GetAgendaByShareTokenAsync: Allows anyone with a secret public link to view an agenda without logging in.
+/// </summary>
 using Microsoft.EntityFrameworkCore;
 using AgendaCS.Backend.Data;
 using AgendaCS.Backend.Dto;
@@ -70,3 +79,5 @@ public class AgendaService : IAgendaService
             .ToListAsync();
     }
 }
+
+

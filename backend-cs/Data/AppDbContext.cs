@@ -1,3 +1,10 @@
+﻿/// <summary>
+/// Entity Framework Core database context.
+/// Links the C# code to the actual PostgreSQL database tables.
+/// 
+/// Key Operations:
+/// - OnModelCreating: Tells the database how tables relate to each other (e.g., ensuring user emails are unique, and linking Agendas to Articles).
+/// </summary>
 using Microsoft.EntityFrameworkCore;
 using AgendaCS.Backend.Entities;
 
@@ -44,3 +51,6 @@ public class AppDbContext : DbContext
         });
     }
 }
+
+
+
