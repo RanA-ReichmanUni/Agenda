@@ -117,8 +117,8 @@ def init_db():
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
-        
-        # Create users table
+
+        # Core tables
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
@@ -128,8 +128,7 @@ def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        
-        # Create agendas table (with user_id foreign key)
+
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS agendas (
                 id SERIAL PRIMARY KEY,
@@ -140,68 +139,50 @@ def init_db():
             )
         """)
 
-        # Migration: Add share_token if it doesn't exist (for existing databases)
-        try:
-            cursor.execute("""
-                ALTER TABLE agendas 
-                ADD COLUMN IF NOT EXISTS share_token VARCHAR(36) UNIQUE;
-            """)
-            conn.commit()
-        except Exception as e:
-            print(f"⚠️  Migration note (share_token): {e}")
-            conn.rollback()
-
-        # Migration: Add analysis columns if they don't exist
-        try:
-            cursor.execute("""
-                ALTER TABLE agendas 
-                ADD COLUMN IF NOT EXISTS analysis_score VARCHAR(10);
-            """)
-            cursor.execute("""
-                ALTER TABLE agendas 
-                ADD COLUMN IF NOT EXISTS analysis_reasoning TEXT;
-            """)
-            cursor.execute("""
-                ALTER TABLE agendas 
-                ADD COLUMN IF NOT EXISTS last_analyzed_at TIMESTAMP;
-            """)
-            cursor.execute("""
-                ALTER TABLE agendas 
-                ADD COLUMN IF NOT EXISTS analysis_article_count INTEGER;
-            """)
-            conn.commit()
-            print("✅ Analysis columns added/verified")
-        except Exception as e:
-            print(f"⚠️  Migration note (analysis columns): {e}")
-            conn.rollback()
-        
-        # Create articles table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS articles (
                 id SERIAL PRIMARY KEY,
                 title VARCHAR(255) NOT NULL,
                 url TEXT NOT NULL,
-
-        # Performance: Add Indexes
-        try:
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_agendas_user_id ON agendas(user_id);")
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_articles_agenda_id ON articles(agenda_id);")
-            conn.commit()
-        except Exception as e:
-            print(f"⚠️  Index creation note: {e}")
-            conn.rollback()
-        description TEXT,
+                description TEXT,
                 image TEXT,
                 agenda_id INTEGER REFERENCES agendas(id) ON DELETE CASCADE,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        
+
+        # Backward-compatible migrations for existing databases
+        cursor.execute("""
+            ALTER TABLE agendas
+            ADD COLUMN IF NOT EXISTS share_token VARCHAR(36) UNIQUE
+        """)
+        cursor.execute("""
+            ALTER TABLE agendas
+            ADD COLUMN IF NOT EXISTS analysis_score VARCHAR(10)
+        """)
+        cursor.execute("""
+            ALTER TABLE agendas
+            ADD COLUMN IF NOT EXISTS analysis_reasoning TEXT
+        """)
+        cursor.execute("""
+            ALTER TABLE agendas
+            ADD COLUMN IF NOT EXISTS last_analyzed_at TIMESTAMP
+        """)
+        cursor.execute("""
+            ALTER TABLE agendas
+            ADD COLUMN IF NOT EXISTS analysis_article_count INTEGER
+        """)
+
+        # Performance indexes
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_agendas_user_id ON agendas(user_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_articles_agenda_id ON articles(agenda_id)")
+
         conn.commit()
-        print("✅ Database tables created successfully")
-        
+        print("✅ Database schema initialized successfully")
+
     except Exception as e:
         print(f"❌ Error initializing database: {e}")
         conn.rollback()
+        raise
     finally:
         conn.close()
