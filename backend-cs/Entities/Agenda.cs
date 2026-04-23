@@ -16,6 +16,11 @@ public class Agenda
     public int UserId { get; set; }
     public User? User { get; set; }
 
+    public string? AnalysisScore { get; set; }
+    public string? AnalysisReasoning { get; set; }
+    public int? AnalysisArticleCount { get; set; }
+    public DateTime? LastAnalyzedAt { get; set; }
+
     public ICollection<Article> Articles { get; set; } = new List<Article>();
 }
 

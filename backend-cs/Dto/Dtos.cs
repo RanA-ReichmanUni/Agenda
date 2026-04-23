@@ -16,7 +16,8 @@ public record UserDto(int Id, string Name, string Email);
 
 // Agenda DTOs
 public record CreateAgendaDto(string Title);
-public record AgendaDto(int Id, int UserId, string Title, DateTime CreatedAt, string? ShareToken, string? OwnerName);
+public record AnalysisResultDto(string Score, string Reasoning, string Claim, bool IsCached, bool IsStale, int? ArticleCount);
+public record AgendaDto(int Id, int UserId, string Title, DateTime CreatedAt, string? ShareToken, string? OwnerName, AnalysisResultDto? AnalysisResult = null);
 
 // Article DTOs
 public record CreateArticleDto(string Title, string Url, string Description, string? Image);

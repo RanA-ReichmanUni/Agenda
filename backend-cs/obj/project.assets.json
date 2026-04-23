@@ -3070,31 +3070,24 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\ranam\\.nuget\\packages\\": {},
-    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
+    "/root/.nuget/packages/": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\ranam\\Downloads\\‏‏AgendaCS\\backend-cs\\AgendaCS.Backend.csproj",
+      "projectUniqueName": "/src/AgendaCS.Backend.csproj",
       "projectName": "AgendaCS.Backend",
-      "projectPath": "C:\\Users\\ranam\\Downloads\\‏‏AgendaCS\\backend-cs\\AgendaCS.Backend.csproj",
-      "packagesPath": "C:\\Users\\ranam\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\ranam\\Downloads\\‏‏AgendaCS\\backend-cs\\obj\\",
+      "projectPath": "/src/AgendaCS.Backend.csproj",
+      "packagesPath": "/root/.nuget/packages/",
+      "outputPath": "/src/obj/",
       "projectStyle": "PackageReference",
-      "fallbackFolders": [
-        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-      ],
       "configFilePaths": [
-        "C:\\Users\\ranam\\AppData\\Roaming\\NuGet\\NuGet.Config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        "/root/.nuget/NuGet/NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net10.0"
       ],
       "sources": {
-        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
@@ -3113,7 +3106,7 @@
         "auditLevel": "low",
         "auditMode": "all"
       },
-      "SdkAnalysisLevel": "10.0.100"
+      "SdkAnalysisLevel": "10.0.200"
     },
     "frameworks": {
       "net10.0": {
@@ -3175,7 +3168,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.101/PortableRuntimeIdentifierGraph.json",
+        "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/10.0.203/PortableRuntimeIdentifierGraph.json",
         "packagesToPrune": {
           "Microsoft.AspNetCore": "(,10.0.32767]",
           "Microsoft.AspNetCore.Antiforgery": "(,10.0.32767]",

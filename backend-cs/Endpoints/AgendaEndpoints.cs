@@ -17,7 +17,10 @@ using System;
 
 namespace AgendaCS.Backend.Endpoints;
 
-public class RawAnalyzeDto { public string[] Urls { get; set; } }
+public class RawAnalyzeDto { 
+    public string Claim { get; set; } = string.Empty;
+    public List<CreateArticleDto> Articles { get; set; } = new();
+}
 
 public static class AgendaEndpoints
 {
@@ -95,9 +98,14 @@ public static class AgendaEndpoints
             return Results.Ok(articles);
         });
 
-        group.MapPost("/shared/{token}/analyze", async (IAgendaService agendaService, string token) =>
+        group.MapPost("/shared/{token}/analyze", async (IAiVerificationService aiService, string token) =>
         {
-            return Results.Ok(new { analysis = "Mock analysis for shared agenda." });
+            try {
+                var result = await aiService.AnalyzeSharedAgendaAsync(token);
+                return Results.Ok(result);
+            } catch (Exception ex) {
+                return Results.BadRequest(new { detail = ex.Message });
+            }
         });
 
         group.MapGet("/{agendaId:int}/articles", async (IArticleService articleService, int agendaId, HttpContext ctx) =>
@@ -119,14 +127,27 @@ public static class AgendaEndpoints
             }
         }).RequireAuthorization();
 
-        group.MapPost("/{id:int}/analyze", async (IAgendaService agendaService, int id, HttpContext ctx) =>
+        group.MapPost("/{id:int}/analyze", async (IAiVerificationService aiService, int id, bool? force_refresh, HttpContext ctx) =>
         {
-            return Results.Ok(new { analysis = "Mock analysis" });
-        });
+            var userId = GetUserId(ctx);
+            if (userId == 0) return Results.Unauthorized();
 
-        group.MapPost("/analyze-raw", (object payload) =>
+            try {
+                var result = await aiService.AnalyzeAgendaAsync(id, userId, force_refresh ?? false);
+                return Results.Ok(result);
+            } catch (Exception ex) {
+                return Results.BadRequest(new { detail = ex.Message });
+            }
+        }).RequireAuthorization();
+
+        group.MapPost("/analyze-raw", async (IAiVerificationService aiService, RawAnalyzeDto payload) =>
         {
-            return Results.Ok(new { analysis = "Mock raw analysis" });
+            try {
+                var result = await aiService.AnalyzeRawClaimAsync(payload.Claim, payload.Articles);
+                return Results.Ok(result);
+            } catch (Exception ex) {
+                return Results.BadRequest(new { detail = ex.Message });
+            }
         });
     }
 

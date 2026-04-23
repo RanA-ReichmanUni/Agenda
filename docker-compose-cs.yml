@@ -12,15 +12,25 @@ services:
       - postgres_data_cs:/var/lib/postgresql/data
 
   backend:
-    build: ./backend-cs
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    working_dir: /src
     ports:
       - "8000:8080" # Map Docker's internal C# port 8080 to localhost's 8000
     depends_on:
       - postgres
+    env_file:
+      - ./backend-cs/.env
     environment:
       # Inject overriding connection string targeting the docker postgres network alias
       ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=agenda_cs_db;Username=agenda_user;Password=supersecret"
       JwtSettings__Secret: "super_secret_for_jwt_auth_1234567890_must_be_long_enough_for_hmac_sha256"
+      ASPNETCORE_URLS: "http://0.0.0.0:8080"
+      ASPNETCORE_ENVIRONMENT: "Development"
+      DOTNET_USE_POLLING_FILE_WATCHER: "1"
+    volumes:
+      - ./backend-cs:/src
+      - backend_cs_nuget:/root/.nuget/packages
+    command: dotnet watch --project AgendaCS.Backend.csproj run --urls http://0.0.0.0:8080
 
   frontend:
     build: ./frontend
@@ -39,3 +49,4 @@ services:
 
 volumes:
   postgres_data_cs:
+  backend_cs_nuget:

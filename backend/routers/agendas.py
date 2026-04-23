@@ -62,12 +62,13 @@ def call_openrouter_analysis(claim: str, evidence: list) -> Optional[dict]:
     Calls OpenRouter LLM to analyze the claim based on evidence.
     """
     api_key = os.getenv("OPENROUTER_API_KEY")
+    model = os.getenv("OPENROUTER_MODEL", "openai/gpt-oss-20b:free")
     print(f"DEBUG: Checking for API Key... Found? {bool(api_key)}")
     if not api_key:
         print("DEBUG: No API Key found, skipping LLM.")
         return None
 
-    print(f"DEBUG: Calling OpenRouter with {len(evidence)} evidence items...")
+    print(f"DEBUG: Calling OpenRouter model '{model}' with {len(evidence)} evidence items...")
     # DEBUG: Print the evidence being sent to checking for empty/malformed content
     for item in evidence:
         print(f"DEBUG EVIDENCE ITEM {item['id']}: URL={item['url']} CONTENT_PREVIEW={item['excerpt'][:100]}...")
@@ -122,7 +123,7 @@ def call_openrouter_analysis(claim: str, evidence: list) -> Optional[dict]:
                 "X-Title": "Agenda App"
             },
             json={
-                "model": "xiaomi/mimo-v2-flash:free",
+                "model": model,
                 "messages": messages
             },
             timeout=45

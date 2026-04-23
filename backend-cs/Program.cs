@@ -32,6 +32,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAgendaService, AgendaService>();
 builder.Services.AddScoped<IArticleService, ArticleService>();
 builder.Services.AddScoped<IMetadataService, MetadataService>();
+builder.Services.AddScoped<IAiVerificationService, AiVerificationService>();
 
 // 3. Add Authentication via JWT Bearer
 var secretKey = builder.Configuration["JwtSettings:Secret"] ?? "super_secret_for_jwt_auth_1234567890_must_be_long_enough_for_hmac_sha256";
@@ -48,6 +49,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+// Middleware configuration:
+// - AddAuthorization: Enables policy-based authorization checks.
+// - AddEndpointsApiExplorer: Generates API metadata for tools like Swagger.
+// - AddSwaggerGen: Adds Swagger/OpenAPI support for API documentation.
+// These are not middleware themselves but configure services that are used by middleware later in the pipeline.
+
+
 builder.Services.AddAuthorization();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -59,8 +67,11 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+// Adds OpenAPI/Swagger services to the application for API documentation.
+// This ensures that developers can view and interact with the API endpoints.
+// The `builder.Build()` step finalizes the service configuration and prepares the app for middleware setup.
 builder.Services.AddOpenApi();
+
 
 var app = builder.Build();
 

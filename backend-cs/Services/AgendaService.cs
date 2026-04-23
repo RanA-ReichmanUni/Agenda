@@ -23,6 +23,27 @@ public class AgendaService : IAgendaService
         _context = context;
     }
 
+    private AgendaDto MapToDto(Agenda a, string? ownerName, bool includeShareToken = true)
+    {
+        AnalysisResultDto? analysis = null;
+        if (!string.IsNullOrEmpty(a.AnalysisScore))
+        {
+            analysis = new AnalysisResultDto(
+                a.AnalysisScore,
+                a.AnalysisReasoning ?? "",
+                a.Title,
+                true, // IsCached default
+                false, // IsStale default
+                a.AnalysisArticleCount
+            );
+        }
+        return new AgendaDto(
+            a.Id, a.UserId, a.Title, a.CreatedAt, 
+            includeShareToken ? a.ShareToken : null, 
+            ownerName, 
+            analysis);
+    }
+
     public async Task<AgendaDto> CreateAgendaAsync(int userId, CreateAgendaDto dto)
     {
         var agenda = new Agenda
@@ -36,7 +57,7 @@ public class AgendaService : IAgendaService
         await _context.SaveChangesAsync();
 
         var user = await _context.Users.FindAsync(userId);
-        return new AgendaDto(agenda.Id, agenda.UserId, agenda.Title, agenda.CreatedAt, agenda.ShareToken, user?.Name);
+        return MapToDto(agenda, user?.Name);
     }
 
     public async Task<bool> DeleteAgendaAsync(int id, int userId)
@@ -57,7 +78,7 @@ public class AgendaService : IAgendaService
 
         if (agenda == null) return null;
 
-        return new AgendaDto(agenda.Id, agenda.UserId, agenda.Title, agenda.CreatedAt, agenda.ShareToken, agenda.User?.Name);
+        return MapToDto(agenda, agenda.User?.Name);
     }
 
     public async Task<AgendaDto?> GetAgendaByShareTokenAsync(string shareToken)
@@ -68,15 +89,17 @@ public class AgendaService : IAgendaService
 
         if (agenda == null) return null;
 
-        return new AgendaDto(agenda.Id, agenda.UserId, agenda.Title, agenda.CreatedAt, null, agenda.User?.Name); // null out shareToken for safety
+        return MapToDto(agenda, agenda.User?.Name, false); // false = null out shareToken for safety
     }
 
     public async Task<List<AgendaDto>> GetUserAgendasAsync(int userId)
     {
-        return await _context.Agendas
+        var agendas = await _context.Agendas
+            .Include(a => a.User)
             .Where(a => a.UserId == userId)
-            .Select(a => new AgendaDto(a.Id, a.UserId, a.Title, a.CreatedAt, a.ShareToken, a.User!.Name))
             .ToListAsync();
+            
+        return agendas.Select(a => MapToDto(a, a.User?.Name)).ToList();
     }
 }
 
