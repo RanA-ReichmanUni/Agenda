@@ -117,7 +117,7 @@ export default function LoginPage() {
               Try Demo Mode (No Login)
             </button>
             
-            <button
+            {/* <button
               onClick={() => {
                 localStorage.removeItem('agenda_demo_tutorial_home');
                 localStorage.removeItem('agenda_demo_tutorial_agenda');
@@ -127,7 +127,7 @@ export default function LoginPage() {
               className="inline-block w-full text-center bg-purple-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-purple-700 transition shadow-lg mt-3"
             >
               🤖 Watch Ghost Demo
-            </button>
+            </button> */}
           </div>
         </div>
       </div>

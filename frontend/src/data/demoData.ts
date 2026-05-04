@@ -9,11 +9,14 @@ export interface DemoAgenda {
   analysisResult?: AnalysisResult;
 }
 
+// Helper to create dates relative to now (for consistent ordering)
+const daysAgo = (n: number) => new Date(Date.now() - n * 24 * 60 * 60 * 1000).toISOString();
+
 export const INITIAL_DEMO_AGENDAS: DemoAgenda[] = [
 {
   id: 4,
   title: "AI Chatbots Make People Dumber",
-  createdAt: new Date().toISOString(),
+  createdAt: daysAgo(0),
   articles: [
     {
       id: "401",
@@ -90,7 +93,7 @@ export const INITIAL_DEMO_AGENDAS: DemoAgenda[] = [
 {
   id: 3,
   title: "U.S. Health Care Politics Put Insurance Companies First, Patients Second",
-  createdAt: new Date().toISOString(),
+  createdAt: daysAgo(1),
   articles: [
     {
       id: "501",
@@ -126,7 +129,7 @@ export const INITIAL_DEMO_AGENDAS: DemoAgenda[] = [
  {
     id: 5,
     title: "Paper Books Are Superior to Screens",
-    createdAt: new Date().toISOString(),
+    createdAt: daysAgo(2),
     articles: [
       {
         id: "201",
@@ -153,7 +156,7 @@ export const INITIAL_DEMO_AGENDAS: DemoAgenda[] = [
   {
     id: 6,
     title: "Smartphones Destroying Our Mental Health",
-    createdAt: new Date().toISOString(),
+    createdAt: daysAgo(3),
     articles: [
       {
         id: "401",
@@ -178,7 +181,7 @@ export const INITIAL_DEMO_AGENDAS: DemoAgenda[] = [
   {
     id: 7,
     title: "The 4-Day Work Week Is Ideal",
-    createdAt: new Date().toISOString(),
+    createdAt: daysAgo(4),
     articles: [
       {
         id: "301",
@@ -203,7 +206,7 @@ export const INITIAL_DEMO_AGENDAS: DemoAgenda[] = [
   {
   id: 8,
   title: "במבה עדיפה על ביסלי",
-  createdAt: new Date().toISOString(),
+  createdAt: daysAgo(5),
   articles: [
 
     {

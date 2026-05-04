@@ -105,7 +105,7 @@ export function TutorialOverlay() {
 
     // Initial update
     const initialTimer = setTimeout(() => updatePosition(true), 0);
-    const timers: NodeJS.Timeout[] = [initialTimer];
+    const timers: ReturnType<typeof setTimeout>[] = [initialTimer];
     
     // Wrapper for event handlers to collect returned timers
     const updatePositionWithTracking = () => {
