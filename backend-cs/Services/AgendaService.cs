@@ -46,6 +46,12 @@ public class AgendaService : IAgendaService
 
     public async Task<AgendaDto> CreateAgendaAsync(int userId, CreateAgendaDto dto)
     {
+        //To remove
+        if (dto.Title.Length < 3)
+        {
+            throw new ArgumentException("Title is too short!");
+        }
+        
         var agenda = new Agenda
         {
             UserId = userId,
@@ -62,6 +68,7 @@ public class AgendaService : IAgendaService
 
     public async Task<bool> DeleteAgendaAsync(int id, int userId)
     {
+        
         var agenda = await _context.Agendas.FirstOrDefaultAsync(a => a.Id == id && a.UserId == userId);
         if (agenda == null) return false;
 

@@ -392,6 +392,29 @@ export default function AgendaPage() {
   };
 
   const handleAnalyzeClaim = async (forceRefresh = false) => {
+    const readErrorMessage = async (response: Response, fallback: string) => {
+      try {
+        const data = await response.clone().json();
+        const detail = data?.detail || data?.error?.message || data?.error || data?.message;
+        if (typeof detail === "string" && detail.trim()) {
+          return `${fallback}: ${detail}`;
+        }
+      } catch {
+        // Response was not JSON, continue to text fallback.
+      }
+
+      try {
+        const text = await response.text();
+        if (text.trim()) {
+          return `${fallback}: ${text}`;
+        }
+      } catch {
+        // Ignore read failures.
+      }
+
+      return `${fallback} (HTTP ${response.status})`;
+    };
+
     // 1. Exact Match Cache: If we have a valid result for current state, show it.
     if (!forceRefresh && analysisResult && analyzedArticleCount === articles.length) {
         setShowAnalysisModal(true);
@@ -470,7 +493,7 @@ export default function AgendaPage() {
                 demoContext.saveAnalysis(demoId, newResult);
 
             } else {
-                 throw new Error("Demo analysis failed");
+                  throw new Error(await readErrorMessage(response, "Demo analysis failed"));
             }
             
             setShowAnalysisModal(true);
@@ -484,7 +507,7 @@ export default function AgendaPage() {
                 const data = await response.json();
                 setAnalysisResult(data);
             } else {
-                throw new Error("Analysis failed");
+              throw new Error(await readErrorMessage(response, "Shared analysis failed"));
             }
         } else if (isShared && token && token.startsWith('valid-demo-token-')) {
             // Shared Demo Mode (Reuse Demo Logic)
@@ -533,13 +556,13 @@ export default function AgendaPage() {
                 const data = await response.json();
                 setAnalysisResult(data);
             } else {
-                throw new Error("Analysis failed");
+              throw new Error(await readErrorMessage(response, "Analysis failed"));
             }
         }
         setShowAnalysisModal(true);
-    } catch (error) {
+        } catch (error: any) {
         console.error(error);
-        alert("Failed to analyze claim. Please try again.");
+          alert(`Failed to analyze claim. ${error?.message || "Please try again."}`);
     } finally {
         setIsAnalyzing(false);
         setIsLongWait(false);
@@ -646,218 +669,202 @@ export default function AgendaPage() {
   }
 
   return (
-    <div className="min-h-[125vh] bg-gradient-to-br from-white via-gray-50 to-blue-100 pt-0 pb-20 px-2 md:px-0 relative overflow-x-hidden">
-      
-      {/* Background Orbs */}
-      <div className="fixed top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-400 via-purple-400 to-pink-400 opacity-30 rounded-full blur-3xl pointer-events-none -z-10 animate-float" style={{ filter: 'blur(120px)' }} />
-      <div className="fixed bottom-0 right-0 w-96 h-96 bg-gradient-to-tr from-pink-400 via-purple-400 to-blue-400 opacity-30 rounded-full blur-3xl pointer-events-none -z-10 animate-float2" style={{ filter: 'blur(120px)' }} />
-
+    <div className="min-h-screen bg-gray-50 pb-20">
       {/* Demo Banner */}
       {isDemo && (
-        <div id="tutorial-demo-banner" className="fixed top-4 left-1/2 transform -translate-x-1/2 z-30 cursor-pointer hover:scale-105 transition-transform" onClick={() => startTutorial(DEMO_MODE_EXPLANATION, 'demo-explanation')}>
-          <div className="bg-yellow-100 border border-yellow-300 text-yellow-800 px-4 py-1 rounded-full text-sm font-semibold shadow-md whitespace-nowrap">
-            Demo Mode - Local Storage Only
-          </div>
+        <div id="tutorial-demo-banner" className="fixed top-0 w-full z-40 bg-yellow-400 text-yellow-900 text-center py-1 text-sm font-bold cursor-pointer hover:bg-yellow-500 transition-colors" onClick={() => startTutorial(DEMO_MODE_EXPLANATION, 'demo-explanation')}>
+          Demo Mode - Local Storage Only
         </div>
       )}
 
       {/* Shared Banner */}
       {isShared && (
-         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-30">
-          <div className="bg-blue-100 border border-blue-300 text-blue-800 px-4 py-1 rounded-full text-sm font-semibold shadow-md whitespace-nowrap">
-            Shared by {agenda.owner_name || 'User'}
-          </div>
+         <div className="fixed top-0 w-full z-40 bg-blue-500 text-white text-center py-1 text-sm font-bold shadow-md">
+          Shared by {agenda.owner_name || 'User'}
         </div>
       )}
 
-      <div className="fixed left-4 md:left-10 top-8 z-30 animate-fade-in flex gap-2">
-        {!isShared && (
+      {/* Top Navigation */}
+      <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-200">
+        <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-4">
             <Link
-            to={isDemo ? "/demo" : "/"}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/60 backdrop-blur-xl border border-gray-200 shadow-lg text-blue-800 font-semibold text-base transition hover:bg-blue-100/80 hover:text-blue-900 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
+              to={isDemo ? "/demo" : "/"}
+              className="p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors"
             >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-            Back
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
             </Link>
-        )}
-        {/* Share & Analyze Buttons (Only Owner) */}
-        {!isReadOnly && (
-             <div className="flex gap-2">
-                <button
-                    id="tutorial-share-button"
-                    onClick={() => setShowShareModal(true)}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/60 backdrop-blur-xl border border-gray-200 shadow-lg text-purple-800 font-semibold text-base transition hover:bg-purple-100/80 hover:text-purple-900 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-purple-400"
-                >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                    </svg>
-                    Share
-                </button>
-             </div>
-        )}
+            <h1 className="text-xl font-bold">Claim Dossier</h1>
+          </div>
+          
+          {!isReadOnly && (
+             <button
+                 id="tutorial-share-button"
+                 onClick={() => setShowShareModal(true)}
+                 className="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-600"
+                 title="Share Agenda"
+             >
+                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                 </svg>
+             </button>
+          )}
+        </div>
       </div>
 
-      <div className="max-w-4xl mx-auto space-y-12 py-12">
-        <div className="relative z-10 flex flex-col items-center animate-agenda-header text-center">
-            <span className="text-sm font-bold tracking-[0.3em] text-blue-600 uppercase mb-4 opacity-80 animate-subtitle-reveal">My Narrative</span>
-            
-            <div className="w-full flex justify-center mb-6">
-                {isEditingTitle ? (
-                    <div className="flex w-full max-w-2xl gap-2 items-center justify-center animate-fade-in relative z-20">
-                        <input 
-                            type="text"
-                            value={editTitleValue}
-                            onChange={(e) => setEditTitleValue(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') handleUpdateTitle();
-                                if (e.key === 'Escape') cancelEditingTitle();
-                            }}
-                            className="w-full text-center text-3xl md:text-5xl font-black text-gray-800 bg-white/50 border-b-2 border-blue-500 focus:outline-none focus:border-blue-700 py-2 rounded-t-lg transition shadow-lg backdrop-blur-sm"
-                            style={{ fontFamily: "'Playfair Display', serif" }}
-                            autoFocus
-                        />
-                        <div className="flex flex-col gap-1 absolute -right-12">
-                            <button 
-                                onClick={handleUpdateTitle}
-                                disabled={isUpdatingTitle}
-                                className="p-2 bg-green-100 text-green-700 rounded-full hover:bg-green-200 transition shadow-md"
-                                title="Save"
-                            >
-                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
-                            </button>
-                            <button 
-                                onClick={cancelEditingTitle}
-                                disabled={isUpdatingTitle}
-                                className="p-2 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition shadow-md"
-                                title="Cancel"
-                            >
-                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                ) : (
-                    <div className="relative group inline-block">
-                        <h1 id="tutorial-agenda-subject" className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-gray-800 via-blue-800 to-gray-900 drop-shadow-sm tracking-tight leading-tight px-4" style={{ fontFamily: "'Playfair Display', serif" }}>
-                        {agenda.title}
-                        </h1>
-                        {!isReadOnly && (
-                            <button
-                                onClick={startEditingTitle}
-                                className="absolute -right-10 md:-right-14 top-1/2 -translate-y-1/2 p-2 opacity-0 group-hover:opacity-100 transition text-gray-400 hover:text-blue-600 bg-white/30 backdrop-blur-sm rounded-full"
-                                title="Edit Title"
-                            >
-                                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                                </svg>
-                            </button>
-                        )}
-                    </div>
-                )}
+      <div className="max-w-2xl mx-auto bg-white min-h-screen border-l border-r border-gray-200">
+        {/* Dossier Header */}
+        <div className="px-4 pt-6 pb-4 border-b border-gray-200">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-lg">
+              {(agenda.owner_name || 'U')[0].toUpperCase()}
             </div>
-          <div className="flex flex-col items-center gap-4">
-            <div className="flex flex-wrap items-center gap-4">
-              <div className="flex items-center gap-2 text-sm text-gray-500 font-medium bg-white/50 backdrop-blur-sm px-4 py-2 rounded-full border border-gray-100 shadow-sm">
-                  <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                  Created <span className="font-mono text-gray-700">{new Date(agenda.createdAt).toLocaleDateString()}</span>
-              </div>
-              {/* AI Score Summary moved here */}
-              {analysisResult && !isAnalyzing && (
-                <div className="flex items-center gap-2 text-sm text-gray-500 font-medium bg-white/50 backdrop-blur-sm px-4 py-2 rounded-full border border-gray-100 shadow-sm" title={analysisResult.score + ' reliability'}>
-                  <span className="text-gray-500 font-medium mr-1">AI Score:</span>
-                  <span
-                    className={`w-3 h-3 rounded-full inline-block mr-1 ${
-                      analysisResult.score === 'High' ? 'bg-green-500' :
-                      analysisResult.score === 'Medium' ? 'bg-yellow-400' :
-                      'bg-red-500'
-                    }`}
-                  ></span>
-                  <span className={
-                    analysisResult.score === 'High' ? 'text-green-700' :
-                    analysisResult.score === 'Medium' ? 'text-yellow-700' :
-                    'text-red-700'
-                  }>
-                    {analysisResult.score === 'High' ? 'High Reliability' :
-                     analysisResult.score === 'Medium' ? 'Moderate Reliability' :
-                     'Low Reliability'}
-                  </span>
+            <div>
+              <div className="font-bold text-gray-900">{agenda.owner_name || 'User'}</div>
+              <div className="text-gray-500 text-sm">@{((agenda.owner_name || 'user').toLowerCase()).replace(/\s+/g, '')} • {new Date(agenda.createdAt).toLocaleDateString()}</div>
+            </div>
+          </div>
+          
+          <div className="mb-4">
+            {isEditingTitle && !isReadOnly ? (
+                <div className="flex items-center w-full relative">
+                    <input
+                        autoFocus
+                        type="text"
+                        value={editTitleValue}
+                        onChange={(e) => setEditTitleValue(e.target.value)}
+                        onKeyDown={(e)=>{if(e.key==='Enter')handleUpdateTitle();if(e.key==='Escape')cancelEditingTitle();}}
+                        onBlur={handleUpdateTitle}
+                        className="w-full text-2xl font-bold bg-gray-50 border border-blue-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                        disabled={isUpdatingTitle}
+                    />
+                    {isUpdatingTitle && (
+                        <div className="absolute right-3 animate-spin h-5 w-5 border-2 border-blue-500 rounded-full border-t-transparent"></div>
+                    )}
                 </div>
+            ) : (
+                <div className="group relative inline-block w-full">
+                    <h2 
+                       className="text-3xl font-bold text-gray-900 break-words" 
+                    >
+                       {agenda.title}
+                    </h2>
+                    {!isReadOnly && (
+                        <button
+                            onClick={startEditingTitle}
+                            className="absolute -right-8 top-1/2 -translate-y-1/2 p-2 opacity-0 group-hover:opacity-100 transition text-gray-400 hover:text-blue-600 rounded-full hover:bg-gray-100"
+                            title="Edit Title"
+                        >
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                        </button>
+                    )}
+                </div>
+            )}
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-gray-200 bg-slate-50 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Summary</p>
+            <div className="mt-2 flex items-center gap-4 text-sm text-gray-600">
+              <span><strong>{articles.length}</strong> Evidence Sources</span>
+             {analysisResult && !isAnalyzing && (
+                 <span className="flex items-center gap-1">
+                     <span
+                        className={`w-2 h-2 rounded-full inline-block ${
+                        analysisResult.score === 'High' ? 'bg-green-500' :
+                        analysisResult.score === 'Medium' ? 'bg-yellow-400' :
+                        'bg-red-500'
+                        }`}
+                    ></span>
+                     <span className={
+                        analysisResult.score === 'High' ? 'text-green-600 font-semibold' :
+                        analysisResult.score === 'Medium' ? 'text-yellow-600 font-semibold' :
+                        'text-red-600 font-semibold'
+                    }>
+                        {analysisResult.score === 'High' ? 'High Reliability' :
+                        analysisResult.score === 'Medium' ? 'Moderate Reliability' :
+                        'Low Reliability'}
+                    </span>
+                 </span>
+             )}
+              {!analysisResult && !isAnalyzing && (
+                <span className="text-slate-500">Not yet verified</span>
               )}
             </div>
           </div>
-        </div>
-
-        {!isReadOnly && (
-            <div id="tutorial-add-article" className="relative z-10 animate-form-float max-w-2xl mx-auto w-full">
-            <AddArticleForm onAdd={handleAddArticle} />
-            </div>
-        )}
-
-        {/* Verify Button (Visible for both Owner and Shared) */}
-        <div className="flex justify-center mt-8 relative z-10">
+          
+          <div className="flex justify-start pt-4 mt-1">
             <button
                 id="analyze-agenda-btn"
-                data-testid="analyze-agenda-btn"
                 onClick={() => handleAnalyzeClaim(false)}
                 disabled={isAnalyzing}
-                className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-full backdrop-blur-xl border shadow-md font-bold text-lg transition-all transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-400
+                className={`flex items-center gap-2 px-4 py-2 rounded-full transition-colors font-semibold
                     ${isAnalyzing 
-                        ? (isLongWait ? 'bg-indigo-50 text-indigo-400 cursor-not-allowed animate-rainbow-border' : 'bg-indigo-50 border-indigo-200 text-indigo-400 cursor-not-allowed')
-                        : 'bg-gradient-to-r from-white to-indigo-50 border-indigo-100 text-indigo-700 hover:to-indigo-100 hover:text-indigo-900 hover:shadow-lg hover:border-indigo-200'}
+                        ? 'text-gray-400 cursor-not-allowed'
+                        : 'text-blue-600 hover:bg-blue-50'}
                 `}
             >
                 {isAnalyzing ? (
                     <>
-                        <div className="animate-spin h-5 w-5 border-2 border-indigo-500 rounded-full border-t-transparent"></div>
-                        <span className="text-base">Running Analysis...</span>
+                        <div className="animate-spin h-4 w-4 border-2 border-current rounded-full border-t-transparent"></div>
+                        <span>Verifying...</span>
                     </>
                 ) : (
                     <>
-                        <span className="text-2xl">✨</span>
-                        Verify Evidence with AI
+                        <svg className="w-5 h-5 outline-none" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                        <span>Run Verification</span>
                     </>
                 )}
             </button>
+          </div>
         </div>
 
-        <div className="relative z-10 space-y-8 animate-articles-container">
-          <div className="flex items-center mb-6 pl-2 border-l-4 border-blue-500 ml-2">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 tracking-tight" style={{ fontFamily: "'Playfair Display', serif" }}>
-              The Evidence
-              {articles.length > 0 && (
-                <sup className="text-sm font-sans text-blue-600 ml-2 font-bold">{articles.length}</sup>
-              )}
-            </h2>
-          </div>
+        {/* Add Evidence Form */}
+        {!isReadOnly && (
+           <div id="tutorial-add-article" className="p-4 border-b border-gray-200">
+             <AddArticleForm onAdd={handleAddArticle} />
+           </div>
+        )}
 
+        {/* Evidence List */}
+        <div>
           {articles.length === 0 ? (
-            <div className="text-center py-20 bg-white/40 backdrop-blur-md rounded-3xl border border-dashed border-gray-300 animate-empty-state">
-              <div className="text-6xl mb-4 opacity-20">📂</div>
-              <p className="text-gray-500 text-lg font-medium">No articles yet.</p>
-              {!isReadOnly && <p className="text-gray-400 text-sm">Paste a URL above to add your first source.</p>}
+            <div className="text-center py-20 px-4">
+              <p className="text-gray-500 font-bold text-lg mb-2">No evidence yet.</p>
+              {!isReadOnly && <p className="text-gray-400 text-sm">Add a link above to start building the thread.</p>}
             </div>
           ) : (
-            <div id="tutorial-evidence-grid" className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div id="tutorial-evidence-grid">
               {articles.map((article, index) => (
                 <div
                   key={article.id}
                   onClick={() => handleArticleClick(article.url)}
-                  className="animate-article-card group cursor-pointer"
-                  style={{ animationDelay: `${index * 0.1}s` }}
+                  className="p-4 border-b border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer"
                 >
-                  <div className="h-full bg-white/70 backdrop-blur-md border border-gray-100 hover:border-blue-200 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 p-2 relative overflow-hidden transform hover:-translate-y-1">
-                     <ArticleCard
-                        article={article}
-                        onDelete={!isReadOnly ? () => {
-                          setArticleToDelete(article);
-                        } : undefined}
-                      />
-                  </div>
+                   <div className="flex gap-3">
+                     <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex-shrink-0 overflow-hidden">
+                        <div className="w-full h-full bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-xs">
+                           SRC
+                        </div>
+                     </div>
+                     <div className="flex-1 min-w-0">
+                         <div className="flex items-center gap-1 mb-1">
+                             <span className="font-bold text-gray-900 text-sm">Evidence source</span>
+                             <span className="text-gray-500 text-sm">· {new Date(article.createdAt || Date.now()).toLocaleDateString()}</span>
+                         </div>
+                         <div className="border border-gray-200 rounded-2xl overflow-hidden hover:border-gray-300 transition-colors bg-white">
+                            <ArticleCard
+                                article={article}
+                                onDelete={!isReadOnly ? () => {
+                                setArticleToDelete(article);
+                                } : undefined}
+                            />
+                         </div>
+                     </div>
+                   </div>
                 </div>
               ))}
             </div>
@@ -865,39 +872,36 @@ export default function AgendaPage() {
         </div>
       </div>
 
+      {/* Modals from before */}
       {/* Share Modal */}
       {showShareModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-          <div className="bg-white/90 backdrop-blur-xl border border-gray-200 rounded-2xl shadow-2xl p-8 max-w-md w-full animate-fade-in relative">
-            <button 
-                id="close-share-modal-btn"
-                onClick={() => setShowShareModal(false)}
-                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-            >
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
-            <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">Share Agenda</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
+            <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold text-gray-900">Share Thread</h3>
+                <button 
+                    onClick={() => setShowShareModal(false)}
+                    className="p-2 hover:bg-gray-100 rounded-full"
+                >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
             
             {shareLoading ? (
-                 <div className="flex justify-center p-4"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>
+                 <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div></div>
             ) : (
                 <>
                     {agenda?.share_token ? (
                         <div className="space-y-4">
-                            {isDemo && (
-                                <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 text-xs p-2 rounded">
-                                    <strong>Demo Mode:</strong> This link is simulated. It will only work in this browser session.
-                                </div>
-                            )}
-                             <p className="text-sm text-gray-600 text-center">
-                                Anyone with this link can view this agenda.
+                             <p className="text-sm text-gray-600">
+                                Anyone with this link can view this thread.
                             </p>
                             <div className="flex gap-2">
                                 <input 
                                     readOnly 
-                                    className="flex-1 bg-gray-100 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-600"
+                                    className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600 outline-none"
                                     value={`${window.location.origin}/shared/${agenda.share_token}`}
                                 />
                                 <button 
@@ -905,15 +909,15 @@ export default function AgendaPage() {
                                         navigator.clipboard.writeText(`${window.location.origin}/shared/${agenda.share_token}`);
                                         alert("Link copied!");
                                     }}
-                                    className="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-semibold hover:bg-blue-200"
+                                    className="px-4 py-2 bg-black text-white rounded-full text-sm font-bold hover:bg-gray-800"
                                 >
                                     Copy
                                 </button>
                             </div>
-                            <div className="pt-4 flex justify-center">
+                            <div className="pt-2">
                                 <button 
                                     onClick={handleUnshare}
-                                    className="text-red-600 text-sm font-medium hover:text-red-800 hover:underline"
+                                    className="text-red-500 text-sm font-bold hover:underline"
                                 >
                                     Stop sharing
                                 </button>
@@ -921,14 +925,14 @@ export default function AgendaPage() {
                         </div>
                     ) : (
                          <div className="text-center">
-                            <p className="text-gray-600 mb-6">
-                                Create a public link to share this agenda with others. They will be able to view it but not edit it.
+                            <p className="text-gray-600 mb-6 text-sm">
+                                Create a public link to share this thread with others. They will be able to view it but not edit it.
                             </p>
                             <button
                                 onClick={handleShare}
-                                className="px-6 py-2 rounded-full bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 transition w-full"
+                                className="px-6 py-2 w-full rounded-full bg-black text-white font-bold hover:bg-gray-800 transition"
                             >
-                                Generate Link
+                                Create Link
                             </button>
                         </div>
                     )}
@@ -938,91 +942,80 @@ export default function AgendaPage() {
         </div>
       )}
 
+      {/* Analysis Modal */}
       {showAnalysisModal && analysisResult && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
-            <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-gray-100 flex flex-col max-h-[90vh]">
-                <div className={`p-6 ${
-                    analysisResult.score === 'High' ? 'bg-green-50' : 
-                    analysisResult.score === 'Medium' ? 'bg-yellow-50' : 'bg-red-50'
-                }`}>
-                    <div className="flex justify-between items-start mb-4">
-                        <h3 className="text-sm font-bold uppercase tracking-wider text-gray-500">AI Claim Verification</h3>
-                        <button onClick={() => setShowAnalysisModal(false)} className="text-gray-400 hover:text-gray-600 transition-colors bg-white/50 rounded-full p-1 hover:bg-white">
-                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                        </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <div className="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+                <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gray-50">
+                    <div className="flex items-center gap-2">
+                        <svg className="w-6 h-6 text-blue-500" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                        <h3 className="font-bold text-gray-900">AI Verification</h3>
                     </div>
-                    
-                    <div className="flex items-center gap-4 mb-2">
-                        <div className={`text-5xl transition-all duration-500 ${analysisResult.score === 'High' ? 'scale-110 drop-shadow-md' : 'grayscale opacity-30 scale-90'}`}>🟢</div>
-                        <div className={`text-5xl transition-all duration-500 ${analysisResult.score === 'Medium' ? 'scale-110 drop-shadow-md' : 'grayscale opacity-30 scale-90'}`}>🟡</div>
-                        <div className={`text-5xl transition-all duration-500 ${analysisResult.score === 'Low' ? 'scale-110 drop-shadow-md' : 'grayscale opacity-30 scale-90'}`}>🔴</div>
-                    </div>
-                    
-                    <h2 className={`text-3xl font-black mb-1 ${
-                        analysisResult.score === 'High' ? 'text-green-800' : 
-                        analysisResult.score === 'Medium' ? 'text-yellow-800' : 'text-red-800'
-                    }`}>{analysisResult.score} Confidence</h2>
-                    <p className="text-gray-600 font-medium italic truncate">"{analysisResult.claim}"</p>
+                    <button onClick={() => setShowAnalysisModal(false)} className="p-2 hover:bg-gray-200 rounded-full transition-colors">
+                        <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
                 </div>
                 
-                <div className="p-8 flex-grow overflow-y-auto">
+                <div className="p-6 flex-grow overflow-y-auto">
+                     <div className="mb-6 flex flex-col items-center">
+                        <h2 className={`text-3xl font-black mb-1 ${
+                            analysisResult.score === 'High' ? 'text-green-600' : 
+                            analysisResult.score === 'Medium' ? 'text-yellow-600' : 'text-red-600'
+                        }`}>{analysisResult.score} Confidence</h2>
+                        <p className="text-gray-500 text-center font-medium text-sm mt-2">"{analysisResult.claim}"</p>
+                     </div>
+                     
                      {analysisResult.is_stale && (
-                        <div className="mb-4 bg-yellow-50 border border-yellow-200 p-4 rounded-xl flex flex-col md:flex-row gap-4 items-center justify-between animate-fade-in">
-                            <div className="flex gap-3 items-center">
-                                <span className="text-2xl">⚠️</span>
-                                <div>
-                                    <p className="font-bold text-yellow-800">New Evidence Detected</p>
-                                    <p className="text-sm text-yellow-700">Sources have changed since the last analysis.</p>
-                                </div>
-                            </div>
+                        <div className="mb-6 bg-yellow-50 border border-yellow-200 p-4 rounded-xl flex flex-col gap-3">
+                            <p className="font-bold text-yellow-800 text-sm">⚠️ New Evidence Detected</p>
                             <button
                                 onClick={() => handleAnalyzeClaim(true)}
-                                className="whitespace-nowrap px-4 py-2 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 rounded-lg font-semibold transition shadow-sm border border-yellow-200"
+                                className="w-full py-2 bg-yellow-200 hover:bg-yellow-300 text-yellow-900 rounded-lg text-sm font-bold transition"
                             >
                                 Recheck Claims
                             </button>
                         </div>
                      )}
 
-                     <h4 className="font-bold text-gray-900 mb-3 text-lg">Analysis Reasoning</h4>
-                     <p className="text-gray-600 leading-relaxed text-lg">
-                        {analysisResult.reasoning}
-                     </p>
-                     
-                     <div className="mt-8 flex justify-end">
-                        <button 
-                            id="close-analysis-btn"
-                            data-testid="close-analysis-btn"
-                            onClick={() => setShowAnalysisModal(false)}
-                            className="bg-gray-900 text-white px-8 py-3 rounded-2xl font-bold shadow hover:bg-black hover:scale-105 transition-all"
-                        >
-                            Close Analysis
-                        </button>
+                     <div className="bg-gray-50 p-4 rounded-xl mb-4">
+                        <h4 className="font-bold text-gray-900 mb-2 text-sm uppercase tracking-wider">Reasoning</h4>
+                        <p className="text-gray-700 leading-relaxed text-sm">
+                            {analysisResult.reasoning}
+                        </p>
                      </div>
+                </div>
+                <div className="p-4 border-t border-gray-100 flex justify-end">
+                     <button 
+                         onClick={() => setShowAnalysisModal(false)}
+                         className="px-6 py-2 bg-gray-900 text-white rounded-full font-bold hover:bg-black transition-colors"
+                     >
+                         Done
+                     </button>
                 </div>
             </div>
         </div>
       )}
 
+      {/* Delete Article Modal */}
       {articleToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-          <div className="bg-white/80 backdrop-blur-xl border border-gray-200 rounded-2xl shadow-2xl p-8 max-w-md w-full animate-fade-in">
-            <h3 className="text-xl font-bold text-red-700 mb-4 text-center">Confirm Deletion</h3>
-            <p className="text-gray-700 text-center mb-6">
-              Are you sure you want to delete the article titled <span className="font-semibold text-blue-800">"{articleToDelete.title}"</span>?
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Delete Evidence?</h3>
+            <p className="text-gray-600 text-sm mb-6">
+              This can't be undone. Will remove <span className="font-semibold">"{articleToDelete.title}"</span> from the thread.
             </p>
-            <div className="flex justify-center gap-4">
+            <div className="flex flex-col gap-3">
               <button
-                className="px-6 py-2 rounded-full bg-red-600 text-white font-semibold shadow hover:bg-red-700 transition"
+                className="w-full py-3 rounded-full bg-red-500 text-white font-bold hover:bg-red-600 transition"
                 onClick={async () => {
                   await handleRemoveArticle(Number(articleToDelete.id));
                   setArticleToDelete(null);
                 }}
               >
-                Confirm
+                Delete
               </button>
               <button
-                className="px-6 py-2 rounded-full bg-gray-200 text-gray-700 font-semibold shadow hover:bg-gray-300 transition"
+                className="w-full py-3 rounded-full bg-white border border-gray-200 text-gray-900 font-bold hover:bg-gray-50 transition"
                 onClick={() => setArticleToDelete(null)}
               >
                 Cancel
@@ -1032,94 +1025,63 @@ export default function AgendaPage() {
         </div>
       )}
 
+      {/* Preview Modal */}
       {previewUrl && !iframeError && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="relative w-[95vw] h-[95vh] bg-white rounded-2xl shadow-2xl overflow-hidden animate-fade-in">
-            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
-              <button
-                onClick={closePreview}
-                className="bg-red-600 text-white rounded-full w-16 h-16 flex items-center justify-center hover:bg-red-700 transition focus:outline-none focus:ring-4 focus:ring-red-400 shadow-2xl"
-                title="Close preview"
-              >
-                <span className="text-4xl font-bold leading-none">×</span>
-              </button>
-              <button
-                onClick={() => window.open(previewUrl, "_blank")}
-                className="bg-blue-600 text-white rounded-full w-16 h-16 flex items-center justify-center hover:bg-blue-700 transition focus:outline-none focus:ring-4 focus:ring-blue-400 shadow-2xl"
-                title="Open in new tab"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-              </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+          <div className="relative w-full h-full max-w-6xl max-h-[90vh] bg-white rounded-2xl overflow-hidden flex flex-col">
+            <div className="h-14 bg-gray-50 border-b border-gray-200 flex items-center justify-between px-4">
+              <div className="font-bold text-gray-700 truncate max-w-md">{previewUrl}</div>
+              <div className="flex items-center gap-2">
+                <button
+                    onClick={() => window.open(previewUrl, "_blank")}
+                    className="p-2 text-gray-600 hover:bg-gray-200 rounded-full transition"
+                    title="Open in new tab"
+                >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                </button>
+                <button
+                    onClick={closePreview}
+                    className="p-2 text-gray-600 hover:bg-gray-200 rounded-full transition"
+                >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+              </div>
             </div>
-            <iframe ref={iframeRef} src={previewUrl} title="Article Preview" className="w-full h-full border-0 rounded-2xl" style={{ minHeight: 0, minWidth: 0 }} />
+            <iframe ref={iframeRef} src={previewUrl} title="Article Preview" className="w-full flex-grow border-0" />
           </div>
         </div>
       )}
 
+      {/* Iframe Error Modal */}
       {iframeError && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40">
-          <div className="bg-white/80 backdrop-blur-xl border border-gray-200 rounded-2xl shadow-2xl p-8 max-w-md w-full animate-fade-in">
-            <h3 className="text-xl font-bold text-blue-800 mb-4 text-center">Website Preview Not Available</h3>
-            <p className="text-gray-700 text-center mb-6">
-              This website cannot be displayed in the preview. Would you like to open it in a new tab instead?
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl text-center">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">🔗</div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Preview Blocked</h3>
+            <p className="text-gray-600 text-sm mb-6">
+              This website doesn't allow previews. Open it in a new tab instead?
             </p>
-            <div className="flex justify-center gap-4">
-              <button className="px-6 py-2 rounded-full bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 transition" onClick={() => handleOpenInNewTab(previewUrl!)}>
+            <div className="flex flex-col gap-3">
+              <button 
+                  className="w-full py-3 rounded-full bg-black text-white font-bold hover:bg-gray-800 transition" 
+                  onClick={() => handleOpenInNewTab(previewUrl!)}
+              >
                 Open in New Tab
               </button>
-              <button className="px-6 py-2 rounded-full bg-gray-200 text-gray-700 font-semibold shadow hover:bg-gray-300 transition" onClick={closePreview}>
+              <button 
+                  className="w-full py-3 rounded-full bg-white border border-gray-200 text-gray-900 font-bold hover:bg-gray-50 transition" 
+                  onClick={closePreview}
+              >
                 Cancel
               </button>
             </div>
           </div>
         </div>
       )}
-
-      <style>{`
-        @keyframes fade-in { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fade-in { animation: fade-in 1s cubic-bezier(0.4,0,0.2,1) both; }
-        
-        @keyframes float { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-30px) scale(1.05); } }
-        .animate-float { animation: float 12s ease-in-out infinite; }
-        @keyframes float2 { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(30px) scale(1.08); } }
-        .animate-float2 { animation: float2 14s ease-in-out infinite; }
-        
-        @keyframes subtitle-reveal { 
-          0% { opacity: 0; letter-spacing: 0em; filter: blur(5px); } 
-          100% { opacity: 0.8; letter-spacing: 0.3em; filter: blur(0px); } 
-        }
-        .animate-subtitle-reveal { animation: subtitle-reveal 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
-
-        @keyframes agenda-header { 0% { opacity: 0; transform: translateY(-20px); } 100% { opacity: 1; transform: translateY(0); } }
-        .animate-agenda-header { animation: agenda-header 1s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
-        
-        @keyframes form-float { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
-        .animate-form-float { animation: form-float 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.4s both; }
-        
-        @keyframes articles-container { 0% { opacity: 0; } 100% { opacity: 1; } }
-        .animate-articles-container { animation: articles-container 0.6s ease-out 0.6s both; }
-        
-        @keyframes article-card { 0% { opacity: 0; transform: translateY(20px) scale(0.98); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
-        .animate-article-card { animation: article-card 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
-        
-        @keyframes empty-state { 0% { opacity: 0; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); } }
-        .animate-empty-state { animation: empty-state 0.6s ease-out 0.8s both; }
-
-        @keyframes rainbow-border { 
-            0% { border-color: #ff5f6d; box-shadow: 0 0 0px #ff5f6d; }
-            25% { border-color: #ffc371; box-shadow: 0 0 8px #ffc371; }
-            50% { border-color: #23a6d5; box-shadow: 0 0 12px #23a6d5; }
-            75% { border-color: #23d5ab; box-shadow: 0 0 8px #23d5ab; }
-            100% { border-color: #ff5f6d; box-shadow: 0 0 0px #ff5f6d; }
-        }
-        .animate-rainbow-border {
-            animation: rainbow-border 3s linear infinite;
-            border-width: 2px;
-            border-style: solid;
-        }
-      `}</style>
     </div>
   );
 }
