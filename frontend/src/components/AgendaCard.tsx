@@ -5,6 +5,7 @@ interface AgendaCardProps {
   agenda: any;
   href?: string;
   onDelete?: (agendaId: number) => void;
+  id?: string;
 }
 
 type Reliability = "High" | "Medium" | "Low" | "Unknown";
@@ -22,7 +23,7 @@ const reliabilityStyle: Record<Reliability, string> = {
   Unknown: "bg-slate-100 text-slate-600 border-slate-200",
 };
 
-export default function AgendaCard({ agenda, href, onDelete }: AgendaCardProps) {
+export default function AgendaCard({ agenda, href, onDelete, id }: AgendaCardProps) {
   const reliability = getReliability(agenda);
   const evidenceCount = agenda.articles?.length || 0;
   const isStale = Boolean(agenda?.analysisResult?.is_stale);
@@ -42,7 +43,7 @@ export default function AgendaCard({ agenda, href, onDelete }: AgendaCardProps) 
     : "Just now";
 
   return (
-    <div className="relative rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
+    <div id={id} className="relative rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
       {onDelete && (
         <button
           onClick={(e) => {

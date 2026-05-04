@@ -28,7 +28,7 @@ export const DEMO_HOME_STEPS: TutorialStep[] = [
     position: 'top'
   },
   {
-    targetId: 'tutorial-agenda-list',
+    targetId: 'tutorial-first-agenda-card',
     title: 'Your Agendas',
     content: 'Your agendas live here. We have pre-loaded a few examples for you to check out.',
     position: 'top'

@@ -157,12 +157,17 @@ export default function HomePage() {
         </div>
       )}
 
-      <div className="mx-auto flex w-[min(1200px,94vw)] flex-col gap-6 lg:flex-row">
+      <div className="mx-auto flex w-[min(1120px,90vw)] flex-col gap-6 lg:flex-row">
         <aside className="lg:sticky lg:top-6 lg:h-fit lg:w-[360px]">
           <div id="tutorial-branding" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.25em] text-blue-700">Evidence Authority</p>
-            <h1 className="mt-2 text-4xl font-black tracking-tight text-slate-900">AGENDA</h1>
-            <p className="mt-2 text-sm text-slate-600">Narratives ranked by evidence quality, not noise.</p>
+            <h1
+              className="mt-2 text-5xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-700 to-purple-800 drop-shadow-2xl"
+              style={{ fontFamily: "'Playfair Display', serif" }}
+            >
+              AGENDA
+            </h1>
+            <p className="mt-2 text-sm font-medium uppercase tracking-[0.35em] text-slate-500">Backup your narratives.</p>
           </div>
 
           <div id="tutorial-create-agenda" className="mt-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -242,10 +247,11 @@ export default function HomePage() {
 
             {!loading &&
               !error &&
-              visibleAgendas.map((agenda) => (
+              visibleAgendas.map((agenda, index) => (
                 <AgendaCard
                   key={agenda.id}
                   agenda={agenda}
+                  id={index === 0 ? "tutorial-first-agenda-card" : undefined}
                   href={isDemo ? `${demoPrefix}/agenda/${agenda.id}` : `/agenda/${agenda.id}`}
                   onDelete={() => setAgendaToDelete(agenda)}
                 />

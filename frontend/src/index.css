@@ -7,6 +7,12 @@
 :root {
   --background: #f8fafc;
   --foreground: #0f172a;
+  /* Scale the whole site. Adjust this value to zoom in/out (1 = 100%). */
+  --site-zoom: 0.92;
+}
+
+html {
+  zoom: var(--site-zoom);
 }
 
 body {
@@ -14,8 +20,10 @@ body {
   color: var(--foreground);
   font-family: "Space Grotesk", "Segoe UI", sans-serif;
   min-height: 100vh;
+  width: 100%;
 }
 
 #root {
   min-height: 100vh;
+  width: 100%;
 }
