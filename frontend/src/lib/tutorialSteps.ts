@@ -31,7 +31,7 @@ export const DEMO_HOME_STEPS: TutorialStep[] = [
     targetId: 'tutorial-agenda-list',
     title: 'Your Agendas',
     content: 'Your agendas live here. We have pre-loaded a few examples for you to check out.',
-    position: 'bottom'
+    position: 'top'
   }
 ];
 
@@ -40,10 +40,10 @@ export const DEMO_AGENDA_STEPS: TutorialStep[] = [
     targetId: 'tutorial-agenda-subject',
     title: 'The Subject',
     content: 'This is the core topic of your agenda.',
-    position: 'right'
+    position: 'top'
   },
   {
-    targetId: 'tutorial-add-article',
+    targetId: 'add-article-url',
     title: 'Add Sources',
     content: 'Paste any URL here. We will extract the metadata and add it to your evidence board.',
     position: 'bottom'

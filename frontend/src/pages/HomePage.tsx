@@ -30,7 +30,7 @@ export default function HomePage() {
     if (isDemo && !isGhostRoute && !hasSeenTutorial("home") && !isActive && !isSuppressed && !ghostModeCompleted) {
       setTimeout(() => {
         startTutorial(DEMO_HOME_STEPS, "home");
-      }, 800);
+      }, 300);
     }
   }, [isDemo, isGhostRoute, startTutorial, hasSeenTutorial, isActive, isSuppressed, ghostModeCompleted]);
 

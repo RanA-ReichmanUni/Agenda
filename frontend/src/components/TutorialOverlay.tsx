@@ -14,79 +14,114 @@ export function TutorialOverlay() {
     
     if (!isActive || !currentStep) return;
 
-        const updatePosition = () => {
+        const updatePosition = (shouldScroll: boolean) => {
             const element = document.getElementById(currentStep.targetId);
             if (!element) return;
 
-            const rect = element.getBoundingClientRect();
-            // Default to 'bottom' if not specified
-            let placement = currentStep.position || 'bottom';
-            
-            // ZOOM CORRECTION:
-            // The global zoom: 0.8 on html means fixed elements are also scaled.
-            // getBoundingClientRect returns visual viewport pixels.
-            // We must divide by 0.8 to convert visual pixels to the CSS pixel value needed for the fix element.
-            const zoomFactor = 0.8;
-            
-            const rTop = rect.top / zoomFactor;
-            const rBottom = rect.bottom / zoomFactor;
-            const rLeft = rect.left / zoomFactor;
-            const rRight = rect.right / zoomFactor;
-
-            // When AutoPilot is running, position bubbles further away to avoid blocking rainbow highlights
-            const offset = isAutoPilotRunning ? 30 : 10;
-
-            // Initial calculation
-            let top = rBottom + offset; 
-            let left = rLeft;
-
-            if (placement === 'top') {
-                top = rTop - offset; 
-            } else if (placement === 'right') {
-                top = rTop;
-                left = rRight + offset;
-            } else if (placement === 'left') {
-                top = rTop;
-                left = rLeft - offset;
+            // On step entry, force-scroll target to center so bubbles never open off-screen.
+            const shouldSmoothScroll = stepIndex > 0;
+            if (shouldScroll) {
+              element.scrollIntoView({
+                behavior: shouldSmoothScroll ? 'smooth' : 'auto',
+                block: 'center',
+                inline: 'nearest',
+              });
             }
 
-            // Auto-Flip Vertical Logic
-            // If placed top but too close to edge, move to bottom
-            const bubbleHeightApprox = 250;
-            if (placement === 'top' && top < bubbleHeightApprox) {
-                placement = 'bottom';
-                top = rBottom + offset;
-            }
-            // If placed bottom but too low? (Handling bottom overflow is harder as we don't know window height perfectly in scaled space, but top is more critical)
+          const applyPosition = () => {
+                const rect = element.getBoundingClientRect();
+                // Default to 'bottom' if not specified
+                let placement = currentStep.position || 'bottom';
+                
+                // Get the actual zoom level from the document
+                const zoomFactor = parseFloat(getComputedStyle(document.documentElement).zoom) || 1;
+                
+                const rTop = rect.top / zoomFactor;
+                const rLeft = rect.left / zoomFactor;
+                const rRight = rect.right / zoomFactor;
+                const rWidth = rect.width / zoomFactor;
+                const rHeight = rect.height / zoomFactor;
 
-            // Clamp Horizontally
-            const bubbleWidth = 320; 
-            // Available width in CSS pixels
-            const windowWidth = window.innerWidth / zoomFactor; 
+                // For large targets (like article grids), anchor to the top segment
+                // so bubbles don't follow the last item off-screen.
+                const anchorBottom = rTop + Math.min(rHeight, 140);
+
+                // When AutoPilot is running, position bubbles further away to avoid blocking rainbow highlights
+                const offset = isAutoPilotRunning ? 30 : 10;
+                const bubbleWidth = isGhostControlled ? 420 : 320;
+
+                // Initial calculation
+                let top = anchorBottom + offset;
+                let left = rLeft + Math.max(0, (rWidth - bubbleWidth) / 2);
+
+                if (placement === 'top') {
+                    top = rTop - offset; 
+                } else if (placement === 'right') {
+                    top = rTop;
+                    left = rRight + offset;
+                } else if (placement === 'left') {
+                    top = rTop;
+                    left = rLeft - offset;
+                }
+
+                // Auto-Flip Vertical Logic
+                // If placed top but too close to edge, move to bottom
+                const bubbleHeightApprox = 250;
+                if (placement === 'top' && top < bubbleHeightApprox) {
+                    placement = 'bottom';
+                    top = anchorBottom + offset;
+                }
+
+                // Clamp Horizontally
+                // Available width in CSS pixels
+                const windowWidth = window.innerWidth / zoomFactor; 
+                const windowHeight = window.innerHeight / zoomFactor;
+                
+                if (left + bubbleWidth > windowWidth) {
+                    left = windowWidth - bubbleWidth - 20;
+                }
+                if (left < 10) left = 10;
+
+                // Clamp Vertically to keep bubble reachable in viewport.
+                if (top + bubbleHeightApprox > windowHeight - 10) {
+                    top = Math.max(10, windowHeight - bubbleHeightApprox - 10);
+                }
+                if (top < 10) top = 10;
+
+                setPosition({ top, left, placement });
+            };
+
+            // Keep the first bubble snappy; allow short delay for smooth-scroll steps.
+            const positionDelay = shouldScroll && shouldSmoothScroll ? 170 : 0;
+            if (positionDelay === 0) {
+              applyPosition();
+              return;
+            }
+
+            const scrollTimer = setTimeout(applyPosition, positionDelay);
             
-            if (left + bubbleWidth > windowWidth) {
-                left = windowWidth - bubbleWidth - 20;
-            }
-            if (left < 10) left = 10;
-
-            setPosition({ top, left, placement });
-
-            // Keep target in view
-            // Use block: 'start' or 'nearest' to avoid centering large elements which pushes them out of top view
-            element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            return scrollTimer;
         };
 
     // Initial update
-    const timer = setTimeout(updatePosition, 100); 
-    window.addEventListener('resize', updatePosition);
-    window.addEventListener('scroll', updatePosition);
+    const initialTimer = setTimeout(() => updatePosition(true), 0);
+    const timers: NodeJS.Timeout[] = [initialTimer];
+    
+    // Wrapper for event handlers to collect returned timers
+    const updatePositionWithTracking = () => {
+      const scrollTimer = updatePosition(false);
+      if (scrollTimer) timers.push(scrollTimer);
+    };
+    
+    window.addEventListener('resize', updatePositionWithTracking);
+    window.addEventListener('scroll', updatePositionWithTracking);
 
     return () => {
-      clearTimeout(timer);
-      window.removeEventListener('resize', updatePosition);
-      window.removeEventListener('scroll', updatePosition);
+      timers.forEach(t => clearTimeout(t));
+      window.removeEventListener('resize', updatePositionWithTracking);
+      window.removeEventListener('scroll', updatePositionWithTracking);
     };
-  }, [isActive, currentStep]);
+  }, [isActive, currentStep, isAutoPilotRunning, isGhostControlled, stepIndex]);
 
   if (!isActive || !currentStep || !position) return null;
 
@@ -104,7 +139,7 @@ export function TutorialOverlay() {
   };
 
   return (
-    <div className={`fixed inset-0 pointer-events-none ${isGhostMode ? 'z-[9995]' : 'z-50'}`}>
+    <div className={`fixed top-0 left-0 w-screen h-screen pointer-events-none ${isGhostMode ? 'z-[9995]' : 'z-50'}`}>
       {/* The Bubble */}
       <div 
         ref={bubbleRef}

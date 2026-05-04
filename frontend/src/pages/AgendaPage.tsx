@@ -152,7 +152,7 @@ export default function AgendaPage() {
     if (isDemo && !isGhostRoute && !loading && !hasSeenTutorial('agenda') && !isActive && !isSuppressed && !ghostModeCompleted) {
         setTimeout(() => {
              startTutorial(DEMO_AGENDA_STEPS, 'agenda');
-        }, 800);
+      }, 300);
     }
   }, [isDemo, isGhostRoute, loading, startTutorial, hasSeenTutorial, isActive, isSuppressed, ghostModeCompleted]);
 
@@ -670,12 +670,6 @@ export default function AgendaPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Demo Banner */}
-      {isDemo && (
-        <div id="tutorial-demo-banner" className="fixed top-0 w-full z-40 bg-yellow-400 text-yellow-900 text-center py-1 text-sm font-bold cursor-pointer hover:bg-yellow-500 transition-colors" onClick={() => startTutorial(DEMO_MODE_EXPLANATION, 'demo-explanation')}>
-          Demo Mode - Local Storage Only
-        </div>
-      )}
 
       {/* Shared Banner */}
       {isShared && (
@@ -715,6 +709,19 @@ export default function AgendaPage() {
       </div>
 
       <div className="max-w-2xl mx-auto bg-white min-h-screen border-l border-r border-gray-200">
+        {/* Demo Banner */}
+        {isDemo && (
+          <div className="flex justify-center pt-6 pb-2">
+            <div
+              id="tutorial-demo-banner"
+              className="cursor-pointer rounded-full border border-amber-300 bg-amber-100 px-4 py-1 text-sm font-semibold text-amber-900"
+              onClick={() => startTutorial(DEMO_MODE_EXPLANATION, 'demo-explanation')}
+            >
+              Demo Mode - Local Storage Only
+            </div>
+          </div>
+        )}
+
         {/* Dossier Header */}
         <div className="px-4 pt-6 pb-4 border-b border-gray-200">
           <div className="flex items-center gap-3 mb-4">
@@ -747,6 +754,7 @@ export default function AgendaPage() {
             ) : (
                 <div className="group relative inline-block w-full">
                     <h2 
+                       id="tutorial-agenda-subject"
                        className="text-3xl font-bold text-gray-900 break-words" 
                     >
                        {agenda.title}
