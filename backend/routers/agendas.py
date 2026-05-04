@@ -14,7 +14,7 @@ except ImportError:
 from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException, Depends, status
 from database import get_db_connection
-from models import User, Agenda, CreateAgenda, Article
+from models import User, Agenda, CreateAgenda, Article, AnalysisResult
 from security import get_current_user
 import requests
 from bs4 import BeautifulSoup
@@ -196,7 +196,7 @@ async def get_agendas(current_user: User = Depends(get_current_user)):
         # Try to select with share_token
         try:
             cursor.execute(
-                "SELECT id, user_id, title, created_at, share_token FROM agendas WHERE user_id = %s ORDER BY created_at DESC",
+                "SELECT id, user_id, title, created_at, share_token, analysis_score, analysis_reasoning, analysis_article_count FROM agendas WHERE user_id = %s ORDER BY created_at DESC",
                 (current_user.id,)
             )
         except Exception:
@@ -210,7 +210,28 @@ async def get_agendas(current_user: User = Depends(get_current_user)):
             return [Agenda(id=r[0], user_id=r[1], title=r[2], createdAt=r[3]) for r in rows]
 
         rows = cursor.fetchall()
-        return [Agenda(id=r[0], user_id=r[1], title=r[2], createdAt=r[3], share_token=r[4]) for r in rows]
+        return [
+            Agenda(
+                id=r[0],
+                user_id=r[1],
+                title=r[2],
+                createdAt=r[3],
+                share_token=r[4],
+                analysisResult=(
+                    AnalysisResult(
+                        score=r[5],
+                        reasoning=r[6] or "",
+                        claim=r[2],
+                        is_cached=True,
+                        is_stale=False,
+                        articleCount=r[7]
+                    )
+                    if r[5]
+                    else None
+                )
+            )
+            for r in rows
+        ]
     finally:
         conn.close()
 
@@ -225,7 +246,7 @@ async def get_shared_agenda(token: str):
     try:
         cursor.execute(
             """
-            SELECT a.id, a.user_id, a.title, a.created_at, a.share_token, u.name 
+            SELECT a.id, a.user_id, a.title, a.created_at, a.share_token, u.name, a.analysis_score, a.analysis_reasoning, a.analysis_article_count
             FROM agendas a 
             JOIN users u ON a.user_id = u.id 
             WHERE a.share_token = %s
@@ -242,7 +263,19 @@ async def get_shared_agenda(token: str):
             title=row[2], 
             createdAt=row[3], 
             share_token=row[4],
-            owner_name=row[5]
+            owner_name=row[5],
+            analysisResult=(
+                AnalysisResult(
+                    score=row[6],
+                    reasoning=row[7] or "",
+                    claim=row[2],
+                    is_cached=True,
+                    is_stale=False,
+                    articleCount=row[8]
+                )
+                if row[6]
+                else None
+            )
         )
     finally:
         conn.close()
@@ -298,7 +331,7 @@ async def get_agenda(
         # Try select with share_token
         try:
             cursor.execute(
-                "SELECT id, user_id, title, created_at, share_token FROM agendas WHERE id = %s AND user_id = %s",
+                "SELECT id, user_id, title, created_at, share_token, analysis_score, analysis_reasoning, analysis_article_count FROM agendas WHERE id = %s AND user_id = %s",
                 (agenda_id, current_user.id)
             )
         except Exception:
@@ -315,7 +348,25 @@ async def get_agenda(
         row = cursor.fetchone()
         if not row:
             raise HTTPException(status_code=404, detail="Agenda not found")
-        return Agenda(id=row[0], user_id=row[1], title=row[2], createdAt=row[3], share_token=row[4])
+        return Agenda(
+            id=row[0],
+            user_id=row[1],
+            title=row[2],
+            createdAt=row[3],
+            share_token=row[4],
+            analysisResult=(
+                AnalysisResult(
+                    score=row[5],
+                    reasoning=row[6] or "",
+                    claim=row[2],
+                    is_cached=True,
+                    is_stale=False,
+                    articleCount=row[7]
+                )
+                if row[5]
+                else None
+            )
+        )
     finally:
         conn.close()
 

@@ -41,6 +41,15 @@ class CreateAgenda(BaseModel):
     """Model for creating a new agenda"""
     title: str
 
+class AnalysisResult(BaseModel):
+    """Model for cached analysis summary on agenda payloads"""
+    score: str
+    reasoning: str
+    claim: str
+    is_cached: Optional[bool] = None
+    is_stale: Optional[bool] = None
+    articleCount: Optional[int] = None
+
 class Agenda(BaseModel):
     """Model for agenda response"""
     id: int
@@ -49,6 +58,7 @@ class Agenda(BaseModel):
     createdAt: datetime
     share_token: Optional[str] = None
     owner_name: Optional[str] = None
+    analysisResult: Optional[AnalysisResult] = None
 
 # ============================================
 # ARTICLE MODELS
