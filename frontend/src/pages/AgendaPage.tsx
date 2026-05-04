@@ -6,6 +6,7 @@ import ArticleCard from "../components/ArticleCard";
 import { API_ENDPOINTS, authFetch } from "../lib/api";
 import { useToastContext } from "../context/ToastContext";
 import { useDemo } from "../context/DemoContext";
+import { useAuth } from "../context/AuthContext";
 import { AgendaContext } from "../context/AgendaContext";
 import { useTutorial } from "../context/TutorialContext";
 import { DEMO_AGENDA_STEPS, DEMO_MODE_EXPLANATION } from "../lib/tutorialSteps";
@@ -88,6 +89,7 @@ export default function AgendaPage() {
 
   const demoContext = useDemo();
   const agendaContext = React.useContext(AgendaContext);
+  const { user } = useAuth();
   const { startTutorial, hasSeenTutorial, isActive, isSuppressed, ghostModeCompleted } = useTutorial();
   const isGhostRoute = location.pathname.startsWith('/auto-pilot-demo');
 
@@ -112,6 +114,7 @@ export default function AgendaPage() {
   const [articleToDelete, setArticleToDelete] = useState<Article | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [iframeError, setIframeError] = useState<boolean>(false);
+  const [iframeLoading, setIframeLoading] = useState<boolean>(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   
   // Share Modal State
@@ -615,6 +618,7 @@ export default function AgendaPage() {
 
   const handleArticleClick = (url: string) => {
     setIframeError(false);
+    setIframeLoading(true);
     setPreviewUrl(url);
     fetch(API_ENDPOINTS.checkIframe(url))
       .then((res) => res.json())
@@ -729,8 +733,8 @@ export default function AgendaPage() {
               {(agenda.owner_name || 'U')[0].toUpperCase()}
             </div>
             <div>
-              <div className="font-bold text-gray-900">{agenda.owner_name || 'User'}</div>
-              <div className="text-gray-500 text-sm">@{((agenda.owner_name || 'user').toLowerCase()).replace(/\s+/g, '')} • {new Date(agenda.createdAt).toLocaleDateString()}</div>
+              <div className="font-bold text-gray-900">{isShared ? (agenda.owner_name || 'User') : (user?.name || user?.email || 'User')}</div>
+              <div className="text-gray-500 text-sm">@{(isShared ? (agenda.owner_name || 'user') : (user?.name || user?.email || 'user')).toLowerCase().replace(/\s+/g, '')} • {new Date(agenda.createdAt).toLocaleDateString()}</div>
             </div>
           </div>
           
@@ -852,16 +856,9 @@ export default function AgendaPage() {
                   onClick={() => handleArticleClick(article.url)}
                   className="p-4 border-b border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer"
                 >
-                   <div className="flex gap-3">
-                     <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex-shrink-0 overflow-hidden">
-                        <div className="w-full h-full bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-xs">
-                           SRC
-                        </div>
-                     </div>
-                     <div className="flex-1 min-w-0">
-                         <div className="flex items-center gap-1 mb-1">
-                             <span className="font-bold text-gray-900 text-sm">Evidence source</span>
-                             <span className="text-gray-500 text-sm">· {new Date(article.createdAt || Date.now()).toLocaleDateString()}</span>
+                   <div className="flex-1 min-w-0">
+                         <div className="flex items-center gap-1 mb-2">
+                             <span className="text-gray-500 text-xs">Added {new Date(article.createdAt || Date.now()).toLocaleDateString()}</span>
                          </div>
                          <div className="border border-gray-200 rounded-2xl overflow-hidden hover:border-gray-300 transition-colors bg-white">
                             <ArticleCard
@@ -872,7 +869,6 @@ export default function AgendaPage() {
                             />
                          </div>
                      </div>
-                   </div>
                 </div>
               ))}
             </div>
@@ -1059,7 +1055,25 @@ export default function AgendaPage() {
                 </button>
               </div>
             </div>
-            <iframe ref={iframeRef} src={previewUrl} title="Article Preview" className="w-full flex-grow border-0" />
+            {iframeLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-white/50 z-10">
+                <div className="flex flex-col items-center gap-3">
+                  <div className="animate-spin rounded-full h-10 w-10 border-4 border-gray-300 border-t-blue-500"></div>
+                  <span className="text-gray-600 text-sm font-medium">Loading article...</span>
+                </div>
+              </div>
+            )}
+            <iframe
+              ref={iframeRef}
+              src={previewUrl}
+              title="Article Preview"
+              className="w-full flex-grow border-0"
+              onLoad={() => setIframeLoading(false)}
+              onError={() => {
+                setIframeLoading(false);
+                setIframeError(true);
+              }}
+            />
           </div>
         </div>
       )}

@@ -93,11 +93,6 @@ export default function AgendaCard({ agenda, href, onDelete, id }: AgendaCardPro
             ))}
           </div>
         )}
-
-        <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
-          <span className="text-sm font-medium text-slate-600">Open dossier</span>
-          <span className="text-sm font-semibold text-blue-700">View details</span>
-        </div>
       </Link>
     </div>
   );
