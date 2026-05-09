@@ -16,6 +16,7 @@ using Npgsql;
 using System.Text;
 using AgendaCS.Backend.Data;
 using AgendaCS.Backend.Services;
+using MassTransit;
 using AgendaCS.Backend.Endpoints;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -33,6 +34,26 @@ builder.Services.AddScoped<IAgendaService, AgendaService>();
 builder.Services.AddScoped<IArticleService, ArticleService>();
 builder.Services.AddScoped<IMetadataService, MetadataService>();
 builder.Services.AddScoped<IAiVerificationService, AiVerificationService>();
+
+// MassTransit configuration for publishing messages to RabbitMQ
+builder.Services.AddMassTransit(x =>
+{
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        var rabbitUrl = Environment.GetEnvironmentVariable("RABBITMQ_URL");
+        if (!string.IsNullOrEmpty(rabbitUrl))
+        {
+            cfg.Host(new Uri(rabbitUrl));
+        }
+        else
+        {
+            var host = Environment.GetEnvironmentVariable("RABBITMQ_HOST") ?? "rabbitmq";
+            var user = Environment.GetEnvironmentVariable("RABBITMQ_USERNAME") ?? "guest";
+            var pass = Environment.GetEnvironmentVariable("RABBITMQ_PASSWORD") ?? "guest";
+            cfg.Host(host, "/", h => { h.Username(user); h.Password(pass); });
+        }
+    });
+});
 
 // 3. Add Authentication via JWT Bearer
 var secretKey = builder.Configuration["JwtSettings:Secret"] ?? "super_secret_for_jwt_auth_1234567890_must_be_long_enough_for_hmac_sha256";

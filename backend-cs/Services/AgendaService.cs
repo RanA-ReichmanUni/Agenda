@@ -23,7 +23,7 @@ public class AgendaService : IAgendaService
         _context = context;
     }
 
-    private AgendaDto MapToDto(Agenda a, string? ownerName, bool includeShareToken = true)
+    private AgendaDto MapToDto(AgendaCS.Backend.Entities.Agenda a, string? ownerName, bool includeShareToken = true)
     {
         AnalysisResultDto? analysis = null;
         if (!string.IsNullOrEmpty(a.AnalysisScore))
@@ -52,7 +52,7 @@ public class AgendaService : IAgendaService
             throw new ArgumentException("Title is too short!");
         }
         
-        var agenda = new Agenda
+        var agenda = new AgendaCS.Backend.Entities.Agenda
         {
             UserId = userId,
             Title = dto.Title,

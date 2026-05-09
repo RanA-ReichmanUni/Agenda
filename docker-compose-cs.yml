@@ -13,7 +13,7 @@ services:
 
   backend:
     image: mcr.microsoft.com/dotnet/sdk:10.0
-    working_dir: /src
+    working_dir: /workspace
     ports:
       - "8000:8080" # Map Docker's internal C# port 8080 to localhost's 8000
     depends_on:
@@ -28,9 +28,34 @@ services:
       ASPNETCORE_ENVIRONMENT: "Development"
       DOTNET_USE_POLLING_FILE_WATCHER: "1"
     volumes:
-      - ./backend-cs:/src
+      - ./:/workspace
       - backend_cs_nuget:/root/.nuget/packages
-    command: dotnet watch --project AgendaCS.Backend.csproj run --urls http://0.0.0.0:8080
+    command: dotnet watch --project backend-cs/AgendaCS.Backend.csproj run --urls http://0.0.0.0:8080
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  worker:
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    working_dir: /workspace
+    depends_on:
+      - postgres
+      - rabbitmq
+    environment:
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=agenda_cs_db;Username=agenda_user;Password=supersecret"
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+      OPENROUTER_API_KEY: ""
+      DOTNET_USE_POLLING_FILE_WATCHER: "1"
+    volumes:
+      - ./:/workspace
+      - backend_cs_nuget:/root/.nuget/packages
+    command: dotnet run --project Agenda.Worker/Agenda.Worker.csproj
 
   frontend:
     build: ./frontend

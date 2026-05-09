@@ -18,7 +18,7 @@ public class AppDbContext : DbContext
     }
 
     public DbSet<User> Users { get; set; }
-    public DbSet<Agenda> Agendas { get; set; }
+    public DbSet<AgendaCS.Backend.Entities.Agenda> Agendas { get; set; }
     public DbSet<Article> Articles { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -33,7 +33,7 @@ public class AppDbContext : DbContext
         });
 
         // Configure Agenda
-        modelBuilder.Entity<Agenda>(entity =>
+        modelBuilder.Entity<AgendaCS.Backend.Entities.Agenda>(entity =>
         {
             entity.HasKey(e => e.Id);
             entity.HasOne(a => a.User)

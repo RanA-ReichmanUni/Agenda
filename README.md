@@ -87,6 +87,26 @@ npm run dev
 > Access backend on `http://localhost:8000`  
 > Access frontend on `http://localhost:5173`
 
+### C# Backend + Worker (RabbitMQ)
+
+The C# stack now supports async AI verification using MassTransit + RabbitMQ:
+
+- API publishes verification requests and returns `202 Accepted` immediately.
+- Worker consumes messages, runs AI verification, and updates PostgreSQL.
+
+Run the C# microservices stack:
+
+```powershell
+docker compose -f docker-compose-cs.yml up -d postgres rabbitmq backend worker
+```
+
+Required environment variables (for local/cloud):
+
+- `DATABASE_URL` or `ConnectionStrings__DefaultConnection`
+- `RABBITMQ_URL` or (`RABBITMQ_HOST`, `RABBITMQ_USERNAME`, `RABBITMQ_PASSWORD`)
+- `OPENROUTER_API_KEY`
+- `OPENROUTER_MODEL`
+
 ---
 
 ## Author

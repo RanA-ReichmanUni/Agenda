@@ -10,6 +10,8 @@
 /// </summary>
 using AgendaCS.Backend.Dto;
 using AgendaCS.Backend.Services;
+using MassTransit;
+using Agenda.Contracts.Messages;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using System.Linq;
@@ -98,14 +100,14 @@ public static class AgendaEndpoints
             return Results.Ok(articles);
         });
 
-        group.MapPost("/shared/{token}/analyze", async (IAiVerificationService aiService, string token) =>
+        group.MapPost("/shared/{token}/analyze", async (IPublishEndpoint publisher, string token) =>
         {
-            try {
-                var result = await aiService.AnalyzeSharedAgendaAsync(token);
-                return Results.Ok(result);
-            } catch (Exception ex) {
-                return Results.BadRequest(new { detail = ex.Message });
-            }
+            await publisher.Publish(new VerifySharedAgendaMessage
+            {
+                ShareToken = token
+            });
+
+            return Results.Accepted();
         });
 
         group.MapGet("/{agendaId:int}/articles", async (IArticleService articleService, int agendaId, HttpContext ctx) =>
@@ -127,27 +129,32 @@ public static class AgendaEndpoints
             }
         }).RequireAuthorization();
 
-        group.MapPost("/{id:int}/analyze", async (IAiVerificationService aiService, int id, bool? force_refresh, HttpContext ctx) =>
+        group.MapPost("/{id:int}/analyze", async (IPublishEndpoint publisher, int id, bool? force_refresh, HttpContext ctx) =>
         {
             var userId = GetUserId(ctx);
             if (userId == 0) return Results.Unauthorized();
 
-            try {
-                var result = await aiService.AnalyzeAgendaAsync(id, userId, force_refresh ?? false);
-                return Results.Ok(result);
-            } catch (Exception ex) {
-                return Results.BadRequest(new { detail = ex.Message });
-            }
+            var msg = new VerifyAgendaMessage
+            {
+                AgendaId = id,
+                UserId = userId,
+                ForceRefresh = force_refresh ?? false
+            };
+
+            await publisher.Publish(msg);
+            return Results.Accepted();
         }).RequireAuthorization();
 
-        group.MapPost("/analyze-raw", async (IAiVerificationService aiService, RawAnalyzeDto payload) =>
+        group.MapPost("/analyze-raw", async (IPublishEndpoint publisher, RawAnalyzeDto payload) =>
         {
-            try {
-                var result = await aiService.AnalyzeRawClaimAsync(payload.Claim, payload.Articles);
-                return Results.Ok(result);
-            } catch (Exception ex) {
-                return Results.BadRequest(new { detail = ex.Message });
-            }
+            var articles = payload.Articles.Select((a, idx) => new ArticleInfo(idx + 1, a.Title, a.Url, a.Description));
+            var msg = new VerifyRawClaimMessage
+            {
+                Claim = payload.Claim,
+                Articles = articles
+            };
+            await publisher.Publish(msg);
+            return Results.Accepted();
         });
     }
 
