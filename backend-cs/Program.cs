@@ -12,6 +12,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Npgsql;
 using System.Text;
 using AgendaCS.Backend.Data;
 using AgendaCS.Backend.Services;
@@ -20,11 +21,10 @@ using AgendaCS.Backend.Endpoints;
 var builder = WebApplication.CreateBuilder(args);
 
 // 1. Add Configuration / DbContext
+var connectionString = ResolveConnectionString(builder.Configuration);
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    var connStr = builder.Configuration.GetConnectionString("DefaultConnection") 
-                  ?? "Host=localhost;Database=agendacs;Username=postgres;Password=postgres";
-    options.UseNpgsql(connStr);
+    options.UseNpgsql(connectionString);
 });
 
 // 2. Add Services (Dependency Injection - as seen in concepts.cs)
@@ -101,6 +101,13 @@ app.MapOpenApi();
 app.UseSwagger();
 app.UseSwaggerUI();
 
+app.MapGet("/", () => Results.Ok(new
+{
+    service = "AgendaCS Backend",
+    status = "running",
+    docs = "/swagger"
+}));
+
 // app.UseHttpsRedirection(); // Removed for local docker proxy routing
 app.UseCors();
 app.UseAuthentication();
@@ -113,6 +120,53 @@ ArticleEndpoints.Map(app);
 MetadataEndpoints.Map(app);
 
 app.Run();
+
+static string ResolveConnectionString(IConfiguration configuration)
+{
+    var databaseUrl = configuration["DATABASE_URL"] ?? Environment.GetEnvironmentVariable("DATABASE_URL");
+    if (!string.IsNullOrWhiteSpace(databaseUrl))
+    {
+        return ConvertDatabaseUrlToConnectionString(databaseUrl);
+    }
+
+    var configuredConnectionString = configuration.GetConnectionString("DefaultConnection");
+    if (!string.IsNullOrWhiteSpace(configuredConnectionString))
+    {
+        return configuredConnectionString;
+    }
+
+    return "Host=localhost;Database=agendacs;Username=postgres;Password=postgres";
+}
+
+static string ConvertDatabaseUrlToConnectionString(string databaseUrl)
+{
+    if (!Uri.TryCreate(databaseUrl, UriKind.Absolute, out var uri) ||
+        (uri.Scheme != "postgres" && uri.Scheme != "postgresql"))
+    {
+        return databaseUrl;
+    }
+
+    var userInfoParts = uri.UserInfo.Split(':', 2);
+    var username = userInfoParts.Length > 0 ? Uri.UnescapeDataString(userInfoParts[0]) : string.Empty;
+    var password = userInfoParts.Length > 1 ? Uri.UnescapeDataString(userInfoParts[1]) : string.Empty;
+    var database = Uri.UnescapeDataString(uri.AbsolutePath.TrimStart('/'));
+
+    var builder = new NpgsqlConnectionStringBuilder
+    {
+        Host = uri.Host,
+        Port = uri.IsDefaultPort ? 5432 : uri.Port,
+        Database = database,
+        Username = username,
+        Password = password
+    };
+
+    if (uri.Query.Contains("sslmode=require", StringComparison.OrdinalIgnoreCase))
+    {
+        builder.SslMode = SslMode.Require;
+    }
+
+    return builder.ConnectionString;
+}
 
 
 

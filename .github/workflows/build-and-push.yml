@@ -40,4 +40,4 @@ jobs:
           context: ./backend-cs # מצביע לתיקייה שבה נמצא ה-Dockerfile
           push: true
           # תחליף את המילה your-username בשם המשתמש האמיתי שלך ב-Docker Hub!
-          tags: your-username/agenda-backend:latest
+          tags: ${{ secrets.DOCKER_USERNAME }}/agenda-backend:latest
