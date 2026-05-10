@@ -11,8 +11,8 @@ The user attaches articles that serve as evidence, and the system **automaticall
 Crucially, an integrated **AI Verification Pipeline** then analyzes the actual text content of these sources, cross-referencing them against the user's claim to generate an objective **Credibility Score**, validating whether the cited evidence genuinely supports the stated narrative.
 
 Check out the demo ! https://cutt.ly/Vtl6slaE
+![Agenda Front Page](http://i.imgur.com/OO5QHmB.png)
 
-![Agenda Front Page](https://i.imgur.com/QcFIh6V.jpeg)
 ---
 
 ## Use Case
