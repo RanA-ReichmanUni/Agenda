@@ -1,25 +1,31 @@
 {
   "format": 1,
   "restore": {
-    "/workspace/Agenda.Worker/Agenda.Worker.csproj": {}
+    "C:\\Users\\ranam\\Downloads\\‏‏AgendaCS\\Agenda.Worker\\Agenda.Worker.csproj": {}
   },
   "projects": {
-    "/workspace/Agenda.Contracts/Agenda.Contracts.csproj": {
+    "C:\\Users\\ranam\\Downloads\\‏‏AgendaCS\\Agenda.Contracts\\Agenda.Contracts.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/workspace/Agenda.Contracts/Agenda.Contracts.csproj",
+        "projectUniqueName": "C:\\Users\\ranam\\Downloads\\‏‏AgendaCS\\Agenda.Contracts\\Agenda.Contracts.csproj",
         "projectName": "Agenda.Contracts",
-        "projectPath": "/workspace/Agenda.Contracts/Agenda.Contracts.csproj",
-        "packagesPath": "/root/.nuget/packages/",
-        "outputPath": "/workspace/Agenda.Contracts/obj/",
+        "projectPath": "C:\\Users\\ranam\\Downloads\\‏‏AgendaCS\\Agenda.Contracts\\Agenda.Contracts.csproj",
+        "packagesPath": "C:\\Users\\ranam\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\ranam\\Downloads\\‏‏AgendaCS\\Agenda.Contracts\\obj\\",
         "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
         "configFilePaths": [
-          "/root/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\ranam\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
           "net10.0"
         ],
         "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -38,7 +44,7 @@
           "auditLevel": "low",
           "auditMode": "all"
         },
-        "SdkAnalysisLevel": "10.0.200"
+        "SdkAnalysisLevel": "10.0.100"
       },
       "frameworks": {
         "net10.0": {
@@ -59,7 +65,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/10.0.203/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.101/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",
@@ -337,33 +343,39 @@
         }
       }
     },
-    "/workspace/Agenda.Worker/Agenda.Worker.csproj": {
+    "C:\\Users\\ranam\\Downloads\\‏‏AgendaCS\\Agenda.Worker\\Agenda.Worker.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/workspace/Agenda.Worker/Agenda.Worker.csproj",
+        "projectUniqueName": "C:\\Users\\ranam\\Downloads\\‏‏AgendaCS\\Agenda.Worker\\Agenda.Worker.csproj",
         "projectName": "Agenda.Worker",
-        "projectPath": "/workspace/Agenda.Worker/Agenda.Worker.csproj",
-        "packagesPath": "/root/.nuget/packages/",
-        "outputPath": "/workspace/Agenda.Worker/obj/",
+        "projectPath": "C:\\Users\\ranam\\Downloads\\‏‏AgendaCS\\Agenda.Worker\\Agenda.Worker.csproj",
+        "packagesPath": "C:\\Users\\ranam\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\ranam\\Downloads\\‏‏AgendaCS\\Agenda.Worker\\obj\\",
         "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
         "configFilePaths": [
-          "/root/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\ranam\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
           "net10.0"
         ],
         "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net10.0": {
             "targetAlias": "net10.0",
             "projectReferences": {
-              "/workspace/Agenda.Contracts/Agenda.Contracts.csproj": {
-                "projectPath": "/workspace/Agenda.Contracts/Agenda.Contracts.csproj"
+              "C:\\Users\\ranam\\Downloads\\‏‏AgendaCS\\Agenda.Contracts\\Agenda.Contracts.csproj": {
+                "projectPath": "C:\\Users\\ranam\\Downloads\\‏‏AgendaCS\\Agenda.Contracts\\Agenda.Contracts.csproj"
               },
-              "/workspace/backend-cs/AgendaCS.Backend.csproj": {
-                "projectPath": "/workspace/backend-cs/AgendaCS.Backend.csproj"
+              "C:\\Users\\ranam\\Downloads\\‏‏AgendaCS\\backend-cs\\AgendaCS.Backend.csproj": {
+                "projectPath": "C:\\Users\\ranam\\Downloads\\‏‏AgendaCS\\backend-cs\\AgendaCS.Backend.csproj"
               }
             }
           }
@@ -378,7 +390,7 @@
           "auditLevel": "low",
           "auditMode": "all"
         },
-        "SdkAnalysisLevel": "10.0.200"
+        "SdkAnalysisLevel": "10.0.100"
       },
       "frameworks": {
         "net10.0": {
@@ -413,7 +425,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/10.0.203/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.101/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",
@@ -691,30 +703,36 @@
         }
       }
     },
-    "/workspace/backend-cs/AgendaCS.Backend.csproj": {
+    "C:\\Users\\ranam\\Downloads\\‏‏AgendaCS\\backend-cs\\AgendaCS.Backend.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/workspace/backend-cs/AgendaCS.Backend.csproj",
+        "projectUniqueName": "C:\\Users\\ranam\\Downloads\\‏‏AgendaCS\\backend-cs\\AgendaCS.Backend.csproj",
         "projectName": "AgendaCS.Backend",
-        "projectPath": "/workspace/backend-cs/AgendaCS.Backend.csproj",
-        "packagesPath": "/root/.nuget/packages/",
-        "outputPath": "/workspace/backend-cs/obj/",
+        "projectPath": "C:\\Users\\ranam\\Downloads\\‏‏AgendaCS\\backend-cs\\AgendaCS.Backend.csproj",
+        "packagesPath": "C:\\Users\\ranam\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\ranam\\Downloads\\‏‏AgendaCS\\backend-cs\\obj\\",
         "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
         "configFilePaths": [
-          "/root/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\ranam\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
           "net10.0"
         ],
         "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net10.0": {
             "targetAlias": "net10.0",
             "projectReferences": {
-              "/workspace/Agenda.Contracts/Agenda.Contracts.csproj": {
-                "projectPath": "/workspace/Agenda.Contracts/Agenda.Contracts.csproj"
+              "C:\\Users\\ranam\\Downloads\\‏‏AgendaCS\\Agenda.Contracts\\Agenda.Contracts.csproj": {
+                "projectPath": "C:\\Users\\ranam\\Downloads\\‏‏AgendaCS\\Agenda.Contracts\\Agenda.Contracts.csproj"
               }
             }
           }
@@ -729,7 +747,7 @@
           "auditLevel": "low",
           "auditMode": "all"
         },
-        "SdkAnalysisLevel": "10.0.200"
+        "SdkAnalysisLevel": "10.0.100"
       },
       "frameworks": {
         "net10.0": {
@@ -799,7 +817,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/10.0.203/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.101/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.AspNetCore": "(,10.0.32767]",
             "Microsoft.AspNetCore.Antiforgery": "(,10.0.32767]",

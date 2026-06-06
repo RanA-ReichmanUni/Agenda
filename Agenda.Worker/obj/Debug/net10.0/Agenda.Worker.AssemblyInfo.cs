@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Agenda.Worker")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+80f9b8d98fe1b638dafb015b65e3c25c9e5163d3")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+203329cb2bc35e47d817ede3ac70c401dc1b83b2")]
 [assembly: System.Reflection.AssemblyProductAttribute("Agenda.Worker")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Agenda.Worker")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
