@@ -58,7 +58,11 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   };
   
   const updateAgendaTitle = (id: number, title: string) => {
-    setAgendas(prev => prev.map(a => a.id === id ? { ...a, title } : a));
+    setAgendas(prev => prev.map(a => a.id === id ? { 
+      ...a, 
+      title,
+      analysisResult: a.analysisResult ? { ...a.analysisResult, is_stale: true } : undefined 
+    } : a));
     return { title };
   };
 
@@ -79,7 +83,8 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       if (a.id === agendaId) {
         return {
           ...a,
-          articles: [newArticle, ...a.articles]
+          articles: [newArticle, ...a.articles],
+          analysisResult: a.analysisResult ? { ...a.analysisResult, is_stale: true } : undefined
         };
       }
       return a;
@@ -93,7 +98,8 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       if (a.id === agendaId) {
         return {
           ...a,
-          articles: a.articles.filter(art => Number(art.id) !== articleId && art.id !== articleId.toString())
+          articles: a.articles.filter(art => Number(art.id) !== articleId && art.id !== articleId.toString()),
+          analysisResult: a.analysisResult ? { ...a.analysisResult, is_stale: true } : undefined
         };
       }
       return a;
