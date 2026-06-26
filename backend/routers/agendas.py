@@ -19,6 +19,7 @@ from security import get_current_user
 import requests
 from bs4 import BeautifulSoup
 import json
+from groq import Groq, GroqError
 
 router = APIRouter()
 
@@ -109,7 +110,7 @@ def call_openrouter_analysis(claim: str, evidence: list) -> Optional[dict]:
             "identify_missing_information": True,
             "return_confidence_level": ["Low", "Medium", "High"]
           }
-        })
+        }, ensure_ascii=False)
       }
     ]
 
@@ -131,10 +132,18 @@ def call_openrouter_analysis(claim: str, evidence: list) -> Optional[dict]:
         
         if response.status_code == 200:
             result = response.json()
-            content = result['choices'][0]['message']['content']
+            content = result['choices'][0]['message']['content'].strip()
+            print(f"DEBUG OPENROUTER RAW CONTENT: {content}")
             # Clean content if it has markdown code blocks
             if "```json" in content:
                 content = content.replace("```json", "").replace("```", "")
+            elif "```" in content:
+                content = content.replace("```", "")
+            
+            start_idx = content.find('{')
+            end_idx = content.rfind('}')
+            if start_idx != -1 and end_idx != -1:
+                content = content[start_idx:end_idx+1]
             
             parsed = json.loads(content)
             
@@ -160,6 +169,128 @@ def call_openrouter_analysis(claim: str, evidence: list) -> Optional[dict]:
     except Exception as e:
         print(f"LLM Exception: {str(e)}")
         return None
+
+def call_groq_analysis(claim: str, evidence: list) -> Optional[dict]:
+    """
+    Calls Groq LLM to analyze the claim based on evidence.
+    """
+    api_key = os.getenv("GROQ_API_KEY")
+    model = os.getenv("GROQ_LLAMA_MODEL", "meta-llama/llama-4-scout-17b-16e-instruct")
+    print(f"DEBUG: Checking for Groq API Key... Found? {bool(api_key)}")
+    if not api_key:
+        print("DEBUG: No Groq API Key found, skipping Groq.")
+        return None
+
+    try:
+        client = Groq(api_key=api_key)
+    except Exception as e:
+        print(f"DEBUG: Error initializing Groq client: {e}")
+        return None
+
+    print(f"DEBUG: Calling Groq model '{model}' with {len(evidence)} evidence items...")
+    for item in evidence:
+        print(f"DEBUG GROQ EVIDENCE ITEM {item['id']}: URL={item['url']} CONTENT_PREVIEW={item['excerpt'][:100]}...")
+
+    messages = [
+      {
+        "role": "system",
+        "content": """You are a strict fact-checking analyst. 
+        Your ONLY job is to verify if the *actual content* of the provided articles supports the user's claim.
+
+        CRITICAL INSTRUCTIONS:
+        1. **Summarize First**: For EACH evidence item, you MUST first write a 1-sentence summary of what it *actually* says.
+        2. **Translate if needed**: If the text is not English, translate the main topic in your summary to verify relevance.
+        3. **Strict Relevance Check**: 
+           - Compare the article's *actual topic* to the user's *claim*.
+           - If the topics are unrelated (e.g. claim is about "Technology" but article is about "Politics"), mark it as **IRRELEVANT**.
+           - Do NOT force a connection where none exists.
+
+        Output Format (JSON):
+        {
+            "article_audits": [
+                { "id": "a0", "detected_topic": "...", "verdict": "Relevant" | "Irrelevant" }
+            ],
+            "score": "High" | "Medium" | "Low",
+            "reasoning": "Combine audits into a final judgment. Explicitly mention any rejected articles."
+        }
+        """
+      },
+      {
+        "role": "user",
+        "content": json.dumps({
+          "task": "Evaluate whether the provided evidence supports the agenda claim.",
+          "agenda_claim": claim,
+          "evidence_items": evidence,
+          "instructions": {
+            "evaluate_source_credibility": True,
+            "evaluate_relevance_to_claim": True,
+            "identify_missing_information": True,
+            "return_confidence_level": ["Low", "Medium", "High"]
+          }
+        }, ensure_ascii=False)
+      }
+    ]
+
+    try:
+        chat_completion = client.chat.completions.create(
+            messages=messages,
+            model=model,
+            temperature=0.3,
+            max_tokens=2048,
+            response_format={"type": "json_object"}
+        )
+        
+        content = chat_completion.choices[0].message.content.strip()
+        print(f"DEBUG GROQ RAW CONTENT: {content}")
+        # Clean content if it has markdown code blocks
+        if "```json" in content:
+            content = content.replace("```json", "").replace("```", "")
+        elif "```" in content:
+            content = content.replace("```", "")
+        
+        start_idx = content.find('{')
+        end_idx = content.rfind('}')
+        if start_idx != -1 and end_idx != -1:
+            content = content[start_idx:end_idx+1]
+        
+        parsed = json.loads(content)
+        
+        # Construct final reasoning from the new structured format
+        reasoning = parsed.get("reasoning", "Analysis failed.")
+        audits = parsed.get("article_audits", [])
+        
+        # Append audit details to reasoning for better visibility
+        if audits and isinstance(audits, list):
+            audit_summary = "\n\nSource Breakdown:\n" + "\n".join(
+                [f"- {a.get('id', '?')}: {a.get('detected_topic', 'Unknown')} ({a.get('verdict', 'Unknown')})" for a in audits]
+            )
+            reasoning += audit_summary
+
+        return {
+            "score": parsed.get("score", "Low"),
+            "reasoning": reasoning,
+            "claim": claim
+        }
+    except GroqError as e:
+        print(f"DEBUG: Groq API Error - {e}")
+        return None
+    except Exception as e:
+        print(f"DEBUG: Groq Exception: {str(e)}")
+        return None
+
+def call_llm_analysis(claim: str, evidence: list) -> Optional[dict]:
+    """
+    Main entry point for LLM analysis.
+    First attempts to use Groq as the primary framework.
+    If the call to Groq fails for any reason, falls back to OpenRouter.
+    """
+    print("DEBUG: Attempting primary LLM call using Groq...")
+    result = call_groq_analysis(claim, evidence)
+    if result is not None:
+        return result
+    
+    print("DEBUG: Primary LLM call with Groq failed or unavailable. Falling back to secondary OpenRouter...")
+    return call_openrouter_analysis(claim, evidence)
 
 @router.post("", response_model=Agenda, status_code=status.HTTP_201_CREATED)
 async def create_agenda(
@@ -532,7 +663,7 @@ async def analyze_raw_claim(request: RawAnalysisRequest):
         })
 
     # Try real LLM
-    llm_result = call_openrouter_analysis(claim, evidence_items)
+    llm_result = call_llm_analysis(claim, evidence_items)
     
     if llm_result:
         return llm_result
@@ -590,7 +721,7 @@ async def analyze_shared_agenda_claim(share_token: str):
             })
             
         # Try real LLM first
-        llm_result = call_openrouter_analysis(claim, evidence_items)
+        llm_result = call_llm_analysis(claim, evidence_items)
         if llm_result:
             return llm_result
 
@@ -723,7 +854,7 @@ async def analyze_agenda_claim(
             })
             
         # Try real LLM first
-        llm_result = call_openrouter_analysis(claim, evidence_items)
+        llm_result = call_llm_analysis(claim, evidence_items)
         
         result = None
         if llm_result:
