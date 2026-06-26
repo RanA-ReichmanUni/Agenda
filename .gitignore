@@ -20,3 +20,10 @@ build/
 Thumbs.db
 .vscode/
 .idea/
+.vs/
+
+# .NET / Visual Studio build outputs
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
