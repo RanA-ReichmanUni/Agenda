@@ -4,6 +4,8 @@ import { Article } from "../lib/types";
 interface ArticleCardProps {
   article: Article;
   onDelete?: (articleId: string) => void;
+  /** 0-100 per-article AI support score, shown when a fresh analysis exists */
+  supportScore?: number;
 }
 
 // Extract source domain from URL
@@ -21,7 +23,14 @@ const extractSourceName = (url: string): string => {
   }
 };
 
-export default function ArticleCard({ article, onDelete }: ArticleCardProps) {
+const scoreChipStyle = (score: number) =>
+  score >= 70
+    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+    : score >= 40
+      ? "border-amber-200 bg-amber-50 text-amber-700"
+      : "border-rose-200 bg-rose-50 text-rose-700";
+
+export default function ArticleCard({ article, onDelete, supportScore }: ArticleCardProps) {
   const sourceName = extractSourceName(article.url);
   const fallbackImage = 'https://via.placeholder.com/800x600/e5e7eb/6b7280?text=No+Image';
   const hostname = (() => {
@@ -42,6 +51,14 @@ export default function ArticleCard({ article, onDelete }: ArticleCardProps) {
             <span className="font-semibold uppercase tracking-wide text-slate-700">{sourceName}</span>
             <span className="text-slate-300">|</span>
             <span className="truncate">{hostname}</span>
+            {supportScore != null && (
+              <span
+                className={`ml-auto rounded-full border px-2 py-0.5 text-[11px] font-bold ${scoreChipStyle(supportScore)}`}
+                title="AI support score: how specifically this source supports the claim"
+              >
+                {supportScore}/100
+              </span>
+            )}
           </div>
           <h3 className="line-clamp-2 text-base font-semibold leading-tight text-slate-900">
             {article.title}

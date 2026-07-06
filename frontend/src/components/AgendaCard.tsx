@@ -42,8 +42,11 @@ export default function AgendaCard({ agenda, href, onDelete, id }: AgendaCardPro
     ? new Date(agenda.createdAt).toLocaleDateString()
     : "Just now";
 
+  const numericScore = agenda?.analysisResult?.numeric_score ?? null;
+
   return (
-    <div id={id} className="relative rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
+    // data-title is the hook the AutoPilot ghost demo uses to find a freshly created card
+    <div id={id} data-title={agenda.title} className="relative rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
       {onDelete && (
         <button
           onClick={(e) => {
@@ -64,6 +67,9 @@ export default function AgendaCard({ agenda, href, onDelete, id }: AgendaCardPro
         <div className="mb-4 flex flex-wrap items-center gap-2">
           <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${reliabilityStyle[reliability]}`}>
             {reliability === "Unknown" ? "Not Verified" : `${reliability} Reliability`}
+            {numericScore != null && reliability !== "Unknown" && (
+              <span className="ml-1.5 border-l pl-1.5 font-bold">{numericScore}</span>
+            )}
           </span>
           <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
             {evidenceCount} {evidenceCount === 1 ? "Source" : "Sources"}

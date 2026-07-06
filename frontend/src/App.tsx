@@ -8,6 +8,7 @@ import AgendaPage from './pages/AgendaPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import AutoPilotDemoPage from './pages/AutoPilotDemoPage';
+import LandingPage from './pages/LandingPage';
 import { ToastProvider } from './context/ToastContext';
 import ShowToast from './components/Toast';
 import { TutorialProvider } from './context/TutorialContext';
@@ -21,8 +22,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100">
-        <div className="animate-spin rounded-full h-24 w-24 border-t-4 border-b-4 border-blue-400 opacity-60"></div>
+      <div className="min-h-screen flex items-center justify-center bg-[radial-gradient(circle_at_top_left,#f5f7ff,transparent_42%),radial-gradient(circle_at_top_right,#eef5ff,transparent_38%),#f8fafc]">
+        <div className="h-16 w-16 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600"></div>
       </div>
     );
   }
@@ -32,6 +33,29 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
 
   return <>{children}</>;
+}
+
+// Root route: marketing landing page for visitors, the app for signed-in users
+function RootRoute() {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[radial-gradient(circle_at_top_left,#f5f7ff,transparent_42%),radial-gradient(circle_at_top_right,#eef5ff,transparent_38%),#f8fafc]">
+        <div className="h-16 w-16 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <LandingPage />;
+  }
+
+  return (
+    <AgendaProvider>
+      <HomePage />
+    </AgendaProvider>
+  );
 }
 
 export default function App() {
@@ -71,17 +95,8 @@ export default function App() {
             element={<AgendaPage />} 
           />
 
-          {/* Protected App Routes */}
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <AgendaProvider>
-                  <HomePage />
-                </AgendaProvider>
-              </ProtectedRoute>
-            }
-          />
+          {/* Root: landing page for visitors, app home for signed-in users */}
+          <Route path="/" element={<RootRoute />} />
           <Route
             path="/agenda/:id"
             element={

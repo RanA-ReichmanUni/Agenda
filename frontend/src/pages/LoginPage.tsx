@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useAutoPilot } from '../context/AutoPilotContext';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -9,7 +8,6 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
-  const { startAutoPilot } = useAutoPilot();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -28,35 +26,35 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 p-4">
-      
+    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[radial-gradient(circle_at_top_left,#f5f7ff,transparent_42%),radial-gradient(circle_at_top_right,#eef5ff,transparent_38%),#f8fafc] p-4">
+
       {/* Brand Title */}
       <div className="text-center mb-8 animate-fade-in-down">
-        <h1 className="text-7xl md:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-700 to-purple-800 drop-shadow-2xl tracking-tighter" style={{ fontFamily: "'Playfair Display', serif" }}>
+        <h1 className="text-7xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-700 to-purple-800 drop-shadow-2xl tracking-tighter" style={{ fontFamily: "'Playfair Display', serif" }}>
           AGENDA
         </h1>
-        <p className="text-gray-600 font-medium text-lg md:text-xl tracking-[0.5em] uppercase opacity-70 mt-2">
+        <p className="text-slate-500 font-medium text-base md:text-lg tracking-[0.5em] uppercase mt-2">
           PROVE YOUR POINT
         </p>
       </div>
 
-      <div className="bg-white/80 backdrop-blur-xl border border-gray-200 rounded-3xl shadow-2xl p-8 max-w-md w-full animate-fade-in-up">
+      <div className="rounded-3xl border border-slate-200 bg-white shadow-xl p-8 max-w-md w-full animate-fade-in-up">
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
-            Welcome Back
+          <h2 className="text-2xl font-bold text-slate-900 mb-1">
+            Welcome back
           </h2>
-          <p className="text-gray-600">Sign in to your Agenda account</p>
+          <p className="text-sm text-slate-500">Sign in to your Agenda account</p>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg text-sm">
+          <div className="mb-4 p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-sm">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1.5">
               Email Address
             </label>
             <input
@@ -65,14 +63,14 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              className="w-full px-4 py-2.5 border border-slate-300 bg-slate-50 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition"
               placeholder="you@example.com"
               disabled={isLoading}
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1.5">
               Password
             </label>
             <input
@@ -81,7 +79,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              className="w-full px-4 py-2.5 border border-slate-300 bg-slate-50 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition"
               placeholder="••••••••"
               disabled={isLoading}
             />
@@ -90,21 +88,21 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-blue-700 hover:to-purple-700 transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-gradient-to-r from-blue-700 to-purple-700 text-white font-semibold py-2.5 px-6 rounded-full shadow-lg shadow-blue-700/20 hover:shadow-xl transition disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
           >
-            {isLoading ? 'Signing in...' : 'Sign In'}
+            {isLoading ? 'Signing in…' : 'Sign In'}
           </button>
         </form>
 
         <div className="mt-6 text-center space-y-4">
-          <p className="text-gray-600">
+          <p className="text-sm text-slate-600">
             Don't have an account?{' '}
-            <Link to="/register" className="text-blue-600 hover:text-blue-700 font-semibold">
+            <Link to="/register" className="text-blue-700 hover:text-blue-800 font-semibold">
               Sign up
             </Link>
           </p>
-          
-          <div className="border-t border-gray-200 pt-4">
+
+          <div className="border-t border-slate-100 pt-4">
             <button
               onClick={() => {
                 // Clear tutorial seen flag in local storage so it always shows on fresh demo entry from login
@@ -112,22 +110,21 @@ export default function LoginPage() {
                 localStorage.removeItem('agenda_demo_tutorial_agenda');
                 navigate('/demo');
               }}
-              className="inline-block w-full text-center bg-yellow-100 text-yellow-800 font-semibold py-3 px-6 rounded-lg hover:bg-yellow-200 transition shadow-inner"
+              className="inline-block w-full text-center rounded-full border border-slate-300 bg-white text-slate-800 font-semibold py-2.5 px-6 hover:border-slate-400 hover:bg-slate-50 transition"
             >
               Try Demo Mode (No Login)
             </button>
-            
-            {/* <button
-              onClick={() => {
-                localStorage.removeItem('agenda_demo_tutorial_home');
-                localStorage.removeItem('agenda_demo_tutorial_agenda');
-                navigate('/demo');
-                setTimeout(() => startAutoPilot(), 500);
-              }}
-              className="inline-block w-full text-center bg-purple-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-purple-700 transition shadow-lg mt-3"
+
+            <button
+              onClick={() => navigate('/auto-pilot-demo')}
+              className="mt-3 inline-block w-full text-center rounded-full border border-purple-200 bg-purple-50 text-purple-800 font-semibold py-2.5 px-6 hover:bg-purple-100 transition"
             >
-              🤖 Watch Ghost Demo
-            </button> */}
+              ▶ Watch the guided tour
+            </button>
+
+            <Link to="/" className="mt-4 inline-block text-sm text-slate-500 hover:text-slate-700 transition">
+              ← What is Agenda?
+            </Link>
           </div>
         </div>
       </div>

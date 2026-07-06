@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional
+from typing import List, Optional
 from datetime import datetime
 
 # ============================================
@@ -41,11 +41,21 @@ class CreateAgenda(BaseModel):
     """Model for creating a new agenda"""
     title: str
 
+class ArticleScore(BaseModel):
+    """Per-article support score produced by the AI verification pipeline"""
+    id: Optional[str] = None
+    title: Optional[str] = None
+    topic: Optional[str] = None
+    verdict: Optional[str] = None
+    score: int
+
 class AnalysisResult(BaseModel):
     """Model for cached analysis summary on agenda payloads"""
     score: str
     reasoning: str
     claim: str
+    numeric_score: Optional[int] = None
+    article_scores: Optional[List[ArticleScore]] = None
     is_cached: Optional[bool] = None
     is_stale: Optional[bool] = None
     articleCount: Optional[int] = None

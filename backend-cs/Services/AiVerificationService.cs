@@ -89,9 +89,106 @@ public class AiVerificationService : IAiVerificationService
         [JsonPropertyName("id")] public string? Id { get; set; }
         [JsonPropertyName("detected_topic")] public string? DetectedTopic { get; set; }
         [JsonPropertyName("verdict")] public string? Verdict { get; set; }
+        [JsonPropertyName("support_score")] public double? SupportScore { get; set; }
     }
 
-    private async Task<AnalysisResultDto?> CallOpenRouterAnalysisAsync(string claim, List<object> evidence)
+    private record EvidenceItem(
+        [property: JsonPropertyName("id")] string Id,
+        [property: JsonPropertyName("title")] string Title,
+        [property: JsonPropertyName("url")] string Url,
+        [property: JsonPropertyName("excerpt")] string Excerpt);
+
+    private const string AnalysisSystemPrompt = @"You are a strict fact-checking analyst.
+        Your ONLY job is to verify if the *actual content* of the provided articles supports the user's claim.
+
+        CRITICAL INSTRUCTIONS:
+        1. **Summarize First**: For EACH evidence item, write a 1-sentence summary of what it *actually* says.
+        2. **Translate if needed**: If the text is not English, translate the main topic in your summary.
+        3. **Strict Relevance Check**: Compare the actual topic to the user's claim. If unrelated, mark it IRRELEVANT.
+        4. **Score each article individually**: assign a ""support_score"" (integer 0-100) measuring how specifically the article's ACTUAL content supports THIS exact claim:
+           - 80-100: directly and substantively supports the claim
+           - 50-79: supports the claim partially or indirectly
+           - 20-49: topically related but weak or tangential support
+           - 0-19: irrelevant to the claim, or contradicts it
+
+        Output Format (JSON):
+        {
+            ""article_audits"": [ { ""id"": ""a0"", ""detected_topic"": ""..."", ""verdict"": ""Relevant"" | ""Irrelevant"", ""support_score"": 85 } ],
+            ""score"": ""High"" | ""Medium"" | ""Low"",
+            ""reasoning"": ""Combine audits into a final judgment. Explicitly mention any rejected articles.""
+        }";
+
+    private static string DomainOf(string? url)
+    {
+        try
+        {
+            return string.IsNullOrEmpty(url) ? "unknown" : new Uri(url).Host.Replace("www.", "");
+        }
+        catch
+        {
+            return "unknown";
+        }
+    }
+
+    /// <summary>
+    /// Aggregates per-article LLM support scores into a single 0-100 credibility score.
+    /// base = mean of all per-article scores; corroboration caps single-source claims
+    /// (min(1, 0.55 + 0.15 * relevant)); diversity discounts repeated outlets
+    /// (0.85 + 0.15 * uniqueDomains / relevant).
+    /// </summary>
+    private static int ComputeNumericScore(List<ArticleScoreDto> articleScores, List<EvidenceItem> evidence)
+    {
+        if (articleScores.Count == 0) return 0;
+
+        var baseScore = articleScores.Average(a => (double)a.Score);
+        var relevant = articleScores.Where(a => a.Score >= 40).ToList();
+        var corroboration = Math.Min(1.0, 0.55 + 0.15 * relevant.Count);
+
+        double diversity = 1.0;
+        if (relevant.Count > 0)
+        {
+            var urlById = evidence.ToDictionary(e => e.Id, e => e.Url);
+            var domains = relevant
+                .Select(a => DomainOf(a.Id != null && urlById.TryGetValue(a.Id, out var u) ? u : null))
+                .Distinct()
+                .Count();
+            diversity = Math.Min(1.0, 0.85 + 0.15 * ((double)domains / relevant.Count));
+        }
+
+        var final = (int)Math.Round(baseScore * corroboration * diversity);
+        return Math.Clamp(final, 0, 100);
+    }
+
+    private static string ScoreBand(int numericScore) =>
+        numericScore >= 70 ? "High" : numericScore >= 40 ? "Medium" : "Low";
+
+    private AnalysisResultDto BuildResult(string claim, List<EvidenceItem> evidence, AnalysisResultInternal parsed)
+    {
+        var reasoning = parsed.Reasoning;
+        var titleById = evidence.ToDictionary(e => e.Id, e => e.Title);
+
+        var articleScores = (parsed.Audits ?? new List<Audit>())
+            .Select(a => new ArticleScoreDto(
+                a.Id,
+                a.Id != null && titleById.TryGetValue(a.Id, out var t) ? t : "",
+                a.DetectedTopic,
+                a.Verdict,
+                Math.Clamp((int)Math.Round(a.SupportScore ?? 0), 0, 100)))
+            .ToList();
+
+        if (articleScores.Count > 0)
+        {
+            // Deterministic aggregation in code; word score derived from the number
+            // so badge and score always agree.
+            var numeric = ComputeNumericScore(articleScores, evidence);
+            return new AnalysisResultDto(ScoreBand(numeric), reasoning, claim, false, false, evidence.Count, numeric, articleScores);
+        }
+
+        // Legacy path: model returned no audits; keep its word score.
+        return new AnalysisResultDto(parsed.Score, reasoning, claim, false, false, evidence.Count);
+    }
+
+    private async Task<AnalysisResultDto?> CallOpenRouterAnalysisAsync(string claim, List<EvidenceItem> evidence)
     {
         var apiKey = _config["OPENROUTER_API_KEY"] ?? Environment.GetEnvironmentVariable("OPENROUTER_API_KEY");
         var model = _config["OPENROUTER_MODEL"] ?? Environment.GetEnvironmentVariable("OPENROUTER_MODEL") ?? "google/gemma-3-27b-it:free";
@@ -108,20 +205,7 @@ public class AiVerificationService : IAiVerificationService
             new
             {
                 role = "system",
-                content = @"You are a strict fact-checking analyst. 
-        Your ONLY job is to verify if the *actual content* of the provided articles supports the user's claim.
-
-        CRITICAL INSTRUCTIONS:
-        1. **Summarize First**: For EACH evidence item, write a 1-sentence summary what it *actually* says.
-        2. **Translate if needed**: If the text is not English, translate the main topic in your summary.
-        3. **Strict Relevance Check**: Compare the actual topic to the user's claim.
-
-        Output Format (JSON):
-        {
-            ""score"": ""High"",
-            ""reasoning"": ""Combine audits into a final judgment."",
-            ""article_audits"": [ { ""id"": ""a0"", ""detected_topic"": ""..."", ""verdict"": ""Relevant"" } ]
-        }"
+                content = AnalysisSystemPrompt
             },
             new
             {
@@ -169,12 +253,7 @@ public class AiVerificationService : IAiVerificationService
                         var parsed = JsonSerializer.Deserialize<AnalysisResultInternal>(content);
                         if (parsed != null)
                         {
-                            var reasoning = parsed.Reasoning;
-                            if (parsed.Audits != null && parsed.Audits.Any())
-                            {
-                                reasoning += "\n\nSource Breakdown:\n" + string.Join("\n", parsed.Audits.Select(a => $"- {a.Id}: {a.DetectedTopic} ({a.Verdict})"));
-                            }
-                            return new AnalysisResultDto(parsed.Score, reasoning, claim, false, false, evidence.Count);
+                            return BuildResult(claim, evidence, parsed);
                         }
                         else
                         {
@@ -218,12 +297,12 @@ public class AiVerificationService : IAiVerificationService
             }
         }
 
-        var evidence = new List<object>();
+        var evidence = new List<EvidenceItem>();
         for (int i = 0; i < agenda.Articles.Count; i++)
         {
             var a = agenda.Articles.ElementAt(i);
             var excerpt = await FetchArticleExcerptAsync(a.Url);
-            evidence.Add(new { id = $"a{i}", title = a.Title, url = a.Url, excerpt = excerpt });
+            evidence.Add(new EvidenceItem($"a{i}", a.Title, a.Url, excerpt));
         }
 
         var result = await CallOpenRouterAnalysisAsync(agenda.Title, evidence);
@@ -248,14 +327,14 @@ public class AiVerificationService : IAiVerificationService
             .FirstOrDefaultAsync(a => a.ShareToken == shareToken);
         if (agenda == null) throw new Exception("Agenda not found");
 
-        var evidence = new List<object>();
+        var evidence = new List<EvidenceItem>();
         for (int i = 0; i < agenda.Articles.Count; i++)
         {
             var a = agenda.Articles.ElementAt(i);
             var excerpt = await FetchArticleExcerptAsync(a.Url);
-            evidence.Add(new { id = $"a{i}", title = a.Title, url = a.Url, excerpt = excerpt });
+            evidence.Add(new EvidenceItem($"a{i}", a.Title, a.Url, excerpt));
         }
-        
+
         var result = await CallOpenRouterAnalysisAsync(agenda.Title, evidence);
         if (result != null) return result;
 
@@ -265,12 +344,12 @@ public class AiVerificationService : IAiVerificationService
 
     public async Task<AnalysisResultDto> AnalyzeRawClaimAsync(string claim, List<CreateArticleDto> articles)
     {
-        var evidence = new List<object>();
+        var evidence = new List<EvidenceItem>();
         for (int i = 0; i < articles.Count; i++)
         {
             var a = articles[i];
             var excerpt = await FetchArticleExcerptAsync(a.Url) ?? a.Description;
-            evidence.Add(new { id = $"a{i}", title = a.Title, url = a.Url, excerpt = excerpt });
+            evidence.Add(new EvidenceItem($"a{i}", a.Title, a.Url, excerpt));
         }
 
         var result = await CallOpenRouterAnalysisAsync(claim, evidence);

@@ -80,86 +80,84 @@ export default function AddArticleForm({ onAdd }: AddArticleFormProps) {
   };
 
   return (
-    <div className="bg-white shadow-xl rounded-2xl p-6 border border-gray-200">
-      <h2 className="text-2xl font-bold text-gray-800 text-center">Add Source</h2>
+    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-blue-700">Evidence</p>
+      <h2 className="mt-1 text-lg font-bold text-slate-900">Add a source</h2>
+      <p className="mt-1 text-sm text-slate-500">Paste any article URL — title, image and description are extracted automatically.</p>
 
-      <div className="space-y-4">
-        <div>
-          <label htmlFor="url" className="block text-sm font-medium text-gray-700 mb-1">
-            Article URL
-          </label>
-          <input
-            id="add-article-url"
-            data-testid="add-article-url"
-            type="url"
-            placeholder="https://example.com/article"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition bg-gray-50 focus:bg-white"
-            required
-          />
-        </div>
+      <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+        <input
+          id="add-article-url"
+          data-testid="add-article-url"
+          type="url"
+          placeholder="https://example.com/article"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          className="min-w-0 flex-1 rounded-full border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm transition focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          required
+        />
         <button
           id="add-article-submit"
           data-testid="add-article-submit"
           onClick={handleFetch}
           disabled={loading || !url}
-          className={`w-full py-3 px-4 rounded-xl font-bold text-lg transition-all duration-300 transform active:scale-[0.98]
-            ${loading || !url 
-              ? "bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200" 
-              : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5"}`}
+          className={`shrink-0 rounded-full px-6 py-2.5 text-sm font-semibold transition
+            ${loading || !url
+              ? "cursor-not-allowed bg-slate-100 text-slate-400"
+              : "bg-gradient-to-r from-blue-700 to-purple-700 text-white shadow-lg shadow-blue-700/20 hover:shadow-xl"}`}
         >
           {loading ? (
              <span className="flex items-center justify-center gap-2">
-                 <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                 <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                  </svg>
-                 Processing...
+                 Fetching…
              </span>
           ) : "Fetch Info"}
         </button>
       </div>
 
       {loading && (
-        <div className="py-8 flex flex-col items-center justify-center space-y-4 animate-fade-in">
+        <div className="animate-fade-in flex flex-col items-center justify-center space-y-3 py-8">
            <div className="relative">
-             <div className="w-12 h-12 rounded-full border-4 border-blue-100"></div>
-             <div className="absolute top-0 left-0 w-12 h-12 rounded-full border-4 border-blue-500 border-t-transparent animate-spin"></div>
+             <div className="h-10 w-10 rounded-full border-4 border-blue-100"></div>
+             <div className="absolute left-0 top-0 h-10 w-10 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
            </div>
-           <p className="text-gray-500 text-sm font-medium animate-pulse">Analyzing content...</p>
+           <p className="animate-pulse text-sm font-medium text-slate-500">Extracting metadata…</p>
         </div>
       )}
 
       {error && !loading && (
-        <div className="mt-6 text-red-600 bg-red-50 border border-red-200 rounded-xl p-4 text-sm flex items-start gap-2 animate-fade-in">
+        <div className="animate-fade-in mt-4 flex items-start gap-2 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
            <span className="text-lg">⚠️</span>
            <span className="mt-0.5">{error}</span>
         </div>
       )}
 
       {articleData && !loading && (
-        <div className="mt-6 bg-white rounded-xl p-4 border border-gray-200 shadow-md space-y-4 animate-fade-in">
-          <h3 className="text-xl font-bold text-gray-800 leading-tight">{articleData.title}</h3>
-          <p className="text-gray-600 text-sm leading-relaxed">{articleData.description}</p>
-
-          {articleData.image && (
-            <div className="flex justify-center">
+        <div className="animate-fade-in mt-4 space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <div className="flex gap-3">
+            <div className="min-w-0 flex-1">
+              <h3 className="text-base font-bold leading-tight text-slate-900">{articleData.title}</h3>
+              <p className="mt-1 line-clamp-3 text-sm leading-relaxed text-slate-600">{articleData.description}</p>
+            </div>
+            {articleData.image && (
               <img
                 src={articleData.image}
                 alt="Article"
-                className="rounded-xl shadow max-h-48 object-cover"
+                className="h-20 w-28 shrink-0 rounded-xl border border-slate-200 object-cover"
               />
-            </div>
-          )}
+            )}
+          </div>
 
           <button
             id="add-article-final-btn"
             data-testid="add-article-final-btn"
             onClick={handleAdd}
-            className="w-full mt-4 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-2 px-4 rounded-xl transition shadow-md hover:shadow-lg"
+            className="w-full rounded-full bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 hover:shadow-md"
           >
-            Add Article
+            Add to Evidence Board
           </button>
         </div>
       )}

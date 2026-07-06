@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -39,24 +39,33 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 p-4">
-      <div className="bg-white/80 backdrop-blur-xl border border-gray-200 rounded-2xl shadow-2xl p-8 max-w-md w-full">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[radial-gradient(circle_at_top_left,#f5f7ff,transparent_42%),radial-gradient(circle_at_top_right,#eef5ff,transparent_38%),#f8fafc] p-4">
+      <div className="text-center mb-8">
+        <h1 className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-700 to-purple-800 drop-shadow-2xl tracking-tighter" style={{ fontFamily: "'Playfair Display', serif" }}>
+          AGENDA
+        </h1>
+        <p className="text-slate-500 font-medium text-sm tracking-[0.5em] uppercase mt-2">
+          PROVE YOUR POINT
+        </p>
+      </div>
+
+      <div className="rounded-3xl border border-slate-200 bg-white shadow-xl p-8 max-w-md w-full">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
-            Create Account
-          </h1>
-          <p className="text-gray-600">Join Agenda today</p>
+          <h2 className="text-2xl font-bold text-slate-900 mb-1">
+            Create account
+          </h2>
+          <p className="text-sm text-slate-500">Start backing your narratives with evidence</p>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg text-sm">
+          <div className="mb-4 p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-sm">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="name" className="block text-sm font-medium text-slate-700 mb-1.5">
               Full Name
             </label>
             <input
@@ -65,14 +74,14 @@ export default function RegisterPage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              className="w-full px-4 py-2.5 border border-slate-300 bg-slate-50 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition"
               placeholder="John Doe"
               disabled={isLoading}
             />
           </div>
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1.5">
               Email Address
             </label>
             <input
@@ -81,14 +90,14 @@ export default function RegisterPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              className="w-full px-4 py-2.5 border border-slate-300 bg-slate-50 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition"
               placeholder="you@example.com"
               disabled={isLoading}
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1.5">
               Password
             </label>
             <input
@@ -98,14 +107,14 @@ export default function RegisterPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              className="w-full px-4 py-2.5 border border-slate-300 bg-slate-50 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition"
               placeholder="••••••••"
               disabled={isLoading}
             />
           </div>
 
           <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-700 mb-1.5">
               Confirm Password
             </label>
             <input
@@ -115,7 +124,7 @@ export default function RegisterPage() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
               minLength={6}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              className="w-full px-4 py-2.5 border border-slate-300 bg-slate-50 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition"
               placeholder="••••••••"
               disabled={isLoading}
             />
@@ -124,16 +133,16 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-blue-700 hover:to-purple-700 transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-gradient-to-r from-blue-700 to-purple-700 text-white font-semibold py-2.5 px-6 rounded-full shadow-lg shadow-blue-700/20 hover:shadow-xl transition disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
           >
-            {isLoading ? 'Creating account...' : 'Sign Up'}
+            {isLoading ? 'Creating account…' : 'Sign Up'}
           </button>
         </form>
 
         <div className="mt-6 text-center">
-          <p className="text-gray-600">
+          <p className="text-sm text-slate-600">
             Already have an account?{' '}
-            <Link to="/login" className="text-blue-600 hover:text-blue-700 font-semibold">
+            <Link to="/login" className="text-blue-700 hover:text-blue-800 font-semibold">
               Sign in
             </Link>
           </p>

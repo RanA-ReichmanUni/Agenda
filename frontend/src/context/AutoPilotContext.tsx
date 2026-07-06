@@ -118,12 +118,16 @@ export function AutoPilotProvider({ children }: { children: React.ReactNode }) {
     };
   });
 
-  const typeText = async (element: HTMLInputElement, text: string) => {
+  const typeText = async (element: HTMLInputElement | HTMLTextAreaElement, text: string) => {
     element.focus();
-    
-    // Get the React internal instance to properly set value
+
+    // Get the React internal instance to properly set value.
+    // The prototype must match the element type or the setter throws "Illegal invocation".
+    const proto = element instanceof HTMLTextAreaElement
+      ? window.HTMLTextAreaElement.prototype
+      : window.HTMLInputElement.prototype;
     const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
-      window.HTMLInputElement.prototype,
+      proto,
       'value'
     )?.set;
     

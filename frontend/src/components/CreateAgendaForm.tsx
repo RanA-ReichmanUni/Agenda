@@ -28,44 +28,30 @@ export default function CreateAgendaForm({ onCreate }: CreateAgendaFormProps) {
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm mb-6">
-      <form onSubmit={handleSubmit}>
-        <div className="flex gap-4">
-          <div className="flex-shrink-0">
-            {/* Mock User Avatar */}
-            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
-              U
-            </div>
-          </div>
-          <div className="flex-grow">
-            <textarea
-              id="create-agenda-input"
-              data-testid="create-agenda-input"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="What narrative are you backing up?"
-              className="w-full bg-transparent text-lg focus:outline-none resize-none pt-1.5"
-              rows={2}
-              disabled={loading}
-              required
-            />
-            {error && (
-              <div className="text-red-500 text-sm mt-1">{error}</div>
-            )}
-            <div className="flex justify-end mt-3 border-t border-gray-100 pt-3">
-              <button
-                id="create-agenda-submit"
-                data-testid="create-agenda-submit"
-                type="submit"
-                disabled={loading || !title.trim()}
-                className="bg-blue-600 text-white px-5 py-1.5 rounded-full font-medium hover:bg-blue-700 active:bg-blue-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? "Posting..." : "Post Agenda"}
-              </button>
-            </div>
-          </div>
-        </div>
-      </form>
-    </div>
+    <form onSubmit={handleSubmit}>
+      <textarea
+        id="create-agenda-input"
+        data-testid="create-agenda-input"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        placeholder="State the claim you want to back with evidence…"
+        className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base transition focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+        rows={2}
+        disabled={loading}
+        required
+      />
+      {error && (
+        <div className="mt-1 text-sm text-rose-500">{error}</div>
+      )}
+      <button
+        id="create-agenda-submit"
+        data-testid="create-agenda-submit"
+        type="submit"
+        disabled={loading || !title.trim()}
+        className="mt-3 w-full rounded-full bg-gradient-to-r from-blue-700 to-purple-700 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-700/20 transition hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
+      >
+        {loading ? "Creating…" : "Create Agenda"}
+      </button>
+    </form>
   );
 }

@@ -6,6 +6,8 @@
 /// - Requests (e.g. UserLoginDto): Represents the exact data we expect the frontend to send us.
 /// - Responses (e.g. UserDto): Represents what we send back to the frontend, intentionally leaving out sensitive info like passwords.
 /// </summary>
+using System.Text.Json.Serialization;
+
 namespace AgendaCS.Backend.Dto;
 
 // Auth DTOs
@@ -16,7 +18,24 @@ public record UserDto(int Id, string Name, string Email);
 
 // Agenda DTOs
 public record CreateAgendaDto(string Title);
-public record AnalysisResultDto(string Score, string Reasoning, string Claim, bool IsCached, bool IsStale, int? ArticleCount);
+// Per-article support score produced by the AI verification pipeline.
+// Property names are pinned to snake_case so the payload matches the Python backend.
+public record ArticleScoreDto(
+    [property: JsonPropertyName("id")] string? Id,
+    [property: JsonPropertyName("title")] string? Title,
+    [property: JsonPropertyName("topic")] string? Topic,
+    [property: JsonPropertyName("verdict")] string? Verdict,
+    [property: JsonPropertyName("score")] int Score);
+
+public record AnalysisResultDto(
+    string Score,
+    string Reasoning,
+    string Claim,
+    bool IsCached,
+    bool IsStale,
+    int? ArticleCount,
+    [property: JsonPropertyName("numeric_score")] int? NumericScore = null,
+    [property: JsonPropertyName("article_scores")] List<ArticleScoreDto>? ArticleScores = null);
 public record AgendaDto(int Id, int UserId, string Title, DateTime CreatedAt, string? ShareToken, string? OwnerName, AnalysisResultDto? AnalysisResult = null);
 
 // Article DTOs

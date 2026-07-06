@@ -58,6 +58,122 @@ def fetch_article_excerpt(url: str, max_words: int = 200) -> str:
     except Exception as e:
         return f"Error extracting content: {str(e)}"
 
+ANALYSIS_SYSTEM_PROMPT = """You are a strict fact-checking analyst.
+        Your ONLY job is to verify if the *actual content* of the provided articles supports the user's claim.
+
+        CRITICAL INSTRUCTIONS:
+        1. **Summarize First**: For EACH evidence item, you MUST first write a 1-sentence summary of what it *actually* says.
+        2. **Translate if needed**: If the text is not English, translate the main topic in your summary to verify relevance.
+        3. **Strict Relevance Check**:
+           - Compare the article's *actual topic* to the user's *claim*.
+           - If the topics are unrelated (e.g. claim is about "Technology" but article is about "Politics"), mark it as **IRRELEVANT**.
+           - Do NOT force a connection where none exists.
+        4. **Score each article individually**: assign a "support_score" (integer 0-100) measuring how specifically the article's ACTUAL content supports THIS exact claim:
+           - 80-100: directly and substantively supports the claim (on-topic, provides data/expert findings)
+           - 50-79: supports the claim partially or indirectly
+           - 20-49: topically related but weak, tangential, or opinion-only support
+           - 0-19: irrelevant to the claim, or contradicts it
+
+        Output Format (JSON):
+        {
+            "article_audits": [
+                { "id": "a0", "detected_topic": "...", "verdict": "Relevant" | "Irrelevant", "support_score": 85 }
+            ],
+            "score": "High" | "Medium" | "Low",
+            "reasoning": "Combine audits into a final judgment. Explicitly mention any rejected articles."
+        }
+        """
+
+def _domain_of(url: str) -> str:
+    try:
+        return urlparse(url).netloc.replace('www.', '') or 'unknown'
+    except Exception:
+        return 'unknown'
+
+def compute_numeric_score(article_scores: list, evidence: list) -> int:
+    """
+    Aggregate per-article LLM support scores into a single 0-100 credibility score.
+
+    Formula:
+      base          = mean of ALL per-article support scores (junk sources drag the average down)
+      corroboration = min(1.0, 0.55 + 0.15 * n_relevant)  -> a single-source claim is capped at 70%
+                      of its face value; 3+ independent relevant sources earn full weight
+      diversity     = 0.85 + 0.15 * (unique_domains / n_relevant) -> repeating the same outlet
+                      is discounted vs. independent corroboration
+      final         = round(base * corroboration * diversity), clamped to [0, 100]
+    """
+    if not article_scores:
+        return 0
+
+    base = sum(a["score"] for a in article_scores) / len(article_scores)
+    relevant = [a for a in article_scores if a["score"] >= 40]
+    n_relevant = len(relevant)
+    corroboration = min(1.0, 0.55 + 0.15 * n_relevant)
+
+    if n_relevant:
+        url_by_id = {e["id"]: e.get("url", "") for e in evidence}
+        domains = {_domain_of(url_by_id.get(a.get("id"), "")) for a in relevant}
+        diversity = 0.85 + 0.15 * (len(domains) / n_relevant)
+    else:
+        diversity = 1.0
+
+    return max(0, min(100, round(base * corroboration * min(diversity, 1.0))))
+
+def score_band(numeric_score: int) -> str:
+    """Map a 0-100 credibility score onto the High/Medium/Low bands."""
+    if numeric_score >= 70:
+        return "High"
+    if numeric_score >= 40:
+        return "Medium"
+    return "Low"
+
+def postprocess_llm_result(claim: str, evidence: list, parsed: dict) -> dict:
+    """
+    Turn the raw LLM JSON into the API result: extract per-article scores,
+    aggregate them deterministically (never trust LLM arithmetic), and derive
+    the word score from the numeric one so badge and number always agree.
+    """
+    reasoning = parsed.get("reasoning", "Analysis failed.")
+    audits = parsed.get("article_audits", []) or []
+    title_by_id = {e["id"]: e.get("title", "") for e in evidence}
+
+    article_scores = []
+    for a in audits:
+        if not isinstance(a, dict):
+            continue
+        try:
+            raw_score = float(a.get("support_score", 0))
+        except (TypeError, ValueError):
+            raw_score = 0.0
+        article_scores.append({
+            "id": a.get("id"),
+            "title": title_by_id.get(a.get("id"), ""),
+            "topic": a.get("detected_topic", ""),
+            "verdict": a.get("verdict", "Unknown"),
+            "score": max(0, min(100, round(raw_score))),
+        })
+
+    if article_scores:
+        numeric_score = compute_numeric_score(article_scores, evidence)
+        word_score = score_band(numeric_score)
+    else:
+        # Legacy path: model returned no audits; keep its word score and append
+        # the old text breakdown so nothing is lost.
+        numeric_score = None
+        word_score = parsed.get("score", "Low")
+        if audits and isinstance(audits, list):
+            reasoning += "\n\nSource Breakdown:\n" + "\n".join(
+                [f"- {a.get('id', '?')}: {a.get('detected_topic', 'Unknown')} ({a.get('verdict', 'Unknown')})" for a in audits if isinstance(a, dict)]
+            )
+
+    return {
+        "score": word_score,
+        "numeric_score": numeric_score,
+        "article_scores": article_scores or None,
+        "reasoning": reasoning,
+        "claim": claim
+    }
+
 def call_openrouter_analysis(claim: str, evidence: list) -> Optional[dict]:
     """
     Calls OpenRouter LLM to analyze the claim based on evidence.
@@ -77,26 +193,7 @@ def call_openrouter_analysis(claim: str, evidence: list) -> Optional[dict]:
     messages = [
       {
         "role": "system",
-        "content": """You are a strict fact-checking analyst. 
-        Your ONLY job is to verify if the *actual content* of the provided articles supports the user's claim.
-
-        CRITICAL INSTRUCTIONS:
-        1. **Summarize First**: For EACH evidence item, you MUST first write a 1-sentence summary of what it *actually* says.
-        2. **Translate if needed**: If the text is not English, translate the main topic in your summary to verify relevance.
-        3. **Strict Relevance Check**: 
-           - Compare the article's *actual topic* to the user's *claim*.
-           - If the topics are unrelated (e.g. claim is about "Technology" but article is about "Politics"), mark it as **IRRELEVANT**.
-           - Do NOT force a connection where none exists.
-
-        Output Format (JSON):
-        {
-            "article_audits": [
-                { "id": "a0", "detected_topic": "...", "verdict": "Relevant" | "Irrelevant" }
-            ],
-            "score": "High" | "Medium" | "Low",
-            "reasoning": "Combine audits into a final judgment. Explicitly mention any rejected articles."
-        }
-        """
+        "content": ANALYSIS_SYSTEM_PROMPT
       },
       {
         "role": "user",
@@ -108,6 +205,7 @@ def call_openrouter_analysis(claim: str, evidence: list) -> Optional[dict]:
             "evaluate_source_credibility": True,
             "evaluate_relevance_to_claim": True,
             "identify_missing_information": True,
+            "score_each_article_individually": True,
             "return_confidence_level": ["Low", "Medium", "High"]
           }
         }, ensure_ascii=False)
@@ -146,23 +244,7 @@ def call_openrouter_analysis(claim: str, evidence: list) -> Optional[dict]:
                 content = content[start_idx:end_idx+1]
             
             parsed = json.loads(content)
-            
-            # Construct final reasoning from the new structured format
-            reasoning = parsed.get("reasoning", "Analysis failed.")
-            audits = parsed.get("article_audits", [])
-            
-            # Append audit details to reasoning for better visibility
-            if audits and isinstance(audits, list):
-                audit_summary = "\n\nSource Breakdown:\n" + "\n".join(
-                    [f"- {a.get('id', '?')}: {a.get('detected_topic', 'Unknown')} ({a.get('verdict', 'Unknown')})" for a in audits]
-                )
-                reasoning += audit_summary
-
-            return {
-                "score": parsed.get("score", "Low"),
-                "reasoning": reasoning,
-                "claim": claim
-            }
+            return postprocess_llm_result(claim, evidence, parsed)
         else:
             print(f"LLM API Error: {response.status_code} - {response.text}")
             return None
@@ -194,26 +276,7 @@ def call_groq_analysis(claim: str, evidence: list) -> Optional[dict]:
     messages = [
       {
         "role": "system",
-        "content": """You are a strict fact-checking analyst. 
-        Your ONLY job is to verify if the *actual content* of the provided articles supports the user's claim.
-
-        CRITICAL INSTRUCTIONS:
-        1. **Summarize First**: For EACH evidence item, you MUST first write a 1-sentence summary of what it *actually* says.
-        2. **Translate if needed**: If the text is not English, translate the main topic in your summary to verify relevance.
-        3. **Strict Relevance Check**: 
-           - Compare the article's *actual topic* to the user's *claim*.
-           - If the topics are unrelated (e.g. claim is about "Technology" but article is about "Politics"), mark it as **IRRELEVANT**.
-           - Do NOT force a connection where none exists.
-
-        Output Format (JSON):
-        {
-            "article_audits": [
-                { "id": "a0", "detected_topic": "...", "verdict": "Relevant" | "Irrelevant" }
-            ],
-            "score": "High" | "Medium" | "Low",
-            "reasoning": "Combine audits into a final judgment. Explicitly mention any rejected articles."
-        }
-        """
+        "content": ANALYSIS_SYSTEM_PROMPT
       },
       {
         "role": "user",
@@ -225,6 +288,7 @@ def call_groq_analysis(claim: str, evidence: list) -> Optional[dict]:
             "evaluate_source_credibility": True,
             "evaluate_relevance_to_claim": True,
             "identify_missing_information": True,
+            "score_each_article_individually": True,
             "return_confidence_level": ["Low", "Medium", "High"]
           }
         }, ensure_ascii=False)
@@ -254,23 +318,7 @@ def call_groq_analysis(claim: str, evidence: list) -> Optional[dict]:
             content = content[start_idx:end_idx+1]
         
         parsed = json.loads(content)
-        
-        # Construct final reasoning from the new structured format
-        reasoning = parsed.get("reasoning", "Analysis failed.")
-        audits = parsed.get("article_audits", [])
-        
-        # Append audit details to reasoning for better visibility
-        if audits and isinstance(audits, list):
-            audit_summary = "\n\nSource Breakdown:\n" + "\n".join(
-                [f"- {a.get('id', '?')}: {a.get('detected_topic', 'Unknown')} ({a.get('verdict', 'Unknown')})" for a in audits]
-            )
-            reasoning += audit_summary
-
-        return {
-            "score": parsed.get("score", "Low"),
-            "reasoning": reasoning,
-            "claim": claim
-        }
+        return postprocess_llm_result(claim, evidence, parsed)
     except GroqError as e:
         print(f"DEBUG: Groq API Error - {e}")
         return None
@@ -327,7 +375,7 @@ async def get_agendas(current_user: User = Depends(get_current_user)):
         # Try to select with share_token
         try:
             cursor.execute(
-                "SELECT id, user_id, title, created_at, share_token, analysis_score, analysis_reasoning, analysis_article_count FROM agendas WHERE user_id = %s ORDER BY created_at DESC",
+                "SELECT id, user_id, title, created_at, share_token, analysis_score, analysis_reasoning, analysis_article_count, analysis_numeric_score FROM agendas WHERE user_id = %s ORDER BY created_at DESC",
                 (current_user.id,)
             )
         except Exception:
@@ -353,6 +401,7 @@ async def get_agendas(current_user: User = Depends(get_current_user)):
                         score=r[5],
                         reasoning=r[6] or "",
                         claim=r[2],
+                        numeric_score=r[8],
                         is_cached=True,
                         is_stale=False,
                         articleCount=r[7]
@@ -377,9 +426,9 @@ async def get_shared_agenda(token: str):
     try:
         cursor.execute(
             """
-            SELECT a.id, a.user_id, a.title, a.created_at, a.share_token, u.name, a.analysis_score, a.analysis_reasoning, a.analysis_article_count
-            FROM agendas a 
-            JOIN users u ON a.user_id = u.id 
+            SELECT a.id, a.user_id, a.title, a.created_at, a.share_token, u.name, a.analysis_score, a.analysis_reasoning, a.analysis_article_count, a.analysis_numeric_score
+            FROM agendas a
+            JOIN users u ON a.user_id = u.id
             WHERE a.share_token = %s
             """,
             (token,)
@@ -400,6 +449,7 @@ async def get_shared_agenda(token: str):
                     score=row[6],
                     reasoning=row[7] or "",
                     claim=row[2],
+                    numeric_score=row[9],
                     is_cached=True,
                     is_stale=False,
                     articleCount=row[8]
@@ -462,7 +512,7 @@ async def get_agenda(
         # Try select with share_token
         try:
             cursor.execute(
-                "SELECT id, user_id, title, created_at, share_token, analysis_score, analysis_reasoning, analysis_article_count FROM agendas WHERE id = %s AND user_id = %s",
+                "SELECT id, user_id, title, created_at, share_token, analysis_score, analysis_reasoning, analysis_article_count, analysis_numeric_score FROM agendas WHERE id = %s AND user_id = %s",
                 (agenda_id, current_user.id)
             )
         except Exception:
@@ -490,6 +540,7 @@ async def get_agenda(
                     score=row[5],
                     reasoning=row[6] or "",
                     claim=row[2],
+                    numeric_score=row[8],
                     is_cached=True,
                     is_stale=False,
                     articleCount=row[7]
@@ -800,17 +851,18 @@ async def analyze_agenda_claim(
     try:
         # 1. Fetch Agenda
         cursor.execute(
-            "SELECT title, analysis_score, analysis_reasoning, last_analyzed_at, analysis_article_count FROM agendas WHERE id = %s AND user_id = %s",
+            "SELECT title, analysis_score, analysis_reasoning, last_analyzed_at, analysis_article_count, analysis_numeric_score FROM agendas WHERE id = %s AND user_id = %s",
             (agenda_id, current_user.id)
         )
         agenda_row = cursor.fetchone()
         if not agenda_row:
             raise HTTPException(status_code=404, detail="Agenda not found")
-        
+
         claim = agenda_row[0]
         cached_score = agenda_row[1]
         cached_reasoning = agenda_row[2]
         cached_count = agenda_row[4]
+        cached_numeric = agenda_row[5]
         
         # 2. Fetch Articles
         cursor.execute(
@@ -827,6 +879,7 @@ async def analyze_agenda_claim(
                      "score": cached_score,
                      "reasoning": cached_reasoning,
                      "claim": claim,
+                     "numeric_score": cached_numeric,
                      "is_cached": True,
                      "is_stale": False
                  }
@@ -836,6 +889,7 @@ async def analyze_agenda_claim(
                      "score": cached_score,
                      "reasoning": cached_reasoning,
                      "claim": claim,
+                     "numeric_score": cached_numeric,
                      "is_cached": True,
                      "is_stale": True
                  }
@@ -883,13 +937,14 @@ async def analyze_agenda_claim(
         if result and result.get("score"):
              try:
                 cursor.execute("""
-                    UPDATE agendas 
-                    SET analysis_score = %s, 
-                        analysis_reasoning = %s, 
-                        last_analyzed_at = CURRENT_TIMESTAMP, 
-                        analysis_article_count = %s 
+                    UPDATE agendas
+                    SET analysis_score = %s,
+                        analysis_reasoning = %s,
+                        last_analyzed_at = CURRENT_TIMESTAMP,
+                        analysis_article_count = %s,
+                        analysis_numeric_score = %s
                     WHERE id = %s
-                """, (result["score"], result["reasoning"], current_count, agenda_id))
+                """, (result["score"], result["reasoning"], current_count, result.get("numeric_score"), agenda_id))
                 conn.commit()
              except Exception as e:
                 print(f"Cache update failed: {e}")

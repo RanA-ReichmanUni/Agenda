@@ -172,6 +172,10 @@ def init_db():
             ALTER TABLE agendas
             ADD COLUMN IF NOT EXISTS analysis_article_count INTEGER
         """)
+        cursor.execute("""
+            ALTER TABLE agendas
+            ADD COLUMN IF NOT EXISTS analysis_numeric_score INTEGER
+        """)
 
         # Performance indexes
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_agendas_user_id ON agendas(user_id)")

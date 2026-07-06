@@ -10,12 +10,21 @@ import { useAuth } from "../context/AuthContext";
 import { AgendaContext } from "../context/AgendaContext";
 import { useTutorial } from "../context/TutorialContext";
 import { DEMO_AGENDA_STEPS, DEMO_MODE_EXPLANATION } from "../lib/tutorialSteps";
-import { AnalysisResult } from "../lib/types";
+import { AnalysisResult, ArticleScore, normalizeAnalysisResult } from "../lib/types";
 
 // --- Hardcoded Static Analysis Results for Demo Mode ---
+// numeric_score follows the production formula: mean per-article support score,
+// scaled by corroboration (source count) and domain diversity.
 const DEMO_ANALYSIS_RESULTS: Record<number, AnalysisResult> = {
   1: {
     score: 'High',
+    numeric_score: 81,
+    article_scores: [
+      { id: 'a0', title: 'Smartphone design plateaued in 2024', topic: 'Smartphone design stagnation', verdict: 'Relevant', score: 88 },
+      { id: 'a1', title: 'Smartphones are boring now — and it\'s our fault', topic: 'Consumer demand for identical phones', verdict: 'Relevant', score: 82 },
+      { id: 'a2', title: 'Yes, many flagship phones now look the same', topic: 'Flagship design convergence', verdict: 'Relevant', score: 74 },
+      { id: 'a3', title: 'Why do all smartphones look the same', topic: 'Form-factor optimization', verdict: 'Relevant', score: 80 },
+    ],
     reasoning: "Analysis of 4 technology sources (Gizmodo, HowToGeek, TechRadar, PhoneArena) indicates a strong consensus. The articles consistently report that form factors have plateaued and become 'boring' due to physical optimization and consumer demand for reliability, supporting the claim.",
     claim: "All Smartphones Are Bland and Boring",
     is_cached: true,
@@ -24,6 +33,13 @@ const DEMO_ANALYSIS_RESULTS: Record<number, AnalysisResult> = {
   },
   2: {
     score: 'Medium',
+    numeric_score: 67,
+    article_scores: [
+      { id: 'a0', title: 'Cash is… protection of privacy, identity and data', topic: 'Cash privacy benefits', verdict: 'Relevant', score: 72 },
+      { id: 'a1', title: 'Can CBDCs give us the same freedom as cash?', topic: 'Digital currency freedom limits', verdict: 'Relevant', score: 68 },
+      { id: 'a2', title: 'Why digital can\'t replace cash', topic: 'Cash anonymity guarantees', verdict: 'Relevant', score: 70 },
+      { id: 'a3', title: 'Cash vs Digital Payments: Why Cash is King', topic: 'Transaction fee erosion', verdict: 'Relevant', score: 58 },
+    ],
     reasoning: "The provided articles from CashMatters, WEF, and BEUC strongly argue for cash's privacy benefits. However, the claim 'Cash is Superior' is broad; while superior for privacy/anonymity (High confidence), the sources do not comprehensively address convenience or security risks compared to digital, resulting in a Medium overall score for the general superiority claim.",
     claim: "Cash Is Superior to Digital Payments",
     is_cached: true,
@@ -32,6 +48,12 @@ const DEMO_ANALYSIS_RESULTS: Record<number, AnalysisResult> = {
   },
   3: {
     score: 'High',
+    numeric_score: 83,
+    article_scores: [
+      { id: 'a0', title: 'Trump and Republicans again face a tough political battle over Obama\'s health care law', topic: 'Political battles over ACA', verdict: 'Relevant', score: 84 },
+      { id: 'a1', title: 'The Politics of Health Care and Elections', topic: 'Health care as election weapon', verdict: 'Relevant', score: 78 },
+      { id: 'a2', title: 'Why Both Republicans and Democrats Are Wrong About Health Care', topic: 'Partisan health policy trade-offs', verdict: 'Relevant', score: 86 },
+    ],
     reasoning: "Sources from PBS, KFF, and NYT provide substantial evidence that political maneuvering often prioritizes election strategy over patient outcomes. The analysis highlights a pattern of 'weaponizing' healthcare policy rather than solving cost/coverage trade-offs, supporting the claim that political interests frequently supersede patient care.",
     claim: "U.S. Health Care Politics Put Insurance Companies First, Patients Second",
     is_cached: true,
@@ -40,6 +62,12 @@ const DEMO_ANALYSIS_RESULTS: Record<number, AnalysisResult> = {
   },
   4: {
     score: 'High',
+    numeric_score: 85,
+    article_scores: [
+      { id: 'a0', title: 'MIT Study Finds ChatGPT Can Harm Critical Thinking Over Time', topic: 'EEG evidence of reduced engagement', verdict: 'Relevant', score: 90 },
+      { id: 'a1', title: 'ChatGPT\'s Impact On Our Brains According to an MIT Study', topic: 'AI reliance and critical thinking', verdict: 'Relevant', score: 85 },
+      { id: 'a2', title: 'Generative AI and the risk of cognitive offloading', topic: 'Cognitive offloading risks', verdict: 'Relevant', score: 79 },
+    ],
     reasoning: "Multiple studies cited (including MIT research reported by Time and TechNewsWorld) directly support the claim. The evidence links AI chatbot usage to reduced 'brain engagement' (EEG data) and cognitive offloading, confirming the negative impact on critical thinking skills.",
     claim: "AI Chatbots Make People Dumber",
     is_cached: true,
@@ -48,6 +76,11 @@ const DEMO_ANALYSIS_RESULTS: Record<number, AnalysisResult> = {
   },
   5: {
     score: 'Medium',
+    numeric_score: 66,
+    article_scores: [
+      { id: 'a0', title: 'Screen vs. Paper: Which One Boosts Reading Comprehension?', topic: 'Reading comprehension on paper', verdict: 'Relevant', score: 80 },
+      { id: 'a1', title: 'Reading on screens instead of paper is a less effective way to absorb and retain information, suggests research', topic: 'Retention research findings', verdict: 'Relevant', score: 76 },
+    ],
     reasoning: "Research provided (phys.org, Oxford Learning) supports the sub-claim that paper improves reading comprehension and retention. However, 'Superior' is a subjective value judgment. The evidence strongly supports paper for *learning*, but does not address portability or accessibility where screens excel.",
     claim: "Paper Books Are Superior to Screens",
     is_cached: true,
@@ -56,6 +89,11 @@ const DEMO_ANALYSIS_RESULTS: Record<number, AnalysisResult> = {
   },
   6: {
     score: 'High',
+    numeric_score: 73,
+    article_scores: [
+      { id: 'a0', title: 'Early smartphone use linked to poorer mental health in young adults', topic: 'Early smartphone use outcomes', verdict: 'Relevant', score: 88 },
+      { id: 'a1', title: 'Smartphones, Social Media, and Their Impact on Mental Health', topic: 'Psychiatric research on phone use', verdict: 'Relevant', score: 84 },
+    ],
     reasoning: "The claim is well-supported by the provided medical and psychiatric sources (News-Medical, Columbia Psychiatry). The articles cite specific correlations between early smartphone use and increased rates of suicidal thoughts, aggression, and poor mental health in young adults.",
     claim: "Smartphones Destroying Our Mental Health",
     is_cached: true,
@@ -64,6 +102,11 @@ const DEMO_ANALYSIS_RESULTS: Record<number, AnalysisResult> = {
   },
   7: {
     score: 'High',
+    numeric_score: 76,
+    article_scores: [
+      { id: 'a0', title: 'The results are in: The UK\'s four-day week pilot was a resounding success', topic: 'UK four-day week pilot results', verdict: 'Relevant', score: 92 },
+      { id: 'a1', title: 'The rise of the 4-day workweek', topic: 'Productivity gains from shorter weeks', verdict: 'Relevant', score: 86 },
+    ],
     reasoning: "Evidence from large-scale trials (UK Pilot, Microsoft Japan) cited by Autonomy and APA strongly supports the claim. The data shows clear improvements in revenue, productivity, and reduced burnout, validating the 'Ideal' characterization in a business context.",
     claim: "The 4-Day Work Week Is Ideal",
     is_cached: true,
@@ -72,6 +115,11 @@ const DEMO_ANALYSIS_RESULTS: Record<number, AnalysisResult> = {
   },
   8: {
     score: 'High',
+    numeric_score: 72,
+    article_scores: [
+      { id: 'a0', title: 'The Twisted History of Bissli, Israel\'s Most Iconic Snack', topic: 'Snack history and allergy data', verdict: 'Relevant', score: 88 },
+      { id: 'a1', title: 'The Twisted History of Bissli, Israel\'s Most Iconic Snack', topic: 'Bamba brand heritage', verdict: 'Relevant', score: 82 },
+    ],
     reasoning: "The debate between Bamba and Bissli is a classic cultural standoff, but the evidence leans towards Bamba due to its peanut-powered nutritional profile (and its ability to potentially reduce peanut allergies, as noted in studies). However, this comparison is largely subjective and humoristic in nature—taste is the ultimate arbiter!",
     claim: "במבה עדיפה על ביסלי",
     is_cached: true,
@@ -80,10 +128,22 @@ const DEMO_ANALYSIS_RESULTS: Record<number, AnalysisResult> = {
   }
 };
 
+// Visual styling for the three reliability bands, shared by chips, bars and modal.
+const BAND_STYLES = {
+  High: { text: 'text-emerald-700', chip: 'border-emerald-300 bg-emerald-50 text-emerald-700', bar: 'bg-emerald-500', soft: 'border-emerald-200 bg-emerald-50', label: 'High Reliability' },
+  Medium: { text: 'text-amber-700', chip: 'border-amber-300 bg-amber-50 text-amber-700', bar: 'bg-amber-500', soft: 'border-amber-200 bg-amber-50', label: 'Moderate Reliability' },
+  Low: { text: 'text-rose-700', chip: 'border-rose-300 bg-rose-50 text-rose-700', bar: 'bg-rose-500', soft: 'border-rose-200 bg-rose-50', label: 'Low Reliability' },
+} as const;
+
+const bandOf = (score: 'High' | 'Medium' | 'Low' | undefined) => BAND_STYLES[score || 'Low'] || BAND_STYLES.Low;
+
+const bandOfNumeric = (n: number) => (n >= 70 ? BAND_STYLES.High : n >= 40 ? BAND_STYLES.Medium : BAND_STYLES.Low);
+
 export default function AgendaPage() {
   const { id, token } = useParams();
   const location = useLocation();
   const isDemo = location.pathname.startsWith('/demo') || location.pathname.startsWith('/auto-pilot-demo');
+  const demoPrefix = location.pathname.startsWith('/auto-pilot-demo') ? '/auto-pilot-demo' : '/demo';
   const isShared = Boolean(token);
   const isReadOnly = isShared;
 
@@ -95,10 +155,10 @@ export default function AgendaPage() {
 
   if (!id && !token) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100">
-        <div className="backdrop-blur-xl bg-white/60 border border-red-200 rounded-2xl p-8 shadow-2xl animate-fade-in">
-          <div className="text-3xl font-bold text-red-600 mb-2">Invalid agenda</div>
-          <p className="text-gray-500">Please check the URL and try again.</p>
+      <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top_left,#f5f7ff,transparent_42%),radial-gradient(circle_at_top_right,#eef5ff,transparent_38%),#f8fafc]">
+        <div className="rounded-3xl border border-rose-200 bg-white p-8 shadow-sm">
+          <div className="mb-2 text-2xl font-bold text-rose-600">Invalid agenda</div>
+          <p className="text-slate-500">Please check the URL and try again.</p>
         </div>
       </div>
     );
@@ -497,7 +557,7 @@ export default function AgendaPage() {
         if (response.ok) {
           const data = await response.json();
           const newResult: AnalysisResult = {
-            ...data,
+            ...normalizeAnalysisResult(data),
             reasoning: `(Real-time Analysis) ${data.reasoning}`,
             articleCount: articles.length
           };
@@ -520,7 +580,7 @@ export default function AgendaPage() {
         });
         if (response.ok) {
           const data = await response.json();
-          setAnalysisResult(data);
+          setAnalysisResult(normalizeAnalysisResult(data));
           setAnalyzedArticleCount(articles.length);
         } else {
           throw new Error(await readErrorMessage(response, "Shared analysis failed"));
@@ -534,22 +594,38 @@ export default function AgendaPage() {
         /* ... Same logic ... */
         // CRITERIA 1: Keywords looking for "Hard Evidence" 
         const authoritativeKeywords = ["report", "study", "evidence", "confirmed", "analysis", "data", "statistics", "review", "official", "survey", "court", "verdict", "proof", "science", "research"];
-        const qualityMatches = articles.filter(a =>
-          authoritativeKeywords.some(kw => (a.title + " " + (a.description || "")).toLowerCase().includes(kw))
-        ).length;
 
         const uniqueDomains = new Set(articles.map(a => {
           try { return new URL(a.url).hostname.replace('www.', ''); } catch { return a.url || 'unknown_source'; }
         })).size;
 
-        let points = (count * 10) + (uniqueDomains * 15) + (qualityMatches * 10);
+        // Per-article simulated support score, mirroring the backend formula:
+        // keyword evidence boosts the individual score, then the aggregate is
+        // scaled by corroboration (source count) and domain diversity.
+        const articleScores: ArticleScore[] = articles.map((a, i) => {
+          const blob = (a.title + " " + (a.description || "")).toLowerCase();
+          const keywordHits = authoritativeKeywords.filter(kw => blob.includes(kw)).length;
+          return {
+            id: `a${i}`,
+            title: a.title,
+            verdict: 'Relevant',
+            score: Math.min(95, 55 + keywordHits * 12),
+          };
+        });
+
+        const base = articleScores.reduce((sum, a) => sum + a.score, 0) / Math.max(1, articleScores.length);
+        const relevantCount = articleScores.filter(a => a.score >= 40).length;
+        const corroboration = Math.min(1, 0.55 + 0.15 * relevantCount);
+        const diversity = relevantCount ? Math.min(1, 0.85 + 0.15 * (uniqueDomains / relevantCount)) : 1;
+        const numericScore = Math.max(0, Math.min(100, Math.round(base * corroboration * diversity)));
+
         let score: 'High' | 'Medium' | 'Low' = 'Low';
         let reasoningDetail = "";
 
-        if (points >= 65) {
+        if (numericScore >= 70) {
           score = 'High';
           reasoningDetail = `Strong consensus detected across about ${uniqueDomains} unique domains. The semantic analysis identified authoritative terminology (e.g., study, data) that strongly supports the claim.`;
-        } else if (points >= 35) {
+        } else if (numericScore >= 40) {
           score = 'Medium';
           reasoningDetail = `Evidence is present (${count} sources) and appears relevant. Usage of ${uniqueDomains === 1 ? 'a single source' : 'diverse sources'} provides a partial correlation. Adding one more distinct source would likely elevate this to a high confidence level.`;
         } else {
@@ -559,6 +635,8 @@ export default function AgendaPage() {
 
         setAnalysisResult({
           score,
+          numeric_score: numericScore,
+          article_scores: articleScores,
           reasoning: `(Shared Demo Simulation) ${reasoningDetail}`,
           claim: agenda?.title || ""
         });
@@ -571,7 +649,7 @@ export default function AgendaPage() {
         });
         if (response.ok) {
           const data = await response.json();
-          setAnalysisResult(data);
+          setAnalysisResult(normalizeAnalysisResult(data));
           setAnalyzedArticleCount(articles.length);
         } else {
           throw new Error(await readErrorMessage(response, "Analysis failed"));
@@ -661,18 +739,18 @@ export default function AgendaPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100">
-        <div className="animate-spin rounded-full h-24 w-24 border-t-4 border-b-4 border-blue-400 opacity-60"></div>
+      <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top_left,#f5f7ff,transparent_42%),radial-gradient(circle_at_top_right,#eef5ff,transparent_38%),#f8fafc]">
+        <div className="h-16 w-16 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600"></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100">
-        <div className="backdrop-blur-xl bg-white/60 border border-red-200 rounded-2xl p-8 shadow-2xl animate-fade-in">
-          <div className="text-3xl font-bold text-red-600 mb-2">{error}</div>
-          <p className="text-gray-500">Something went wrong. Please try again later.</p>
+      <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top_left,#f5f7ff,transparent_42%),radial-gradient(circle_at_top_right,#eef5ff,transparent_38%),#f8fafc]">
+        <div className="rounded-3xl border border-rose-200 bg-white p-8 shadow-sm">
+          <div className="mb-2 text-2xl font-bold text-rose-600">{error}</div>
+          <p className="text-slate-500">Something went wrong. Please try again later.</p>
         </div>
       </div>
     );
@@ -680,84 +758,97 @@ export default function AgendaPage() {
 
   if (!agenda) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100">
-        <div className="backdrop-blur-xl bg-white/60 border border-red-200 rounded-2xl p-8 shadow-2xl animate-fade-in">
-          <div className="text-3xl font-bold text-red-600 mb-2">Agenda not found</div>
-          <p className="text-gray-500">Please check the URL and try again.</p>
+      <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top_left,#f5f7ff,transparent_42%),radial-gradient(circle_at_top_right,#eef5ff,transparent_38%),#f8fafc]">
+        <div className="rounded-3xl border border-rose-200 bg-white p-8 shadow-sm">
+          <div className="mb-2 text-2xl font-bold text-rose-600">Agenda not found</div>
+          <p className="text-slate-500">Please check the URL and try again.</p>
         </div>
       </div>
     );
   }
 
+  const numericScore = analysisResult?.numeric_score ?? null;
+  const band = numericScore != null ? bandOfNumeric(numericScore) : bandOf(analysisResult?.score);
+  const ownerName = isShared ? (agenda.owner_name || 'User') : (user?.name || user?.email || 'User');
+
+  // Map per-article support scores back onto the evidence list (fresh results only).
+  const scoreByTitle = new Map<string, number>();
+  if (analysisResult && !analysisResult.is_stale && analysisResult.article_scores) {
+    for (const s of analysisResult.article_scores) {
+      if (s.title) scoreByTitle.set(s.title, s.score);
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#f5f7ff,transparent_42%),radial-gradient(circle_at_top_right,#eef5ff,transparent_38%),#f8fafc] pb-24">
 
       {/* Shared Banner */}
       {isShared && (
-        <div className="fixed top-0 w-full z-40 bg-blue-500 text-white text-center py-1 text-sm font-bold shadow-md">
-          Shared by {agenda.owner_name || 'User'}
+        <div className="bg-gradient-to-r from-blue-800 to-purple-800 py-1.5 text-center text-sm font-semibold text-white">
+          Shared by {agenda.owner_name || 'User'} · read-only
         </div>
       )}
 
       {/* Top Navigation */}
-      <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-200">
-        <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+      <div className="sticky top-0 z-30 border-b border-slate-200 bg-white/80 backdrop-blur-md">
+        <div className="mx-auto flex h-14 w-[min(1120px,92vw)] items-center justify-between">
+          <div className="flex items-center gap-3">
             <Link
-              to={isDemo ? "/demo" : "/"}
-              className="p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors"
+              to={isDemo ? demoPrefix : "/"}
+              className="-ml-2 rounded-full p-2 text-slate-600 transition-colors hover:bg-slate-100"
+              title="Back to agendas"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
             </Link>
-            <h1 className="text-xl font-bold">Claim Dossier</h1>
+            <span
+              className="bg-gradient-to-r from-blue-900 via-blue-700 to-purple-800 bg-clip-text text-lg font-black tracking-tighter text-transparent"
+              style={{ fontFamily: "'Playfair Display', serif" }}
+            >
+              AGENDA
+            </span>
+            <span className="hidden text-xs font-semibold uppercase tracking-[0.25em] text-slate-400 sm:inline">Claim Dossier</span>
           </div>
 
           {!isReadOnly && (
             <button
               id="tutorial-share-button"
               onClick={() => setShowShareModal(true)}
-              className="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-600"
+              className="flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-1.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
               title="Share Agenda"
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
               </svg>
+              Share
             </button>
           )}
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto bg-white min-h-screen border-l border-r border-gray-200">
-        {/* Demo Banner */}
-        {isDemo && (
-          <div className="flex justify-center pt-6 pb-2">
-            <div
-              id="tutorial-demo-banner"
-              className="cursor-pointer rounded-full border border-amber-300 bg-amber-100 px-4 py-1 text-sm font-semibold text-amber-900"
-              onClick={() => startTutorial(DEMO_MODE_EXPLANATION, 'demo-explanation')}
-            >
-              Demo Mode - Local Storage Only
-            </div>
+      {/* Demo Banner */}
+      {isDemo && (
+        <div className="flex justify-center pt-5">
+          <div
+            id="tutorial-demo-banner"
+            className="cursor-pointer rounded-full border border-amber-300 bg-amber-100 px-4 py-1 text-sm font-semibold text-amber-900"
+            onClick={() => startTutorial(DEMO_MODE_EXPLANATION, 'demo-explanation')}
+          >
+            Demo Mode - Local Storage Only
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Dossier Header */}
-        <div className="px-4 pt-6 pb-4 border-b border-gray-200">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-lg">
-              {(agenda.owner_name || 'U')[0].toUpperCase()}
-            </div>
-            <div>
-              <div className="font-bold text-gray-900">{isShared ? (agenda.owner_name || 'User') : (user?.name || user?.email || 'User')}</div>
-              <div className="text-gray-500 text-sm">@{(isShared ? (agenda.owner_name || 'user') : (user?.name || user?.email || 'user')).toLowerCase().replace(/\s+/g, '')} • {new Date(agenda.createdAt).toLocaleDateString()}</div>
-            </div>
-          </div>
+      <div className="mx-auto mt-6 flex w-[min(1120px,92vw)] flex-col gap-6 lg:flex-row">
+        {/* Left rail: claim + verification */}
+        <aside className="space-y-4 lg:sticky lg:top-20 lg:h-fit lg:w-[380px]">
+          {/* Claim card */}
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-blue-700">Claim</p>
 
-          <div className="mb-4">
             {isEditingTitle && !isReadOnly ? (
-              <div className="flex items-center w-full relative">
+              <div className="relative mt-2 flex w-full items-center">
                 <input
                   autoFocus
                   type="text"
@@ -765,170 +856,202 @@ export default function AgendaPage() {
                   onChange={(e) => setEditTitleValue(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') handleUpdateTitle(); if (e.key === 'Escape') cancelEditingTitle(); }}
                   onBlur={handleUpdateTitle}
-                  className="w-full text-2xl font-bold bg-gray-50 border border-blue-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full rounded-xl border border-blue-300 bg-slate-50 px-3 py-2 text-xl font-bold outline-none focus:ring-2 focus:ring-blue-500"
                   disabled={isUpdatingTitle}
                 />
                 {isUpdatingTitle && (
-                  <div className="absolute right-3 animate-spin h-5 w-5 border-2 border-blue-500 rounded-full border-t-transparent"></div>
+                  <div className="absolute right-3 h-5 w-5 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></div>
                 )}
               </div>
             ) : (
-              <div className="group relative inline-block w-full">
+              <div className="group relative mt-2">
                 <h2
                   id="tutorial-agenda-subject"
-                  className="text-3xl font-bold text-gray-900 break-words"
+                  className="break-words text-2xl font-black leading-snug text-slate-900"
+                  style={{ fontFamily: "'Playfair Display', serif" }}
                 >
                   {agenda.title}
                 </h2>
                 {!isReadOnly && (
                   <button
                     onClick={startEditingTitle}
-                    className="absolute -right-8 top-1/2 -translate-y-1/2 p-2 opacity-0 group-hover:opacity-100 transition text-gray-400 hover:text-blue-600 rounded-full hover:bg-gray-100"
+                    className="absolute -right-2 -top-1 rounded-full p-2 text-slate-400 opacity-0 transition hover:bg-slate-100 hover:text-blue-600 group-hover:opacity-100"
                     title="Edit Title"
                   >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                     </svg>
                   </button>
                 )}
               </div>
             )}
-          </div>
 
-          <div className="mt-4 rounded-2xl border border-gray-200 bg-slate-50 p-3">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Summary</p>
-            <div className="mt-2 flex items-center gap-4 text-sm text-gray-600">
-              <span><strong>{articles.length}</strong> Evidence Sources</span>
-              {analysisResult && !isAnalyzing && (
-                <span className="flex items-center gap-3">
-                  <span className="flex items-center gap-1">
-                    <span
-                      className={`w-2 h-2 rounded-full inline-block ${analysisResult.score === 'High' ? 'bg-green-500' :
-                        analysisResult.score === 'Medium' ? 'bg-yellow-400' :
-                          'bg-red-500'
-                        }`}
-                    ></span>
-                    <span className={
-                      analysisResult.score === 'High' ? 'text-green-600 font-semibold' :
-                        analysisResult.score === 'Medium' ? 'text-yellow-600 font-semibold' :
-                          'text-red-600 font-semibold'
-                    }>
-                      {analysisResult.score === 'High' ? 'High Reliability' :
-                        analysisResult.score === 'Medium' ? 'Moderate Reliability' :
-                          'Low Reliability'}
-                    </span>
-                  </span>
-                  {analysisResult.is_stale && (
-                    <span className="font-bold text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded text-xs border border-yellow-200 animate-pulse">
-                      ⚠️ Outdated Rating - Details Modified
-                    </span>
-                  )}
-                </span>
-              )}
-              {!analysisResult && !isAnalyzing && (
-                <span className="text-slate-500">Not yet verified</span>
-              )}
+            <div className="mt-4 flex items-center gap-3 border-t border-slate-100 pt-4">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-tr from-blue-600 to-purple-600 text-sm font-bold text-white">
+                {ownerName[0].toUpperCase()}
+              </div>
+              <div className="min-w-0">
+                <div className="truncate text-sm font-semibold text-slate-900">{ownerName}</div>
+                <div className="text-xs text-slate-500">Filed {new Date(agenda.createdAt).toLocaleDateString()} · {articles.length} {articles.length === 1 ? 'source' : 'sources'}</div>
+              </div>
             </div>
           </div>
 
-          <div className="flex justify-start pt-4 mt-1">
+          {/* Verification card */}
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-blue-700">AI Verification</p>
+              {analysisResult?.is_stale && (
+                <span className="rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 text-[11px] font-bold text-amber-800">
+                  Outdated
+                </span>
+              )}
+            </div>
+
+            {analysisResult && !isAnalyzing ? (
+              <div className="mt-3">
+                <div className="flex items-end justify-between gap-3">
+                  {numericScore != null ? (
+                    <div className="flex items-end gap-1.5">
+                      <span className={`text-5xl font-black leading-none ${band.text}`}>{numericScore}</span>
+                      <span className="pb-1 text-sm font-semibold text-slate-400">/ 100</span>
+                    </div>
+                  ) : (
+                    <span className={`text-2xl font-black ${band.text}`}>{analysisResult.score}</span>
+                  )}
+                  <span className={`rounded-full border px-3 py-1 text-xs font-bold ${band.chip}`}>
+                    {band.label}
+                  </span>
+                </div>
+                {numericScore != null && (
+                  <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                    <div className={`h-full rounded-full ${band.bar}`} style={{ width: `${numericScore}%` }} />
+                  </div>
+                )}
+              </div>
+            ) : !isAnalyzing ? (
+              <p className="mt-3 text-sm leading-relaxed text-slate-500">
+                Not yet verified. The AI pipeline reads each source and scores how credibly the evidence supports this claim.
+              </p>
+            ) : (
+              <p className="mt-3 text-sm leading-relaxed text-slate-500">
+                Reading sources and cross-referencing the claim…
+              </p>
+            )}
+
             <button
               id="analyze-agenda-btn"
               onClick={() => handleAnalyzeClaim(false)}
               disabled={isAnalyzing}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full transition-colors font-semibold
-                    ${isAnalyzing
-                  ? 'text-gray-400 cursor-not-allowed'
-                  : 'text-blue-600 hover:bg-blue-50'}
-                `}
+              className={`mt-4 flex w-full items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition
+                ${isAnalyzing
+                  ? 'cursor-not-allowed bg-slate-100 text-slate-400'
+                  : analysisResult
+                    ? 'border border-slate-300 bg-white text-slate-800 hover:border-slate-400 hover:bg-slate-50'
+                    : 'bg-gradient-to-r from-blue-700 to-purple-700 text-white shadow-lg shadow-blue-700/20 hover:shadow-xl'}
+              `}
             >
               {isAnalyzing ? (
                 <>
-                  <div className="animate-spin h-4 w-4 border-2 border-current rounded-full border-t-transparent"></div>
-                  <span>Verifying...</span>
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+                  <span>Verifying…</span>
                 </>
+              ) : analysisResult ? (
+                <span>View full report</span>
               ) : (
-                <>
-                  <svg className="w-5 h-5 outline-none" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" /></svg>
-                  <span>Run Verification</span>
-                </>
+                <span>Run AI Verification</span>
               )}
             </button>
-          </div>
-        </div>
 
-        {/* Add Evidence Form */}
-        {!isReadOnly && (
-          <div id="tutorial-add-article" className="p-4 border-b border-gray-200">
-            <AddArticleForm onAdd={handleAddArticle} />
+            {analysisResult?.is_stale && !isAnalyzing && (
+              <button
+                onClick={() => handleAnalyzeClaim(true)}
+                className="mt-2 w-full rounded-full bg-amber-100 px-4 py-2 text-sm font-semibold text-amber-900 transition hover:bg-amber-200"
+              >
+                Re-run analysis
+              </button>
+            )}
           </div>
-        )}
+        </aside>
 
-        {/* Evidence List */}
-        <div>
-          {articles.length === 0 ? (
-            <div className="text-center py-20 px-4">
-              <p className="text-gray-500 font-bold text-lg mb-2">No evidence yet.</p>
-              {!isReadOnly && <p className="text-gray-400 text-sm">Add a link above to start building the thread.</p>}
-            </div>
-          ) : (
-            <div id="tutorial-evidence-grid">
-              {articles.map((article, index) => (
-                <div
-                  key={article.id}
-                  onClick={() => handleArticleClick(article.url)}
-                  className="p-4 border-b border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer"
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1 mb-2">
-                      <span className="text-gray-500 text-xs">Added {new Date(article.createdAt || Date.now()).toLocaleDateString()}</span>
-                    </div>
-                    <div className="border border-gray-200 rounded-2xl overflow-hidden hover:border-gray-300 transition-colors bg-white">
-                      <ArticleCard
-                        article={article}
-                        onDelete={!isReadOnly ? () => {
-                          setArticleToDelete(article);
-                        } : undefined}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
+        {/* Right: evidence board */}
+        <main className="min-w-0 flex-1 space-y-5">
+          {!isReadOnly && (
+            <div id="tutorial-add-article">
+              <AddArticleForm onAdd={handleAddArticle} />
             </div>
           )}
-        </div>
+
+          <section>
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-slate-900">Evidence Board</h3>
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                {articles.length} {articles.length === 1 ? 'Source' : 'Sources'}
+              </span>
+            </div>
+
+            {articles.length === 0 ? (
+              <div className="rounded-3xl border border-slate-200 bg-white p-12 text-center shadow-sm">
+                <p className="mb-1 text-lg font-bold text-slate-700">No evidence yet.</p>
+                {!isReadOnly && <p className="text-sm text-slate-400">Paste an article URL above to start building the case.</p>}
+              </div>
+            ) : (
+              <div id="tutorial-evidence-grid" className="space-y-3">
+                {articles.map((article) => (
+                  <div
+                    key={article.id}
+                    onClick={() => handleArticleClick(article.url)}
+                    className="cursor-pointer transition hover:-translate-y-0.5"
+                  >
+                    <ArticleCard
+                      article={article}
+                      supportScore={scoreByTitle.get(article.title)}
+                      onDelete={!isReadOnly ? () => {
+                        setArticleToDelete(article);
+                      } : undefined}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        </main>
       </div>
 
       {/* Modals from before */}
       {/* Share Modal */}
       {showShareModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-gray-900">Share Thread</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-blue-700">Publish</p>
+                <h3 className="text-xl font-bold text-slate-900">Share this dossier</h3>
+              </div>
               <button
+                id="close-share-modal-btn"
                 onClick={() => setShowShareModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-full"
+                className="rounded-full p-2 transition hover:bg-slate-100"
               >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="h-5 w-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
 
             {shareLoading ? (
-              <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div></div>
+              <div className="flex justify-center py-8"><div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-200 border-t-blue-600"></div></div>
             ) : (
               <>
                 {agenda?.share_token ? (
                   <div className="space-y-4">
-                    <p className="text-sm text-gray-600">
-                      Anyone with this link can view this thread.
+                    <p className="text-sm text-slate-600">
+                      Anyone with this link can view the claim, its evidence and the AI verification — read-only.
                     </p>
                     <div className="flex gap-2">
                       <input
                         readOnly
-                        className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600 outline-none"
+                        className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 outline-none"
                         value={`${window.location.origin}/shared/${agenda.share_token}`}
                       />
                       <button
@@ -936,15 +1059,15 @@ export default function AgendaPage() {
                           navigator.clipboard.writeText(`${window.location.origin}/shared/${agenda.share_token}`);
                           alert("Link copied!");
                         }}
-                        className="px-4 py-2 bg-black text-white rounded-full text-sm font-bold hover:bg-gray-800"
+                        className="rounded-full bg-gradient-to-r from-blue-700 to-purple-700 px-4 py-2 text-sm font-bold text-white transition hover:shadow-lg"
                       >
                         Copy
                       </button>
                     </div>
-                    <div className="pt-2">
+                    <div className="pt-1">
                       <button
                         onClick={handleUnshare}
-                        className="text-red-500 text-sm font-bold hover:underline"
+                        className="text-sm font-bold text-rose-500 hover:underline"
                       >
                         Stop sharing
                       </button>
@@ -952,12 +1075,12 @@ export default function AgendaPage() {
                   </div>
                 ) : (
                   <div className="text-center">
-                    <p className="text-gray-600 mb-6 text-sm">
-                      Create a public link to share this thread with others. They will be able to view it but not edit it.
+                    <p className="mb-6 text-sm text-slate-600">
+                      Create a public link so anyone can audit this narrative — sources, scores and all. Viewers can't edit.
                     </p>
                     <button
                       onClick={handleShare}
-                      className="px-6 py-2 w-full rounded-full bg-black text-white font-bold hover:bg-gray-800 transition"
+                      className="w-full rounded-full bg-gradient-to-r from-blue-700 to-purple-700 px-6 py-2.5 font-bold text-white shadow-lg shadow-blue-700/20 transition hover:shadow-xl"
                     >
                       Create Link
                     </button>
@@ -972,48 +1095,97 @@ export default function AgendaPage() {
       {/* Analysis Modal */}
       {showAnalysisModal && analysisResult && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
-            <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gray-50">
-              <div className="flex items-center gap-2">
-                <svg className="w-6 h-6 text-blue-500" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" /></svg>
-                <h3 className="font-bold text-gray-900">AI Verification</h3>
+          <div className="flex max-h-[90vh] w-full max-w-xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 p-5">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-blue-700">AI Verification</p>
+                <h3 className="text-lg font-bold text-slate-900">Credibility Report</h3>
               </div>
-              <button onClick={() => setShowAnalysisModal(false)} className="p-2 hover:bg-gray-200 rounded-full transition-colors">
-                <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              <button onClick={() => setShowAnalysisModal(false)} className="rounded-full p-2 transition-colors hover:bg-slate-200">
+                <svg className="h-5 w-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
 
-            <div className="p-6 flex-grow overflow-y-auto">
-              <div className="mb-6 flex flex-col items-center">
-                <h2 className={`text-3xl font-black mb-1 ${analysisResult.score === 'High' ? 'text-green-600' :
-                  analysisResult.score === 'Medium' ? 'text-yellow-600' : 'text-red-600'
-                  }`}>{analysisResult.score} Confidence</h2>
-                <p className="text-gray-500 text-center font-medium text-sm mt-2">"{analysisResult.claim}"</p>
+            <div className="flex-grow overflow-y-auto p-6">
+              <p className="text-center text-sm font-medium text-slate-500">"{analysisResult.claim}"</p>
+
+              {/* Score hero */}
+              <div className={`mt-4 rounded-2xl border p-5 ${band.soft}`}>
+                <div className="flex items-end justify-between gap-3">
+                  {numericScore != null ? (
+                    <div className="flex items-end gap-1.5">
+                      <span className={`text-6xl font-black leading-none ${band.text}`}>{numericScore}</span>
+                      <span className="pb-1.5 text-sm font-semibold text-slate-500">/ 100</span>
+                    </div>
+                  ) : (
+                    <span className={`text-4xl font-black ${band.text}`}>{analysisResult.score}</span>
+                  )}
+                  <span className={`rounded-full border px-3 py-1 text-xs font-bold ${band.chip}`}>
+                    {band.label}
+                  </span>
+                </div>
+                {numericScore != null && (
+                  <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/70">
+                    <div className={`h-full rounded-full ${band.bar}`} style={{ width: `${numericScore}%` }} />
+                  </div>
+                )}
               </div>
 
               {analysisResult.is_stale && (
-                <div className="mb-6 bg-yellow-50 border border-yellow-200 p-4 rounded-xl flex flex-col gap-3">
-                  <p className="font-bold text-yellow-800 text-sm">⚠️Outdated Rating - Details Modified</p>
+                <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                  <p className="text-sm font-bold text-amber-800">⚠️ Outdated rating — the claim or evidence changed since this analysis ran.</p>
                   <button
                     onClick={() => handleAnalyzeClaim(true)}
-                    className="w-full py-2 bg-yellow-200 hover:bg-yellow-300 text-yellow-900 rounded-lg text-sm font-bold transition"
+                    className="w-full rounded-full bg-amber-200 py-2 text-sm font-bold text-amber-900 transition hover:bg-amber-300"
                   >
-                    Recheck Claims
+                    Re-run analysis
                   </button>
                 </div>
               )}
 
-              <div className="bg-gray-50 p-4 rounded-xl mb-4">
-                <h4 className="font-bold text-gray-900 mb-2 text-sm uppercase tracking-wider">Reasoning</h4>
-                <p className="text-gray-700 leading-relaxed text-sm">
+              {/* Per-source breakdown */}
+              {analysisResult.article_scores && analysisResult.article_scores.length > 0 && (
+                <div className="mt-5">
+                  <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">Source breakdown</h4>
+                  <div className="space-y-2">
+                    {analysisResult.article_scores.map((s, i) => {
+                      const sBand = bandOfNumeric(s.score);
+                      return (
+                        <div key={s.id || i} className="rounded-xl border border-slate-200 bg-white px-3 py-2.5">
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-700" title={s.title || s.topic || ''}>
+                              {s.title || s.topic || `Source ${i + 1}`}
+                            </span>
+                            <span className={`shrink-0 text-sm font-bold ${sBand.text}`}>{s.score}</span>
+                          </div>
+                          <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-slate-100">
+                            <div className={`h-full rounded-full ${sBand.bar}`} style={{ width: `${s.score}%` }} />
+                          </div>
+                          {s.topic && s.title && (
+                            <p className="mt-1 truncate text-xs text-slate-400">{s.topic}{s.verdict ? ` · ${s.verdict}` : ''}</p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <p className="mt-2 text-[11px] leading-relaxed text-slate-400">
+                    Overall score = average per-source support × corroboration (number of relevant sources) × source diversity (unique outlets).
+                  </p>
+                </div>
+              )}
+
+              <div className="mt-5 rounded-2xl bg-slate-50 p-4">
+                <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">Reasoning</h4>
+                <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700">
                   {analysisResult.reasoning}
                 </p>
               </div>
             </div>
-            <div className="p-4 border-t border-gray-100 flex justify-end">
+            <div className="flex justify-end border-t border-slate-100 p-4">
               <button
+                id="close-analysis-btn"
                 onClick={() => setShowAnalysisModal(false)}
-                className="px-6 py-2 bg-gray-900 text-white rounded-full font-bold hover:bg-black transition-colors"
+                className="rounded-full bg-slate-900 px-6 py-2 font-bold text-white transition-colors hover:bg-slate-700"
               >
                 Done
               </button>
@@ -1024,15 +1196,15 @@ export default function AgendaPage() {
 
       {/* Delete Article Modal */}
       {articleToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Delete Evidence?</h3>
-            <p className="text-gray-600 text-sm mb-6">
-              This can't be undone. Will remove <span className="font-semibold">"{articleToDelete.title}"</span> from the thread.
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
+            <h3 className="mb-2 text-xl font-bold text-slate-900">Delete evidence?</h3>
+            <p className="mb-6 text-sm text-slate-600">
+              This removes <span className="font-semibold text-slate-900">"{articleToDelete.title}"</span> from the dossier.
             </p>
-            <div className="flex flex-col gap-3">
+            <div className="flex gap-3">
               <button
-                className="w-full py-3 rounded-full bg-red-500 text-white font-bold hover:bg-red-600 transition"
+                className="flex-1 rounded-full bg-rose-600 px-4 py-2.5 font-semibold text-white transition hover:bg-rose-700"
                 onClick={async () => {
                   await handleRemoveArticle(Number(articleToDelete.id));
                   setArticleToDelete(null);
@@ -1041,7 +1213,7 @@ export default function AgendaPage() {
                 Delete
               </button>
               <button
-                className="w-full py-3 rounded-full bg-white border border-gray-200 text-gray-900 font-bold hover:bg-gray-50 transition"
+                className="flex-1 rounded-full border border-slate-200 bg-white px-4 py-2.5 font-semibold text-slate-700 transition hover:bg-slate-50"
                 onClick={() => setArticleToDelete(null)}
               >
                 Cancel
@@ -1102,22 +1274,22 @@ export default function AgendaPage() {
 
       {/* Iframe Error Modal */}
       {iframeError && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl text-center">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">🔗</div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Preview Blocked</h3>
-            <p className="text-gray-600 text-sm mb-6">
-              This website doesn't allow previews. Open it in a new tab instead?
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-6 text-center shadow-2xl">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-2xl">🔗</div>
+            <h3 className="mb-2 text-xl font-bold text-slate-900">Preview blocked</h3>
+            <p className="mb-6 text-sm text-slate-600">
+              This website doesn't allow embedded previews. Open it in a new tab instead?
             </p>
             <div className="flex flex-col gap-3">
               <button
-                className="w-full py-3 rounded-full bg-black text-white font-bold hover:bg-gray-800 transition"
+                className="w-full rounded-full bg-slate-900 py-2.5 font-bold text-white transition hover:bg-slate-700"
                 onClick={() => handleOpenInNewTab(previewUrl!)}
               >
                 Open in New Tab
               </button>
               <button
-                className="w-full py-3 rounded-full bg-white border border-gray-200 text-gray-900 font-bold hover:bg-gray-50 transition"
+                className="w-full rounded-full border border-slate-200 bg-white py-2.5 font-bold text-slate-700 transition hover:bg-slate-50"
                 onClick={closePreview}
               >
                 Cancel
