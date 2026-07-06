@@ -8,6 +8,8 @@ import { useAuth } from "../context/AuthContext";
 import { API_ENDPOINTS, authFetch } from "../lib/api";
 import { useTutorial } from "../context/TutorialContext";
 import { DEMO_HOME_STEPS, DEMO_MODE_EXPLANATION } from "../lib/tutorialSteps";
+import { normalizeAnalysisResult } from "../lib/types";
+import { DEMO_ANALYSIS_RESULTS } from "../data/demoAnalysisResults";
 
 type ReliabilityFilter = "All" | "High" | "Medium" | "Low" | "Unknown";
 type SortMode = "Newest" | "MostEvidence" | "NeedsReview";
@@ -46,6 +48,8 @@ export default function HomePage() {
   const [agendaToDelete, setAgendaToDelete] = useState<any | null>(null);
   const [reliabilityFilter, setReliabilityFilter] = useState<ReliabilityFilter>("All");
   const [sortMode, setSortMode] = useState<SortMode>("Newest");
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [verifyingId, setVerifyingId] = useState<number | null>(null);
 
   const handleCreateAgenda = async (title: string) => {
     if (isDemo) {
@@ -74,6 +78,11 @@ export default function HomePage() {
     agendaContext?.refetch();
   };
 
+  const onAgendaCreated = async (title: string) => {
+    await handleCreateAgenda(title);
+    setIsCreateModalOpen(false);
+  };
+
   const handleDeleteAgenda = async (agendaId: number) => {
     try {
       if (isDemo) {
@@ -84,7 +93,80 @@ export default function HomePage() {
       }
       setAgendaToDelete(null);
     } catch (err: any) {
-      alert("Failed to delete agenda: " + err.message);
+      alert("Failed to delete narrative: " + err.message);
+    }
+  };
+
+  const handleVerify = async (agenda: any) => {
+    // If there are no articles, the user cannot verify. 
+    // They must add articles first.
+    if (!agenda.articles || agenda.articles.length === 0) {
+      alert("Please open the narrative and add evidence before verifying.");
+      // Optionally route them to the agenda page
+      navigate(`${isDemo ? demoPrefix : ""}/agenda/${agenda.id}`);
+      return;
+    }
+
+    setVerifyingId(Number(agenda.id));
+    try {
+      if (isDemo) {
+        const demoId = Number(agenda.id);
+        const staticResult = DEMO_ANALYSIS_RESULTS[demoId];
+        
+        // 1. Check if Static Result is valid for the current state (like AgendaPage)
+        const demoDefaultCounts: Record<number, number> = { 1: 4, 2: 4, 3: 3, 4: 3, 5: 2, 6: 2, 7: 2, 8: 2 };
+        const isModified = (demoDefaultCounts[demoId] || 0) !== agenda.articles.length || agenda.title !== staticResult?.claim;
+
+        if (staticResult) {
+          // Simulated Wait for Demo Agenda
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          const resultToSet = {
+            ...staticResult,
+            is_stale: isModified,
+            articleCount: agenda.articles.length
+          };
+          demoContext.saveAnalysis(demoId, resultToSet);
+          setVerifyingId(null);
+          return;
+        }
+
+        const payload = {
+          claim: agenda.title || "",
+          articles: agenda.articles.map((a: any) => ({
+            title: a.title,
+            url: a.url,
+            description: a.description || ""
+          }))
+        };
+
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        const response = await fetch(`${apiUrl}/agendas/analyze-raw`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const newResult = {
+            ...normalizeAnalysisResult(data),
+            reasoning: `(Real-time Analysis) ${data.reasoning}`,
+            articleCount: agenda.articles.length
+          };
+          // Persist to Context/LocalStorage
+          demoContext.saveAnalysis(agenda.id, newResult);
+        } else {
+          throw new Error("Demo analysis failed");
+        }
+      } else {
+        const response = await authFetch(API_ENDPOINTS.analyzeAgenda(agenda.id), { method: 'POST' });
+        if (!response.ok) throw new Error("Failed to analyze narrative");
+        agendaContext?.refetch();
+      }
+    } catch (e: any) {
+      alert(e.message);
+    } finally {
+      setVerifyingId(null);
     }
   };
 
@@ -146,41 +228,32 @@ export default function HomePage() {
   }, [agendasWithArticles, reliabilityFilter, sortMode]);
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#f5f7ff,transparent_42%),radial-gradient(circle_at_top_right,#eef5ff,transparent_38%),#f8fafc] pb-20 pt-6">
-      {isDemo && (
-        <div
-          id="tutorial-demo-banner"
-          className="mx-auto mb-5 w-fit cursor-pointer rounded-full border border-amber-300 bg-amber-100 px-4 py-1 text-sm font-semibold text-amber-900"
-          onClick={() => startTutorial(DEMO_MODE_EXPLANATION, "demo-explanation")}
-        >
-          Demo Mode - Local Storage Only
-        </div>
-      )}
-
-      <div className="mx-auto flex w-[min(1120px,90vw)] flex-col gap-6 lg:flex-row">
-        <aside className="lg:sticky lg:top-6 lg:h-fit lg:w-[360px]">
-          <div id="tutorial-branding" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-blue-700">Evidence-Driven Platform</p>
-            <h1
-              className="mt-2 text-5xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-700 to-purple-800 drop-shadow-2xl"
-              style={{ fontFamily: "'Playfair Display', serif" }}
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#f5f7ff,transparent_42%),radial-gradient(circle_at_top_right,#eef5ff,transparent_38%),#f8fafc] pb-24">
+      {/* ── Top bar — same style as LandingPage header ── */}
+      <header className="mx-auto flex w-[min(1120px,92vw)] items-center justify-between py-5">
+        <div id="tutorial-branding" className="flex items-center gap-3">
+          <span
+            className="bg-gradient-to-r from-blue-900 via-blue-700 to-purple-800 bg-clip-text text-2xl font-black tracking-tighter text-transparent"
+            style={{ fontFamily: "'Playfair Display', serif" }}
+          >
+            AGENDA
+          </span>
+          {isDemo && (
+            <span
+              id="tutorial-demo-banner"
+              className="cursor-pointer rounded-full border border-amber-300 bg-amber-100 px-3 py-0.5 text-xs font-semibold text-amber-900"
+              onClick={() => startTutorial(DEMO_MODE_EXPLANATION, "demo-explanation")}
             >
-              AGENDA
-            </h1>
-            <p className="mt-2 text-sm font-medium uppercase tracking-[0.35em] text-slate-500">Prove your point.</p>
-          </div>
-
-          <div id="tutorial-create-agenda" className="mt-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-blue-700">New Claim</p>
-            <h2 className="mb-3 mt-1 text-lg font-bold text-slate-900">Create Narrative</h2>
-            <CreateAgendaForm onCreate={handleCreateAgenda} />
-          </div>
-
+              Demo Mode
+            </span>
+          )}
+        </div>
+        <nav className="flex items-center gap-2 sm:gap-3">
           {(user || isDemo) && (
-            <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="text-sm text-slate-700">
-                Signed in as <span className="font-semibold text-slate-900">{user?.name || user?.email || "Demo User"}</span>
-              </p>
+            <>
+              <span className="hidden sm:block text-sm text-slate-600">
+                {user?.name || user?.email || "Demo User"}
+              </span>
               <button
                 onClick={() => {
                   if (isDemo && !user) {
@@ -190,80 +263,144 @@ export default function HomePage() {
                   }
                   logout();
                 }}
-                className="mt-3 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
+                className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400"
               >
-                {isDemo && !user ? "Exit Demo" : "Logout"}
+                {isDemo && !user ? "Exit Demo" : "Log out"}
               </button>
-            </div>
+            </>
           )}
-        </aside>
+        </nav>
+      </header>
 
-        <main className="min-w-0 flex-1">
-          <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+      {/* ── Hero section — explains what the user is looking at ── */}
+      <section className="mx-auto w-[min(1120px,92vw)]">
+        <div className="flex flex-col items-start gap-1">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-blue-700">Your narratives</p>
+          <h1
+            className="text-4xl font-black leading-tight tracking-tight text-slate-900 sm:text-5xl"
+            style={{ fontFamily: "'Playfair Display', serif" }}
+          >
+            Evidence
+            <span className="bg-gradient-to-r from-blue-800 via-blue-600 to-purple-700 bg-clip-text text-transparent"> Dashboard</span>
+          </h1>
+          <p className="mt-2 max-w-2xl text-base leading-relaxed text-slate-600">
+            Each card below is a <span className="font-semibold text-slate-800">narrative</span> — a claim backed by evidence sources. 
+            The AI verification pipeline reads every article and scores how credibly your evidence supports the claim.
+          </p>
+        </div>
+      </section>
+
+      {/* ── Filter & Sort toolbar — rounded-3xl white card, same as LandingPage sections ── */}
+      <section className="mx-auto mt-8 w-[min(1120px,92vw)]">
+        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            {/* Filters */}
             <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-400 mr-1">Filter</span>
               {(["All", "High", "Medium", "Low", "Unknown"] as ReliabilityFilter[]).map((item) => (
                 <button
                   key={item}
                   onClick={() => setReliabilityFilter(item)}
-                  className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
+                  className={`rounded-full border px-4 py-1.5 text-sm font-semibold transition ${
                     reliabilityFilter === item
-                      ? "border-blue-700 bg-blue-700 text-white"
-                      : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                      ? "border-blue-700 bg-blue-700 text-white shadow-md shadow-blue-700/20"
+                      : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
                   }`}
                 >
                   {item === "Unknown" ? "Not Verified" : item}
                 </button>
               ))}
             </div>
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-              <span className="font-semibold text-slate-500">Sort:</span>
+            {/* Sort */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-400 mr-1">Sort</span>
               {(["Newest", "MostEvidence", "NeedsReview"] as SortMode[]).map((mode) => (
                 <button
                   key={mode}
                   onClick={() => setSortMode(mode)}
-                  className={`rounded-full px-3 py-1 transition ${
-                    sortMode === mode ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                  className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+                    sortMode === mode
+                      ? "bg-slate-900 text-white"
+                      : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                   }`}
                 >
                   {mode === "MostEvidence" ? "Most Evidence" : mode === "NeedsReview" ? "Needs Review" : "Newest"}
                 </button>
               ))}
             </div>
-          </section>
+          </div>
+        </div>
+      </section>
 
-          <section className="mt-5 space-y-4" id="tutorial-agenda-list">
-            {loading && (
-              <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center text-slate-500">Loading dossiers...</div>
-            )}
+      {/* ── Agenda grid ── */}
+      <section className="mx-auto mt-8 w-[min(1120px,92vw)]" id="tutorial-agenda-list">
+        {loading && (
+          <div className="rounded-3xl border border-slate-200 bg-white p-12 text-center shadow-sm">
+            <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-blue-600 border-t-transparent mb-3" />
+            <p className="text-sm text-slate-500">Loading narratives…</p>
+          </div>
+        )}
 
-            {error && !loading && (
-              <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-rose-700">Error: {error}</div>
-            )}
+        {error && !loading && (
+          <div className="rounded-3xl border border-rose-200 bg-rose-50 p-8 text-center text-rose-700 shadow-sm">
+            <p className="font-semibold text-lg">Error loading narratives</p>
+            <p className="text-sm mt-1">{error}</p>
+          </div>
+        )}
 
-            {!loading && !error && visibleAgendas.length === 0 && (
-              <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center text-slate-500">
-                No narratives match this filter yet.
-              </div>
-            )}
+        {!loading && !error && visibleAgendas.length === 0 && (
+          <div className="animate-fade-in-up rounded-3xl border border-slate-200 border-dashed bg-white p-12 text-center shadow-sm">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+            </div>
+            <h3
+              className="text-xl font-bold text-slate-900"
+              style={{ fontFamily: "'Playfair Display', serif" }}
+            >
+              No narratives yet
+            </h3>
+            <p className="mt-2 text-sm text-slate-500">
+              Create your first narrative to start collecting and verifying evidence.
+            </p>
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-700 to-purple-700 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-700/20 transition hover:shadow-xl"
+            >
+              <span className="text-lg leading-none">+</span>
+              Create your first narrative
+            </button>
+          </div>
+        )}
 
-            {!loading &&
-              !error &&
-              visibleAgendas.map((agenda, index) => (
+        {!loading && !error && visibleAgendas.length > 0 && (
+          <div className="flex flex-col gap-5">
+            {visibleAgendas.map((agenda, index) => (
+              <div
+                key={agenda.id}
+                className="animate-fade-in-up"
+                style={{ animationDelay: `${index * 80}ms` }}
+              >
                 <AgendaCard
-                  key={agenda.id}
                   agenda={agenda}
                   id={index === 0 ? "tutorial-first-agenda-card" : undefined}
                   href={isDemo ? `${demoPrefix}/agenda/${agenda.id}` : `/agenda/${agenda.id}`}
                   onDelete={() => setAgendaToDelete(agenda)}
+                  onShare={(agendaToShare) => navigate(`${isDemo ? demoPrefix : ""}/agenda/${agendaToShare.id}?share=true`)}
+                  onVerify={handleVerify}
+                  isVerifying={verifyingId === agenda.id}
                 />
-              ))}
-          </section>
-        </main>
-      </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
 
+      {/* ── Delete modal ── */}
       {agendaToDelete && (
         <div id="delete-modal" className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 px-4">
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+          <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
             <h3 className="text-lg font-bold text-slate-900">Delete Narrative?</h3>
             <p className="mt-2 text-sm text-slate-600">
               You are deleting <span className="font-semibold text-slate-900">"{agendaToDelete.title}"</span>.
@@ -272,7 +409,7 @@ export default function HomePage() {
               <button
                 id="confirm-delete-btn"
                 data-testid="confirm-delete-btn"
-                className="flex-1 rounded-full bg-rose-600 px-4 py-2 font-semibold text-white transition hover:bg-rose-700"
+                className="flex-1 rounded-full bg-rose-600 px-4 py-2.5 font-semibold text-white transition hover:bg-rose-700"
                 onClick={async () => {
                   await handleDeleteAgenda(Number(agendaToDelete.id));
                   setAgendaToDelete(null);
@@ -281,7 +418,7 @@ export default function HomePage() {
                 Confirm Delete
               </button>
               <button
-                className="flex-1 rounded-full border border-slate-200 bg-white px-4 py-2 font-semibold text-slate-700 transition hover:bg-slate-50"
+                className="flex-1 rounded-full border border-slate-300 bg-white px-4 py-2.5 font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
                 onClick={() => setAgendaToDelete(null)}
               >
                 Cancel
@@ -290,6 +427,65 @@ export default function HomePage() {
           </div>
         </div>
       )}
+
+      {/* ── Floating Action Button — gradient pill, same as LandingPage CTA ── */}
+      <button
+        id="tutorial-create-agenda"
+        onClick={() => setIsCreateModalOpen(true)}
+        className="fixed bottom-8 right-8 z-40 group flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-700 to-purple-700 px-6 py-3.5 text-base font-semibold text-white shadow-lg shadow-blue-700/20 transition hover:shadow-xl hover:shadow-purple-700/25"
+      >
+        <span className="text-xl leading-none transition-transform group-hover:rotate-90">+</span>
+        <span>New Narrative</span>
+      </button>
+
+      {/* ── Create modal ── */}
+      {isCreateModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4 animate-fade-in-up"
+          onClick={(e) => { if (e.target === e.currentTarget) setIsCreateModalOpen(false); }}
+        >
+          <div className="relative w-full max-w-lg">
+            {/* Soft glow */}
+            <div
+              aria-hidden
+              className="absolute -inset-6 rounded-[2.5rem] bg-gradient-to-br from-blue-200/60 via-purple-200/40 to-transparent blur-2xl"
+            />
+            <div className="relative rounded-3xl border border-slate-200 bg-white p-8 shadow-xl">
+              <button
+                onClick={() => setIsCreateModalOpen(false)}
+                className="absolute right-6 top-6 text-slate-400 hover:text-slate-700 transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-blue-700">New narrative</p>
+              <h2
+                className="mt-2 text-2xl font-bold text-slate-900"
+                style={{ fontFamily: "'Playfair Display', serif" }}
+              >
+                State your claim
+              </h2>
+              <p className="mt-2 text-sm text-slate-600">
+                Create a narrative — a single arguable statement you want to stand behind with evidence.
+              </p>
+              <div className="mt-6">
+                <CreateAgendaForm onCreate={onAgendaCreated} />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes fade-in-up {
+          from { opacity: 0; transform: translateY(16px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-up {
+          animation: fade-in-up 0.5s ease-out both;
+        }
+      `}</style>
     </div>
   );
 }

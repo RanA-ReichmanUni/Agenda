@@ -5,7 +5,7 @@ import { useAutoPilot } from '../context/AutoPilotContext';
 export function TutorialOverlay() {
   const { isActive, currentStep, nextStep, prevStep, endTutorial, stepIndex, totalSteps, isGhostControlled } = useTutorial();
   const { isRunning: isAutoPilotRunning, speedUp } = useAutoPilot();
-  const [position, setPosition] = useState<{ top: number; left: number; placement: string } | null>(null);
+  const [position, setPosition] = useState<{ top: number; left: number; placement: string; arrowLeft?: number } | null>(null);
   const bubbleRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -52,7 +52,7 @@ export function TutorialOverlay() {
 
                 // Initial calculation
                 let top = anchorBottom + offset;
-                let left = rLeft + Math.max(0, (rWidth - bubbleWidth) / 2);
+                let left = rLeft + (rWidth - bubbleWidth) / 2;
 
                 if (placement === 'top') {
                     top = rTop - offset; 
@@ -73,14 +73,21 @@ export function TutorialOverlay() {
                 }
 
                 // Clamp Horizontally
-                // Available width in CSS pixels
                 const windowWidth = window.innerWidth / zoomFactor; 
                 const windowHeight = window.innerHeight / zoomFactor;
                 
-                if (left + bubbleWidth > windowWidth) {
-                    left = windowWidth - bubbleWidth - 20;
+                // If the bubble is placed to the left, its actual bounds are [left - bubbleWidth, left]
+                // For top/bottom/right, bounds are [left, left + bubbleWidth]
+                if (placement === 'left') {
+                    if (left - bubbleWidth < 10) {
+                        left = bubbleWidth + 10;
+                    }
+                } else {
+                    if (left + bubbleWidth > windowWidth) {
+                        left = windowWidth - bubbleWidth - 20;
+                    }
+                    if (left < 10) left = 10;
                 }
-                if (left < 10) left = 10;
 
                 // Clamp Vertically to keep bubble reachable in viewport.
                 if (top + bubbleHeightApprox > windowHeight - 10) {
@@ -88,7 +95,13 @@ export function TutorialOverlay() {
                 }
                 if (top < 10) top = 10;
 
-                setPosition({ top, left, placement });
+                // Dynamically calculate arrow position for top/bottom placements
+                const targetCenter = rLeft + rWidth / 2;
+                let arrowLeft = targetCenter - left;
+                // Keep the arrow within the bubble bounds
+                arrowLeft = Math.max(20, Math.min(bubbleWidth - 20, arrowLeft));
+
+                setPosition({ top, left, placement, arrowLeft });
             };
 
             // Keep the first bubble snappy; allow short delay for smooth-scroll steps.
@@ -218,9 +231,14 @@ export function TutorialOverlay() {
           <div 
               className={`absolute w-4 h-4 bg-white border-blue-200 transform rotate-45 ${
                   finalPlacement === 'top' ? 'bottom-[-9px] border-b border-r border-t-0 border-l-0' :
-                  finalPlacement === 'right' ? 'left-[-9px] border-b-0 border-r-0 border-t-0 border-l-[1px] bg-transparent' : 
-                  'top-[-9px] left-8 border-t border-l border-b-0 border-r-0'
+                  finalPlacement === 'right' ? 'left-[-9px] top-6 border-b border-l border-t-0 border-r-0' : 
+                  finalPlacement === 'left' ? 'right-[-9px] bottom-10 border-t border-r border-b-0 border-l-0' : 
+                  'top-[-9px] border-t border-l border-b-0 border-r-0'
               }`}
+              style={{
+                left: (finalPlacement === 'top' || finalPlacement === 'bottom') && position.arrowLeft ? `${position.arrowLeft}px` : undefined,
+                marginLeft: (finalPlacement === 'top' || finalPlacement === 'bottom') && position.arrowLeft ? '-8px' : undefined
+              }}
           />
         )}
       </div>

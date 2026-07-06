@@ -209,7 +209,7 @@ const HOW_IT_WORKS = [
   {
     step: "01",
     title: "State your claim",
-    text: "Create an agenda — a single arguable statement you want to stand behind.",
+    text: "Create a narrative — a single arguable statement you want to stand behind.",
   },
   {
     step: "02",
@@ -407,7 +407,7 @@ export default function LandingPage() {
             See the full workflow in 90 seconds
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-blue-100">
-            The guided tour creates an agenda, attaches evidence, runs the AI verification and shares the result — all
+            The guided tour creates a narrative, attaches evidence, runs the AI verification and shares the result — all
             by itself, with narration.
           </p>
           <div className="mt-7 flex flex-wrap justify-center gap-3">

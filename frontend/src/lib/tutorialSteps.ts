@@ -24,13 +24,13 @@ export const DEMO_HOME_STEPS: TutorialStep[] = [
   {
     targetId: 'tutorial-create-agenda',
     title: 'Create a Topic',
-    content: 'Start by creating a new Agenda. Think of it as a folder for a specific argument or narrative you want to argue.',
-    position: 'top'
+    content: 'Start by creating a new narrative. Think of it as a folder for a specific argument you want to stand behind.',
+    position: 'left'
   },
   {
     targetId: 'tutorial-first-agenda-card',
-    title: 'Your Agendas',
-    content: 'Your agendas live here. We have pre-loaded a few examples for you to check out.',
+    title: 'Your Narratives',
+    content: 'Your narratives live here. We have pre-loaded a few examples for you to check out.',
     position: 'top'
   }
 ];
@@ -39,7 +39,7 @@ export const DEMO_AGENDA_STEPS: TutorialStep[] = [
   {
     targetId: 'tutorial-agenda-subject',
     title: 'The Subject',
-    content: 'This is the core topic of your agenda.',
+    content: 'This is the core topic of your narrative.',
     position: 'top'
   },
   {
@@ -62,7 +62,7 @@ export const DEMO_AGENDA_STEPS: TutorialStep[] = [
   },
   {
     targetId: 'tutorial-share-button',
-    title: 'Share Your Agenda',
+    title: 'Share Your Narrative',
     content: 'Ready to publish? Generate a public link to share your curated narrative with others.',
     position: 'bottom'
   }
@@ -78,20 +78,20 @@ export const GHOST_NARRATION = {
   },
   createInput: {
     targetId: 'create-agenda-input',
-    title: '📝 Creating an Agenda',
-    content: 'First, we\'ll create a new agenda. This is where you organize evidence around a specific topic or argument.<div dir="rtl" style="text-align:right;margin-top:8px;">נתחיל ביצירת אג\'נדה חדשה. כאן מארגנים ראיות סביב נושא או טיעון מסוים.</div>',
+    title: '📝 Creating a Narrative',
+    content: 'First, we\'ll create a new narrative. This is where you organize evidence around a specific topic or argument.<div dir="rtl" style="text-align:right;margin-top:8px;">נתחיל ביצירת נרטיב חדש. כאן מארגנים ראיות סביב נושא או טיעון מסוים.</div>',
     position: 'right' as const
   },
   submitAgenda: {
     targetId: 'create-agenda-submit',
     title: '✨ Submitting',
-    content: 'Click to create your new agenda and start collecting evidence.<div dir="rtl" style="text-align:right;margin-top:8px;">לחצו כדי ליצור את האג\'נדה החדשה ולהתחיל לאסוף ראיות.</div>',
+    content: 'Click to create your new narrative and start collecting evidence.<div dir="rtl" style="text-align:right;margin-top:8px;">לחצו כדי ליצור את הנרטיב החדש ולהתחיל לאסוף ראיות.</div>',
     position: 'left' as const
   },
   openAgenda: {
     targetId: 'tutorial-agenda-list',
-    title: '📂 Opening Your Agenda',
-    content: 'Your new agenda appears here. Let\'s open it to add some sources.<div dir="rtl" style="text-align:right;margin-top:8px;">האג\'נדה החדשה שלכם מופיעה כאן. נפתח אותה כדי להוסיף מקורות.</div>',
+    title: '📂 Opening Your Narrative',
+    content: 'Your new narrative appears here. Let\'s open it to add some sources.<div dir="rtl" style="text-align:right;margin-top:8px;">הנרטיב החדש שלכם מופיע כאן. נפתח אותו כדי להוסיף מקורות.</div>',
     position: 'top' as const
   },
   addArticle: {
@@ -115,7 +115,7 @@ export const GHOST_NARRATION = {
   moreArticles: {
     targetId: 'tutorial-evidence-grid',
     title: '📚 Building Evidence',
-    content: 'Adding more sources strengthens your narrative. Watch as we add a few more.<div dir="rtl" style="text-align:right;margin-top:8px;">הוספת עוד מקורות מחזקת את האג\'נדה שלכם. צפו איך אנחנו מוסיפים עוד כמה.</div>',
+    content: 'Adding more sources strengthens your narrative. Watch as we add a few more.<div dir="rtl" style="text-align:right;margin-top:8px;">הוספת מקורות נוספים מחזקת את הנרטיב שלכם. צפו כיצד אנו מוסיפים עוד כמה.</div>',
     position: 'top' as const
   },
   verifyAgenda: {
@@ -133,13 +133,13 @@ export const GHOST_NARRATION = {
   shareAgenda: {
     targetId: 'tutorial-share-button',
     title: '🚀 Share Your Work',
-    content: 'Finally, generate a public link to share your curated narrative with the world!<div dir="rtl" style="text-align:right;margin-top:8px;">לבסוף, צרו קישור ציבורי כדי לשתף את האג\'נדה שאספתם עם העולם!</div>',
+    content: 'Finally, generate a public link to share your curated narrative with the world!<div dir="rtl" style="text-align:right;margin-top:8px;">לבסוף, צרו קישור ציבורי כדי לשתף את הנרטיב שאספתם עם העולם!</div>',
     position: 'bottom' as const
   },
   complete: {
     targetId: 'tutorial-demo-banner',
     title: '🎉 Tour Complete!',
-    content: 'You\'ve seen the full Agenda workflow: Create → Collect Evidence → Verify with AI → Share. Now it\'s your turn, explore the features yourself and build your own narrative!<div dir="rtl" style="text-align:right;margin-top:8px;">ראיתם את כל הזרימה של אג\'נדה: יצירה -> איסוף ראיות -> בדיקת בינה מלאכותית -> שיתוף. עכשיו תורכם, גלו את הפיצ\'רים בעצמכם ובנו את האג\'נדה שלכם!</div>',
+    content: 'You\'ve seen the full Agenda workflow: Create → Collect Evidence → Verify with AI → Share. Now it\'s your turn, explore the features yourself and build your own narrative!<div dir="rtl" style="text-align:right;margin-top:8px;">ראיתם את כל זרימת העבודה של Agenda: יצירה -> איסוף ראיות -> אימות AI -> שיתוף. כעת תורכם, גלו את הפיצ\'רים בעצמכם ובנו נרטיב משלכם!</div>',
     position: 'bottom' as const
   }
 };

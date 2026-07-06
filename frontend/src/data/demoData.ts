@@ -135,7 +135,7 @@ export const INITIAL_DEMO_AGENDAS: DemoAgenda[] = [
         id: "201",
         title: "Screen vs. Paper: Which One Boosts Reading Comprehension?",
         url: "https://oxfordlearning.com/screen-vs-paper-which-one-boosts-reading-comprehension/",
-        description: "Drawing parallels between the 19th-century backlash against photography and today's AI skepticism.",
+        description: "New research shows that reading on paper significantly boosts reading comprehension and retention compared to reading on screens.",
         createdAt: new Date().toISOString(),
         agenda_id: "5",
         image:"https://oxfordlearning.com/wp-content/uploads/2025/03/reading-comprehension-860x420-1.jpg"
@@ -145,7 +145,7 @@ export const INITIAL_DEMO_AGENDAS: DemoAgenda[] = [
         id: "202",
         title: "Reading on screens instead of paper is a less effective way to absorb and retain information, suggests research",
         url: "https://phys.org/news/2024-02-screens-paper-effective-absorb-retain.html",
-        description: "Why the human element of taste and selection matters more than the mechanical act of drawing.",
+        description: "A comprehensive study reveals that screen reading leads to a less effective absorption of information, solidifying the superiority of paper books for deep learning.",
         createdAt: new Date().toISOString(),
         agenda_id: "5",
         image: "https://scx1.b-cdn.net/csz/news/800a/2024/reading-on-screens-is.jpg"

@@ -206,7 +206,7 @@ export function AutoPilotProvider({ children }: { children: React.ReactNode }) {
       await sleep(3000);
 
       // Narrate: Opening agenda
-      setCurrentStatus('Waiting for new agenda card...');
+      setCurrentStatus('Waiting for new narrative card...');
       showSingleBubble(GHOST_NARRATION.openAgenda);
       await sleep(3000); // Let user read
       const agendaCard = await waitForElement(`[data-title="${TARGET_AGENDA_TITLE}"]`, 10000);

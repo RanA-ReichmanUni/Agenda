@@ -34,7 +34,7 @@ def fetch_article_excerpt(url: str, max_words: int = 200) -> str:
         # Short timeout to not stall the request too long
         response = requests.get(url, headers=headers, timeout=4)
         if response.status_code != 200:
-            return "Could not fetch content."
+            return ""
             
         soup = BeautifulSoup(response.content, 'lxml')
         
@@ -56,7 +56,7 @@ def fetch_article_excerpt(url: str, max_words: int = 200) -> str:
             return ' '.join(words[:max_words]) + "..."
         return text
     except Exception as e:
-        return f"Error extracting content: {str(e)}"
+        return ""
 
 ANALYSIS_SYSTEM_PROMPT = """You are a strict fact-checking analyst.
         Your ONLY job is to verify if the *actual content* of the provided articles supports the user's claim.
@@ -703,7 +703,9 @@ async def analyze_raw_claim(request: RawAnalysisRequest):
         # We need to make sure 'fetch_article_excerpt' is available in scope or moved up.
         # Assuming it is available (it was used in previous function).
         url = a.url
-        excerpt = fetch_article_excerpt(url) if url else a.description
+        excerpt = fetch_article_excerpt(url) if url else None
+        if not excerpt:
+            excerpt = a.description
         
         evidence_items.append({
             "id": f"a{i}",
