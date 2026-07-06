@@ -23,12 +23,12 @@ export const DEMO_HOME_STEPS: TutorialStep[] = [
   },
   {
     targetId: 'tutorial-create-agenda',
-    title: 'Create a Topic',
+    title: 'Create a Narrative',
     content: 'Start by creating a new narrative. Think of it as a folder for a specific argument you want to stand behind.',
     position: 'left'
   },
   {
-    targetId: 'tutorial-first-agenda-card',
+    targetId: 'tutorial-first-agenda-card-claim',
     title: 'Your Narratives',
     content: 'Your narratives live here. We have pre-loaded a few examples for you to check out.',
     position: 'top'

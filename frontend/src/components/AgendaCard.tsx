@@ -81,7 +81,7 @@ export default function AgendaCard({ agenda, href, onDelete, onShare, onVerify, 
         <div className="flex flex-col md:flex-row gap-6 md:items-stretch">
           
           {/* ── Column 1: Claim ── */}
-          <div className="flex flex-1 flex-col">
+          <div id={id ? `${id}-claim` : undefined} className="flex flex-1 flex-col">
             <div className="flex items-center gap-3">
               <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-blue-700">Narrative</p>
               {isStale && (

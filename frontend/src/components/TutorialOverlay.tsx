@@ -160,7 +160,7 @@ export function TutorialOverlay() {
         className={`ghost-tutorial-bubble absolute transition-all duration-300 ease-in-out pointer-events-auto backdrop-blur-sm rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] ${
           isGhostMode 
             ? 'bg-gradient-to-br from-purple-50 to-blue-50 border-2 border-purple-300 p-8 w-[420px] cursor-pointer hover:border-purple-400 hover:shadow-purple-200/50' 
-            : 'bg-white/95 border border-blue-200 p-6 w-80 z-50'
+            : 'bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 border border-blue-700/50 p-6 w-80 z-50 shadow-2xl shadow-blue-900/40 text-white'
         }`}
         style={{ 
             top: position.top, 
@@ -173,10 +173,10 @@ export function TutorialOverlay() {
             <h3 className={`font-bold tracking-tight ${
               isGhostMode 
                 ? 'text-2xl text-purple-800' 
-                : 'text-lg text-slate-800'
+                : 'text-lg text-white'
             }`}>{currentStep.title}</h3>
             {!isGhostMode && (
-              <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-full border border-blue-100">
+              <span className="text-xs font-bold text-blue-100 bg-white/10 px-2 py-1 rounded-full border border-white/20">
                 {stepIndex + 1} / {totalSteps}
               </span>
             )}
@@ -186,7 +186,7 @@ export function TutorialOverlay() {
           className={`leading-relaxed ${
             isGhostMode 
               ? 'text-xl text-purple-900 font-semibold' 
-              : 'text-slate-600 text-sm'
+              : 'text-blue-100 text-sm'
           }`}
           dangerouslySetInnerHTML={{ __html: currentStep.content }}
         />
@@ -203,7 +203,7 @@ export function TutorialOverlay() {
             <div className="flex justify-between items-center mt-6">
             <button 
               onClick={endTutorial}
-              className="text-slate-400 hover:text-slate-600 text-sm font-medium transition-colors"
+              className="text-blue-300 hover:text-white text-sm font-medium transition-colors"
             >
               Skip
             </button>
@@ -211,14 +211,14 @@ export function TutorialOverlay() {
               {stepIndex > 0 && (
                 <button 
                   onClick={prevStep}
-                  className="px-3 py-1.5 rounded-lg border border-blue-100 text-blue-600 hover:bg-blue-50 text-sm font-semibold transition-colors"
+                  className="px-3 py-1.5 rounded-lg border border-white/20 text-blue-100 hover:bg-white/10 text-sm font-semibold transition-colors"
                 >
                   Back
                 </button>
               )}
               <button 
                 onClick={nextStep}
-                className="px-4 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 text-sm font-semibold shadow-md shadow-blue-200 transition-all hover:shadow-lg"
+                className="px-4 py-1.5 rounded-lg bg-white text-blue-900 hover:bg-blue-50 text-sm font-bold shadow-md transition-all hover:shadow-lg"
               >
                 {stepIndex === totalSteps - 1 ? 'Finish' : 'Next'}
               </button>
@@ -229,11 +229,11 @@ export function TutorialOverlay() {
         {/* Arrow (Visual only, simplified) */}
           {!isGhostMode && (
           <div 
-              className={`absolute w-4 h-4 bg-white border-blue-200 transform rotate-45 ${
-                  finalPlacement === 'top' ? 'bottom-[-9px] border-b border-r border-t-0 border-l-0' :
-                  finalPlacement === 'right' ? 'left-[-9px] top-6 border-b border-l border-t-0 border-r-0' : 
-                  finalPlacement === 'left' ? 'right-[-9px] bottom-10 border-t border-r border-b-0 border-l-0' : 
-                  'top-[-9px] border-t border-l border-b-0 border-r-0'
+              className={`absolute w-4 h-4 transform rotate-45 ${
+                  finalPlacement === 'top' ? 'bottom-[-9px] border-b border-r border-t-0 border-l-0 bg-indigo-900 border-blue-700/50' :
+                  finalPlacement === 'right' ? 'left-[-9px] top-6 border-b border-l border-t-0 border-r-0 bg-blue-900 border-blue-700/50' : 
+                  finalPlacement === 'left' ? 'right-[-9px] bottom-10 border-t border-r border-b-0 border-l-0 bg-indigo-900 border-blue-700/50' : 
+                  'top-[-9px] border-t border-l border-b-0 border-r-0 bg-blue-900 border-blue-700/50'
               }`}
               style={{
                 left: (finalPlacement === 'top' || finalPlacement === 'bottom') && position.arrowLeft ? `${position.arrowLeft}px` : undefined,

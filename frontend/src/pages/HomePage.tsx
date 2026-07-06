@@ -8,8 +8,9 @@ import { useAuth } from "../context/AuthContext";
 import { API_ENDPOINTS, authFetch } from "../lib/api";
 import { useTutorial } from "../context/TutorialContext";
 import { DEMO_HOME_STEPS, DEMO_MODE_EXPLANATION } from "../lib/tutorialSteps";
-import { normalizeAnalysisResult } from "../lib/types";
+import { normalizeAnalysisResult, AnalysisResult } from "../lib/types";
 import { DEMO_ANALYSIS_RESULTS } from "../data/demoAnalysisResults";
+import AnalysisModal from '../components/AnalysisModal';
 
 type ReliabilityFilter = "All" | "High" | "Medium" | "Low" | "Unknown";
 type SortMode = "Newest" | "MostEvidence" | "NeedsReview";
@@ -50,6 +51,11 @@ export default function HomePage() {
   const [sortMode, setSortMode] = useState<SortMode>("Newest");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [verifyingId, setVerifyingId] = useState<number | null>(null);
+
+  // Analysis Modal state
+  const [showAnalysisModal, setShowAnalysisModal] = useState(false);
+  const [selectedAnalysisResult, setSelectedAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [selectedAgenda, setSelectedAgenda] = useState<any>(null);
 
   const handleCreateAgenda = async (title: string) => {
     if (isDemo) {
@@ -112,7 +118,7 @@ export default function HomePage() {
       if (isDemo) {
         const demoId = Number(agenda.id);
         const staticResult = DEMO_ANALYSIS_RESULTS[demoId];
-        
+
         // 1. Check if Static Result is valid for the current state (like AgendaPage)
         const demoDefaultCounts: Record<number, number> = { 1: 4, 2: 4, 3: 3, 4: 3, 5: 2, 6: 2, 7: 2, 8: 2 };
         const isModified = (demoDefaultCounts[demoId] || 0) !== agenda.articles.length || agenda.title !== staticResult?.claim;
@@ -127,6 +133,9 @@ export default function HomePage() {
           };
           demoContext.saveAnalysis(demoId, resultToSet);
           setVerifyingId(null);
+          setSelectedAnalysisResult(resultToSet);
+          setSelectedAgenda(agenda);
+          setShowAnalysisModal(true);
           return;
         }
 
@@ -155,13 +164,28 @@ export default function HomePage() {
           };
           // Persist to Context/LocalStorage
           demoContext.saveAnalysis(agenda.id, newResult);
+
+          setSelectedAnalysisResult(newResult);
+          setSelectedAgenda(agenda);
+          setShowAnalysisModal(true);
         } else {
           throw new Error("Demo analysis failed");
         }
       } else {
-        const response = await authFetch(API_ENDPOINTS.analyzeAgenda(agenda.id), { method: 'POST' });
+        const response = await authFetch(`${API_ENDPOINTS.agendas}/${agenda.id}/analyze?force_refresh=false`, { method: 'POST' });
         if (!response.ok) throw new Error("Failed to analyze narrative");
+
+        // Fetch the updated agenda to get the new analysisResult
+        const freshAgendas = await authFetch(API_ENDPOINTS.agendas).then(r => r.json());
+        const updatedAgenda = freshAgendas.find((a: any) => a.id === agenda.id);
+
         agendaContext?.refetch();
+
+        if (updatedAgenda?.analysisResult) {
+          setSelectedAnalysisResult(updatedAgenda.analysisResult);
+          setSelectedAgenda(updatedAgenda);
+          setShowAnalysisModal(true);
+        }
       }
     } catch (e: any) {
       alert(e.message);
@@ -233,7 +257,7 @@ export default function HomePage() {
       <header className="mx-auto flex w-[min(1120px,92vw)] items-center justify-between py-5">
         <div id="tutorial-branding" className="flex items-center gap-3">
           <span
-            className="bg-gradient-to-r from-blue-900 via-blue-700 to-purple-800 bg-clip-text text-2xl font-black tracking-tighter text-transparent"
+            className="bg-gradient-to-r from-blue-900 via-blue-700 to-purple-800 bg-clip-text text-4xl font-black tracking-tighter text-transparent"
             style={{ fontFamily: "'Playfair Display', serif" }}
           >
             AGENDA
@@ -284,7 +308,7 @@ export default function HomePage() {
             <span className="bg-gradient-to-r from-blue-800 via-blue-600 to-purple-700 bg-clip-text text-transparent"> Dashboard</span>
           </h1>
           <p className="mt-2 max-w-2xl text-base leading-relaxed text-slate-600">
-            Each card below is a <span className="font-semibold text-slate-800">narrative</span> — a claim backed by evidence sources. 
+            Each card below is a <span className="font-semibold text-slate-800">narrative</span> - a claim backed by evidence sources.
             The AI verification pipeline reads every article and scores how credibly your evidence supports the claim.
           </p>
         </div>
@@ -301,11 +325,10 @@ export default function HomePage() {
                 <button
                   key={item}
                   onClick={() => setReliabilityFilter(item)}
-                  className={`rounded-full border px-4 py-1.5 text-sm font-semibold transition ${
-                    reliabilityFilter === item
-                      ? "border-blue-700 bg-blue-700 text-white shadow-md shadow-blue-700/20"
-                      : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
-                  }`}
+                  className={`rounded-full border px-4 py-1.5 text-sm font-semibold transition ${reliabilityFilter === item
+                    ? "border-blue-700 bg-blue-700 text-white shadow-md shadow-blue-700/20"
+                    : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                    }`}
                 >
                   {item === "Unknown" ? "Not Verified" : item}
                 </button>
@@ -318,11 +341,10 @@ export default function HomePage() {
                 <button
                   key={mode}
                   onClick={() => setSortMode(mode)}
-                  className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${
-                    sortMode === mode
-                      ? "bg-slate-900 text-white"
-                      : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                  }`}
+                  className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${sortMode === mode
+                    ? "bg-slate-900 text-white"
+                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                    }`}
                 >
                   {mode === "MostEvidence" ? "Most Evidence" : mode === "NeedsReview" ? "Needs Review" : "Newest"}
                 </button>
@@ -467,7 +489,7 @@ export default function HomePage() {
                 State your claim
               </h2>
               <p className="mt-2 text-sm text-slate-600">
-                Create a narrative — a single arguable statement you want to stand behind with evidence.
+                Create a narrative - a single arguable statement you want to stand behind with evidence.
               </p>
               <div className="mt-6">
                 <CreateAgendaForm onCreate={onAgendaCreated} />
@@ -476,6 +498,14 @@ export default function HomePage() {
           </div>
         </div>
       )}
+
+      {/* Analysis Modal for completed verification */}
+      <AnalysisModal
+        isOpen={showAnalysisModal}
+        onClose={() => setShowAnalysisModal(false)}
+        analysisResult={selectedAnalysisResult}
+        onReanalyze={() => selectedAgenda && handleVerify(selectedAgenda)}
+      />
 
       <style>{`
         @keyframes fade-in-up {

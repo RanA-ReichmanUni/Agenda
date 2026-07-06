@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -41,10 +41,10 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[radial-gradient(circle_at_top_left,#f5f7ff,transparent_42%),radial-gradient(circle_at_top_right,#eef5ff,transparent_38%),#f8fafc] p-4">
       <div className="text-center mb-8">
-        <h1 className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-700 to-purple-800 drop-shadow-2xl tracking-tighter" style={{ fontFamily: "'Playfair Display', serif" }}>
+        <h1 className="text-[100px] md:text-[120px] leading-none font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-700 to-purple-800 drop-shadow-2xl tracking-tighter" style={{ fontFamily: "'Playfair Display', serif" }}>
           AGENDA
         </h1>
-        <p className="text-slate-500 font-medium text-sm tracking-[0.5em] uppercase mt-2">
+        <p className="text-slate-500 font-medium text-lg md:text-xl tracking-[0.5em] uppercase mt-2">
           PROVE YOUR POINT
         </p>
       </div>

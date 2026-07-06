@@ -91,9 +91,8 @@ function PipelineShowcase() {
             {[0, 1, 4, 5].map((p) => (
               <span
                 key={p}
-                className={`h-1.5 w-1.5 rounded-full transition-colors duration-500 ${
-                  phase >= p ? "bg-blue-600" : "bg-slate-200"
-                }`}
+                className={`h-1.5 w-1.5 rounded-full transition-colors duration-500 ${phase >= p ? "bg-blue-600" : "bg-slate-200"
+                  }`}
               />
             ))}
           </div>
@@ -116,9 +115,8 @@ function PipelineShowcase() {
             return (
               <div
                 key={source.domain}
-                className={`flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 transition-all duration-500 ${
-                  visible ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
-                }`}
+                className={`flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 transition-all duration-500 ${visible ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
+                  }`}
               >
                 <span className="rounded-md bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-500">
                   {source.domain}
@@ -136,12 +134,11 @@ function PipelineShowcase() {
         </div>
 
         {/* Verification / verdict */}
-        <div className="mt-4 min-h-[92px]">
+        <div className="mt-4 min-h-[124px]">
           {!done ? (
             <div
-              className={`rounded-2xl border border-blue-200 bg-blue-50 p-4 transition-opacity duration-500 ${
-                verifying ? "opacity-100" : "opacity-0"
-              }`}
+              className={`rounded-2xl border border-blue-200 bg-blue-50 p-4 transition-opacity duration-500 ${verifying ? "opacity-100" : "opacity-0"
+                }`}
             >
               <div className="flex items-center gap-2 text-sm font-semibold text-blue-800">
                 <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
@@ -224,7 +221,7 @@ const HOW_IT_WORKS = [
   {
     step: "04",
     title: "Share your case",
-    text: "Publish a read-only link so anyone can audit your narrative — sources, scores and all.",
+    text: "Publish a read-only link so anyone can audit your narrative sources, scores and all.",
   },
 ];
 
@@ -262,12 +259,17 @@ export default function LandingPage() {
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#f5f7ff,transparent_42%),radial-gradient(circle_at_top_right,#eef5ff,transparent_38%),#f8fafc] pb-24">
       {/* Top bar */}
       <header className="mx-auto flex w-[min(1120px,92vw)] items-center justify-between py-5">
-        <span
-          className="bg-gradient-to-r from-blue-900 via-blue-700 to-purple-800 bg-clip-text text-2xl font-black tracking-tighter text-transparent"
-          style={{ fontFamily: "'Playfair Display', serif" }}
-        >
-          AGENDA
-        </span>
+        <div className="flex flex-col">
+          <span
+            className="bg-gradient-to-r from-blue-900 via-blue-700 to-purple-800 bg-clip-text text-5xl font-black tracking-tighter text-transparent"
+            style={{ fontFamily: "'Playfair Display', serif" }}
+          >
+            AGENDA
+          </span>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-blue-700 mt-1">Evidence-driven platform</p>
+        </div>
+
+        {/* Right Nav */}
         <nav className="flex items-center gap-2 sm:gap-3">
           <a
             href={GITHUB_URL}
@@ -293,11 +295,10 @@ export default function LandingPage() {
       </header>
 
       {/* Hero */}
-      <section className="mx-auto mt-6 grid w-[min(1120px,92vw)] items-center gap-10 lg:mt-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14">
+      <section className="mx-auto mt-6 grid w-[min(1120px,92vw)] items-center gap-10 lg:mt-4 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-blue-700">Evidence-driven platform</p>
           <h1
-            className="mt-3 text-5xl font-black leading-[1.05] tracking-tight text-slate-900 sm:text-6xl"
+            className="text-5xl font-black leading-[1.05] tracking-tight text-slate-900 sm:text-6xl"
             style={{ fontFamily: "'Playfair Display', serif" }}
           >
             Make a claim.
@@ -314,21 +315,15 @@ export default function LandingPage() {
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <button
-              onClick={startGuidedTour}
+              onClick={enterSandbox}
               className="group flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-700 to-purple-700 px-6 py-3.5 text-base font-semibold text-white shadow-lg shadow-blue-700/20 transition hover:shadow-xl hover:shadow-purple-700/25"
             >
               <span className="transition-transform group-hover:translate-x-0.5">▶</span>
-              Watch it drive itself
-            </button>
-            <button
-              onClick={enterSandbox}
-              className="rounded-full border border-slate-300 bg-white px-6 py-3.5 text-base font-semibold text-slate-800 transition hover:border-slate-400 hover:bg-slate-50"
-            >
               Explore the sandbox
             </button>
           </div>
           <p className="mt-3 text-sm text-slate-500">
-            No account needed — the demo runs entirely in your browser.
+            No account needed - the demo runs entirely in your browser.
           </p>
         </div>
 
@@ -402,26 +397,20 @@ export default function LandingPage() {
 
       {/* Closing CTA */}
       <section className="mx-auto mt-20 w-[min(1120px,92vw)]">
-        <div className="rounded-3xl bg-gradient-to-r from-blue-800 via-blue-700 to-purple-800 p-8 text-center shadow-xl sm:p-12">
-          <h2 className="text-3xl font-black text-white" style={{ fontFamily: "'Playfair Display', serif" }}>
-            See the full workflow in 90 seconds
+        <div className="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-xl sm:p-12">
+          <h2 className="text-3xl font-black text-slate-900" style={{ fontFamily: "'Playfair Display', serif" }}>
+            Ready to explore?
           </h2>
-          <p className="mx-auto mt-3 max-w-xl text-blue-100">
-            The guided tour creates a narrative, attaches evidence, runs the AI verification and shares the result — all
-            by itself, with narration.
+          <p className="mx-auto mt-3 max-w-xl text-slate-600">
+            No account needed - the demo runs entirely in your browser.
           </p>
           <div className="mt-7 flex flex-wrap justify-center gap-3">
             <button
-              onClick={startGuidedTour}
-              className="rounded-full bg-white px-6 py-3.5 text-base font-semibold text-blue-900 shadow-lg transition hover:bg-blue-50"
-            >
-              ▶ Start the guided tour
-            </button>
-            <button
               onClick={enterSandbox}
-              className="rounded-full border border-white/40 px-6 py-3.5 text-base font-semibold text-white transition hover:bg-white/10"
+              className="group flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-700 to-purple-700 px-6 py-3.5 text-base font-semibold text-white shadow-lg shadow-blue-700/20 transition hover:shadow-xl hover:shadow-purple-700/25"
             >
-              Explore on my own
+              <span className="transition-transform group-hover:translate-x-0.5">▶</span>
+              Explore the sandbox
             </button>
           </div>
         </div>

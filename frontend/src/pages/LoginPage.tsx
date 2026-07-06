@@ -30,10 +30,10 @@ export default function LoginPage() {
 
       {/* Brand Title */}
       <div className="text-center mb-8 animate-fade-in-down">
-        <h1 className="text-7xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-700 to-purple-800 drop-shadow-2xl tracking-tighter" style={{ fontFamily: "'Playfair Display', serif" }}>
+        <h1 className="text-[100px] md:text-[120px] leading-none font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-900 via-blue-700 to-purple-800 drop-shadow-2xl tracking-tighter" style={{ fontFamily: "'Playfair Display', serif" }}>
           AGENDA
         </h1>
-        <p className="text-slate-500 font-medium text-base md:text-lg tracking-[0.5em] uppercase mt-2">
+        <p className="text-slate-500 font-medium text-lg md:text-xl tracking-[0.5em] uppercase mt-2">
           PROVE YOUR POINT
         </p>
       </div>
@@ -115,12 +115,14 @@ export default function LoginPage() {
               Try Demo Mode (No Login)
             </button>
 
+            {/* 
             <button
               onClick={() => navigate('/auto-pilot-demo')}
               className="mt-3 inline-block w-full text-center rounded-full border border-purple-200 bg-purple-50 text-purple-800 font-semibold py-2.5 px-6 hover:bg-purple-100 transition"
             >
               ▶ Watch the guided tour
             </button>
+            */}
 
             <Link to="/" className="mt-4 inline-block text-sm text-slate-500 hover:text-slate-700 transition">
               ← What is Agenda?
