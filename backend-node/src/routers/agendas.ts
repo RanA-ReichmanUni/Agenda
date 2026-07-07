@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { v4 as uuidv4 } from 'uuid';
+import crypto from 'crypto';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import Groq from 'groq-sdk';
@@ -158,6 +158,7 @@ function postprocessLlmResult(claim: string, evidence: any[], parsed: any): any 
 async function callOpenRouterAnalysis(claim: string, evidence: any[]): Promise<any> {
     const apiKey = process.env.OPENROUTER_API_KEY;
     const model = process.env.OPENROUTER_MODEL || "openai/gpt-oss-20b:free";
+    console.log("OpenRouter API Key present:", !!apiKey, "Model:", model);
     
     if (!apiKey) return null;
 
@@ -207,8 +208,8 @@ async function callOpenRouterAnalysis(claim: string, evidence: any[]): Promise<a
         
         const parsed = JSON.parse(content);
         return postprocessLlmResult(claim, evidence, parsed);
-    } catch (e) {
-        console.error(`OpenRouter Error: ${e}`);
+    } catch (e: any) {
+        console.error(`OpenRouter Error:`, e?.response?.data || e.message);
         return null;
     }
 }
@@ -216,6 +217,7 @@ async function callOpenRouterAnalysis(claim: string, evidence: any[]): Promise<a
 async function callGroqAnalysis(claim: string, evidence: any[]): Promise<any> {
     const apiKey = process.env.GROQ_API_KEY;
     const model = process.env.GROQ_LLAMA_MODEL || "meta-llama/llama-4-scout-17b-16e-instruct";
+    console.log("Groq API Key present:", !!apiKey, "Model:", model);
     
     if (!apiKey) return null;
 
@@ -261,8 +263,8 @@ async function callGroqAnalysis(claim: string, evidence: any[]): Promise<any> {
         
         const parsed = JSON.parse(content);
         return postprocessLlmResult(claim, evidence, parsed);
-    } catch (e) {
-        console.error(`Groq Error: ${e}`);
+    } catch (e: any) {
+        console.error(`Groq Error:`, e?.response?.data || e.message || e);
         return null;
     }
 }
@@ -480,7 +482,7 @@ router.post('/:agenda_id/share', getCurrentUser, async (req: AuthRequest, res: R
             });
         }
 
-        const newToken = uuidv4();
+        const newToken = crypto.randomUUID();
         await pool.query("UPDATE agendas SET share_token = $1 WHERE id = $2", [newToken, agendaId]);
         
         return res.json({
@@ -669,6 +671,120 @@ router.post('/shared/:share_token/analyze', async (req: Request, res: Response) 
         
     } catch (e: any) {
         return res.status(500).json({ detail: e.message });
+    }
+});
+
+router.post('/:agenda_id/analyze', getCurrentUser, async (req: AuthRequest, res: Response) => {
+    const agendaId = parseInt(req.params.agenda_id as string, 10);
+    const forceRefresh = req.body.force_refresh === true;
+    const userId = req.user!.id;
+
+    const pool = getDbPool();
+    const client = await pool.connect();
+    
+    try {
+        const agendaResult = await client.query(
+            "SELECT title, analysis_score, analysis_reasoning, last_analyzed_at, analysis_article_count, analysis_numeric_score FROM agendas WHERE id = $1 AND user_id = $2",
+            [agendaId, userId]
+        );
+        
+        if (agendaResult.rows.length === 0) {
+            return res.status(404).json({ detail: "Agenda not found" });
+        }
+        
+        const row = agendaResult.rows[0];
+        const claim = row.title;
+        const cachedScore = row.analysis_score;
+        const cachedReasoning = row.analysis_reasoning;
+        const cachedCount = row.analysis_article_count;
+        const cachedNumeric = row.analysis_numeric_score;
+
+        const articlesResult = await client.query("SELECT title, url, description FROM articles WHERE agenda_id = $1", [agendaId]);
+        const articles = articlesResult.rows;
+        const currentCount = articles.length;
+
+        if (cachedScore && cachedReasoning && !forceRefresh) {
+            if (cachedCount === currentCount) {
+                return res.json({
+                    score: cachedScore,
+                    reasoning: cachedReasoning,
+                    claim: claim,
+                    numeric_score: cachedNumeric,
+                    is_cached: true,
+                    is_stale: false
+                });
+            } else {
+                return res.json({
+                    score: cachedScore,
+                    reasoning: cachedReasoning,
+                    claim: claim,
+                    numeric_score: cachedNumeric,
+                    is_cached: true,
+                    is_stale: true
+                });
+            }
+        }
+
+        const evidenceItems = [];
+        for (let i = 0; i < articles.length; i++) {
+            const a = articles[i];
+            const excerpt = await fetchArticleExcerpt(a.url);
+            evidenceItems.push({
+                id: `a${i}`,
+                title: a.title,
+                url: a.url,
+                publisher: getDomainOf(a.url),
+                excerpt: excerpt
+            });
+        }
+
+        const llmResult = await callLlmAnalysis(claim, evidenceItems);
+        let result: any = null;
+
+        if (llmResult) {
+            result = llmResult;
+        } else {
+            // Fallback
+            await new Promise(r => setTimeout(r, 1500));
+            if (currentCount === 0) {
+                result = {
+                    score: "Low",
+                    reasoning: "No evidence provided. Please add articles to verify this claim.",
+                    claim: claim
+                };
+            } else {
+                result = {
+                    score: "Low",
+                    reasoning: `Analysis simulation (Real AI failed). Based on ${currentCount} articles.`,
+                    claim: claim
+                };
+            }
+        }
+
+        if (result && result.score) {
+            try {
+                await client.query(`
+                    UPDATE agendas
+                    SET analysis_score = $1,
+                        analysis_reasoning = $2,
+                        last_analyzed_at = CURRENT_TIMESTAMP,
+                        analysis_article_count = $3,
+                        analysis_numeric_score = $4
+                    WHERE id = $5
+                `, [result.score, result.reasoning, currentCount, result.numeric_score || null, agendaId]);
+            } catch (e) {
+                console.error(`Cache update failed: ${e}`);
+            }
+        }
+
+        result.is_cached = false;
+        result.is_stale = false;
+        return res.json(result);
+        
+    } catch (e: any) {
+        return res.status(500).json({ detail: e.message });
+    } finally {
+        client.release();
     }
 });
 
