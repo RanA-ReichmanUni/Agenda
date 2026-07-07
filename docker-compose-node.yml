@@ -1,0 +1,50 @@
+services:
+  postgres:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: agenda_user
+      POSTGRES_PASSWORD: supersecret
+      POSTGRES_DB: agenda_db_node
+    ports:
+      - "5434:5432" # Changed to avoid conflict with python and c# DB
+    volumes:
+      - postgres_data_node:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend-node
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+    env_file:
+      - ./backend-node/.env
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: agenda_db_node
+      DB_USER: agenda_user
+      DB_PASSWORD: supersecret
+      API_PORT: 8000
+    volumes:
+      - ./backend-node:/app
+      - /app/node_modules
+    command: npm run dev
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    environment:
+      VITE_API_URL: http://localhost:8000
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm run dev -- --host 0.0.0.0 --force
+
+volumes:
+  postgres_data_node:
