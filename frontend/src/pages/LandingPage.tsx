@@ -311,6 +311,13 @@ export default function LandingPage() {
             Agenda lets you state a narrative, back it with news sources, and runs an{" "}
             <span className="font-semibold text-slate-800">AI verification pipeline</span> that reads every article and
             scores how credibly your evidence supports the claim.
+             <p className="mt-5 max-w-xl text-lg leading-relaxed text-slate-600">
+              Share it on social media or send it around. 
+                <p >
+                  Proof your own Agenda !
+                </p>
+                
+            </p>
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
